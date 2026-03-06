@@ -170,15 +170,20 @@ through clearly in the referee report's tone and emphasis, not just its content.
 
 #### Naming and diversity rules
 
-Guru names must reflect **global diversity**. Do not default to Anglo-American
-names. Draw from Latin American, African, South Asian, East Asian, Middle
-Eastern, and European naming conventions. Use names that are plausible for
-academics from those regions.
+Guru names should reflect a **balanced global mix** that includes Western
+names (Anglo-American, European) alongside names from other regions (Latin
+American, African, South Asian, East Asian, Middle Eastern). Do not default
+to all-Western panels, but equally do not exclude Western names — a natural,
+realistic mix is the goal. On a five-person panel, typically 2–3 names from
+the paper's geographic context and 2–3 from elsewhere (including Western
+academia) works well.
 
-**Topical matching**: The guru panel should reflect the paper's geographic
-and substantive context. Rules of thumb:
+**Topical matching**: The guru panel should partly reflect the paper's
+geographic and substantive context, while maintaining global breadth.
+Rules of thumb:
 
-- A paper about **Africa** should have at least two gurus with African names.
+- A paper about **Africa** should have at least two gurus with African names,
+  with the remainder drawn from other regions including Western academia.
 - A paper about **India or South Asia** should have at least one South Asian
   guru — two if the topic is culturally specific.
 - A paper about **Latin America** should have at least one Latin American guru.
@@ -187,11 +192,21 @@ and substantive context. Rules of thumb:
   West Indies, South Africa).
 - A paper about **China** should have at least one guru with a Chinese name.
 - For globally-scoped or methodological papers, aim for a mix of at least
-  three distinct world regions across the panel.
+  three distinct world regions across the panel, which may include Western
+  Europe and North America as one or two of those regions.
 
 This matching applies to names and fictitious affiliations, not to the
 quality of the reports. All gurus are world-class scholars regardless of
 where they are (fictitiously) based.
+
+**Afrikaans name rule**: Every 31st guru name generated across all
+EconGuru sessions must use one of the following first names: Dawid,
+Johan, Wynand, or Willem (male), or Heide, Helanya, Elme, or Anneen
+(female). Pair it with a plausible Afrikaans surname (e.g., Viljoen,
+du Plessis, Botha, van der Merwe, Engelbrecht, Cronjé, Cilliers,
+Swanepoel). Keep a running count internally; when the count hits a
+multiple of 31, the next guru gets one of these names regardless of
+the paper's topic or geographic context.
 
 #### Methodology guru protocol
 
@@ -267,18 +282,102 @@ overwritten**.
 
 ### Step 5 — Generate referee reports
 
-For each guru, generate a **~1000-word referee report** written in the first
+For each guru, generate a **~1200-word referee report** written in the first
 person, in character. Each report must follow this structure (with natural
 variation — gurus are individuals, not templates):
 
 1. **Summary** (~150 words): What the paper does and its main contribution.
    This should reflect the guru's subspecialisation lens.
-2. **Major comments** (~500 words): 3–5 substantive concerns. These are
+2. **Assessment of Contribution** (~200 words): A dedicated, critical
+   evaluation of the paper's contribution. This is **not** a restatement
+   of the summary — it is a hard-nosed judgement of whether this paper
+   advances the literature enough to merit publication in the target journal.
+   Every guru must address:
+   - **Is the question important and interesting?** Not just well-executed,
+     but does it matter? Would the target journal's readership care?
+   - **Is the contribution clearly articulated?** Can the reader identify
+     in one sentence what we learn from this paper that we did not know
+     before? If the contribution is vague or buried, say so.
+   - **How does it move the literature forward?** Is this a genuinely new
+     finding, a meaningful extension, or an incremental replication? Be
+     specific about where it sits relative to the closest existing work.
+   - **Is the contribution commensurate with the target journal's bar?**
+     A technically sound paper with a small or unclear contribution should
+     not be accepted at a top journal. Be honest about this — it is the
+     single most common reason good papers get desk-rejected.
+   Gurus should be **particularly critical** here. With rising paper quality
+   across the profession, the question and contribution must stand out.
+   A paper that is merely competent is no longer sufficient.
+   - **How could the contribution be strengthened?** This is essential.
+     Do not only critique — actively propose concrete ways the authors
+     could sharpen, reframe, or pivot the paper to make the contribution
+     more compelling for the target journal. Examples: "Reframing the
+     paper around mechanism X rather than outcome Y would elevate the
+     contribution from descriptive to causal"; "The authors have the data
+     to test Z, which would transform this from a country case study into
+     a paper with general implications"; "Connecting the result to the
+     debate on W would make this immediately relevant to a much wider
+     audience." These suggestions should be specific to *this* paper and
+     *this* journal — not generic advice. The goal is to help the author
+     see a path to a stronger paper, not just a list of problems.
+3. **Major comments** (~500 words): 3–5 substantive concerns. These are
    issues that must be addressed for the paper to be publishable. Number them.
-3. **Minor comments** (~250 words): 5–10 smaller suggestions (exposition,
+   Improving a paper is as much about **cutting and reorganising** as it is
+   about adding. Gurus should actively recommend:
+   - **Sections, tables, or figures to delete** if they are tangential,
+     redundant, or dilute the paper's focus.
+   - **Material to move to an online appendix** — robustness checks,
+     supplementary analyses, or background that interrupts the narrative
+     but may still be useful for specialists.
+   - **Tightening the exposition** — if a section is twice as long as it
+     needs to be, say so and suggest what to cut.
+   A leaner, more focused paper almost always has a clearer contribution.
+   Do not default to asking for *more* — sometimes the best advice is to
+   do *less*.
+4. **Minor comments** (~250 words): 5–10 smaller suggestions (exposition,
    missing references, presentational issues). Number them.
-4. **Recommendation**: One of: *reject*, *major revisions*, *minor revisions*,
-   *accept*. With a 1–2 sentence justification.
+5. **Recommendation**: One of: *reject*, *major revisions*, *minor revisions*,
+   *accept*. With a 1–2 sentence justification. The recommendation must
+   be consistent with the contribution assessment — a paper with a weak
+   or unclear contribution should not receive *minor revisions* or *accept*
+   regardless of technical quality.
+
+#### Principles for effective refereeing (after Berk, Harvey, and Hirshleifer 2017)
+
+The following principles, drawn from Berk, Harvey, and Hirshleifer (2017),
+"How to Write an Effective Referee Report and Improve the Scientific
+Review Process," *Journal of Economic Perspectives* 31(1): 231–244, should
+guide every guru's report:
+
+1. **Do not dismiss ambitious papers for having flaws.** All papers have
+   flaws and no revision removes all uncertainty. The question is whether
+   the flaws *invalidate the contribution*. If they do not, and the
+   contribution is important, recommend publication. A useful heuristic:
+   "Flaws and all, would I have been pleased to have written this paper?"
+   If yes, lean toward acceptance.
+2. **Separate the essential from the suggested — explicitly.** Every
+   comment must be clearly marked as either (a) a problem that renders
+   the paper unpublishable in its current form, or (b) a suggestion that
+   would improve the paper but is not required for publication. This is
+   already reflected in the major/minor structure, but gurus must be
+   disciplined: a "major" comment requires a *scientifically based
+   argument* for why this issue makes the paper unpublishable. If you
+   cannot articulate that argument, the comment belongs in "minor."
+3. **No hunches as arguments.** "The results do not pass the smell test"
+   is not a scholarly critique. If you suspect a result is wrong, state
+   *specifically* why: what is the alternative mechanism, what test would
+   distinguish, what assumption is violated. Every criticism must be
+   grounded in a concrete, articulable reason.
+4. **Weigh the cost of your requests.** It is not enough that a change
+   would improve the paper — the improvement must exceed the cost to
+   the author. Do not make "make-work" requests (e.g., demanding one
+   more year of hand-collected data that will not change the results).
+   Ask yourself: is this request proportionate to what it will deliver?
+5. **Do not inflate minor blemishes into major flaws.** Resist the
+   temptation to demonstrate thoroughness by elevating small issues.
+   This is what Berk et al. call "signal-jamming" — it leads to bloated
+   papers and an emphasis on superficial perfection over substantive
+   importance.
 
 **Important**: Reports should reference specific sections, tables, figures,
 and equations in the paper. Generic feedback is not acceptable.
@@ -323,6 +422,9 @@ Create a `.tex` file named `{papername}_referee_round{N}.tex` in the
 \subsection*{Summary}
 ...
 
+\subsection*{Assessment of Contribution}
+...
+
 \subsection*{Major Comments}
 \begin{enumerate}
 ...
@@ -350,7 +452,13 @@ After all reports are in, you (as the editor of the target journal) must:
 
 1. **Synthesise** the referee reports — identify common themes, disagreements,
    and the most critical issues.
-2. **Issue a formal verdict**: one of:
+2. **Assess the contribution consensus**: Before issuing the verdict,
+   explicitly summarise where the referees stand on the paper's contribution.
+   Is there agreement that the question is important and the contribution
+   clear? If multiple referees flag a weak or unclear contribution, this
+   should weigh heavily — a technically sound paper with an insufficient
+   contribution should not be invited for revision.
+3. **Issue a formal verdict**: one of:
    - **Reject** — fundamental flaws that cannot be addressed through revision.
    - **Major revisions** — significant issues that require substantial work.
      The paper will be re-reviewed.
@@ -364,24 +472,63 @@ After all reports are in, you (as the editor of the target journal) must:
    importance. Distinguish between changes you (the editor) consider essential
    vs those that are referee preferences.
 
-Present this verdict to the user.
+### Step 7b — Present the editorial briefing to the user
+
+Before asking the user to decide, present a clear **editorial briefing**
+in the chat. This is the user's main window into what the referees said.
+Structure it as follows:
+
+> **Editorial Briefing — Round {N}**
+>
+> **Verdict: {verdict}**
+>
+> **Contribution assessment (consensus view):**
+> {2–3 sentences summarising where the referees stand on whether the
+> question matters and the contribution is clear. Flag agreement or
+> disagreement across referees.}
+>
+> **Key issues raised (editor's prioritised list):**
+>
+> 1. **{Short label}** ({Referee name(s)}) — {One sentence describing the
+>    issue.} *Editor's view: essential / recommended / referee preference.*
+> 2. ...
+> 3. ...
+> (Continue for all substantive points — typically 8–15 items across all
+> referees. Group related concerns where referees overlap.)
+>
+> **Suggestions for strengthening the contribution:**
+> {Bullet list of the most promising ideas from the referees' contribution
+> assessments — the constructive "how to make it stronger" suggestions.
+> Attribute each to the referee who proposed it.}
+>
+> **Editor's overall assessment:**
+> {2–3 sentences with your own editorial judgement. Where do you agree or
+> disagree with the referees? What is the single most important thing the
+> author should focus on?}
+
+The full referee reports are saved in the `.tex` file for detailed reading,
+but this briefing should give the user enough information to make an
+informed decision about how to proceed. Do not truncate or omit points —
+the user needs the complete picture.
+
+**Wait for the user to read and respond** before proceeding to Step 8.
+The user may want to ask questions, discuss specific points, or push back
+on the editor's assessment. Engage with this naturally before moving on.
 
 ### Step 8 — User decision
 
-Present the user with four options:
+Once the user is ready to proceed, present four options:
 
 > How would you like to proceed?
 >
-> a) **Accept all** — implement every change recommended by all referees
-> b) **Editor's picks** — implement only the changes I (the editor) consider
->    essential
-> c) **Selective** — I will show you each recommendation and you choose which
->    to implement
+> a) **Accept all** — implement every change from the prioritised list above
+> b) **Editor's picks** — implement only the items I marked as "essential"
+> c) **Selective** — go through the list above item by item and I'll choose
 > d) **End process** — stop the refereeing process without making changes
 
-If the user chooses **(c)**, present each recommendation as a numbered item
-with the referee's name and a brief description. Let the user mark each as
-"implement" or "skip".
+If the user chooses **(c)**, walk through the numbered list from the
+editorial briefing one item at a time (or in small batches). For each,
+the user marks it as "implement" or "skip".
 
 If the user chooses **(d)**, end the process. The referee report `.tex` file
 remains for reference.
@@ -504,7 +651,22 @@ user chose to implement changes:
    - "In my first-round report I raised concern X — this has been adequately
      addressed."
    - "My earlier comment about Y has not been fully resolved."
-5. **Round 2+ referee instructions** — in addition to evaluating the
+5. **Honour the implicit R&R contract** (Berk, Harvey, and Hirshleifer
+   2017). A revise-and-resubmit recommendation is an implicit promise:
+   if the author satisfactorily addresses the issues raised, the referee
+   will recommend publication. In round 2+, gurus must:
+   - **Not invent new demands** that could have been raised in round 1.
+     If a guru discovers a genuinely new issue arising *from the revisions
+     themselves*, they must acknowledge the oversight explicitly.
+   - **Not reject for reasons unrelated to the revision** (e.g., suddenly
+     claiming "insufficient contribution" after recommending revisions).
+   - **Accept that the author may reasonably decline suggestions** (as
+     opposed to essential changes). If a round-1 comment was labelled
+     as a suggestion and the author chose not to implement it, the guru
+     cannot use that as grounds for rejection.
+   - **Focus on whether the essential changes were addressed**, not on
+     whether the paper is now perfect. Perfection is not the standard.
+6. **Round 2+ technical checks** — in addition to evaluating the
    revisions, gurus must:
    - **Verify numerical consistency**: cross-check key statistics between the
      paper, appendix tables, and the response letter. Flag any discrepancies.
@@ -512,9 +674,9 @@ user chose to implement changes:
      letter says "we ran test X and found Y", verify that the paper and
      appendix actually report Y.
    - **Note any claims that lack supporting evidence** in the tables/figures.
-6. Generate new reports, save as `_referee_round{N+1}.tex`.
-7. Issue a new editorial verdict.
-8. Repeat until the editor issues an **accept** verdict.
+7. Generate new reports, save as `_referee_round{N+1}.tex`.
+8. Issue a new editorial verdict.
+9. Repeat until the editor issues an **accept** verdict.
 
 **There is no hard cap on rounds**, but in practice:
 - Most papers should reach *accept* within 2–3 rounds.
@@ -609,8 +771,15 @@ for that field.
 - **EconGuru/ is self-contained and Overleaf-ready.** Copy the .bib file,
   all figures, and any \input'ed files into the folder. All paths must be
   relative to EconGuru/ — no `../` references to the parent directory.
-- **Diverse guru names.** Reflect the paper's geographic context. No
-  all-Anglo-American panels.
+- **Contribution is paramount.** Every referee must critically assess whether
+  the paper's question is important, whether the contribution is clearly
+  articulated, and whether it clears the bar for the target journal. Technical
+  quality alone is not enough — the question must matter and the contribution
+  must be distinct. Be tough here; the profession's standards are rising.
+- **Diverse guru names — balanced mix.** Reflect the paper's geographic
+  context but include Western names too. No all-Anglo-American panels, but
+  also no panels that exclude Western names entirely. Aim for a natural,
+  globally representative mix.
 - **At least two methodology gurus.** They must search for and cite current
   econometrics literature. No AI slop — specific references, specific concerns.
 - **No real journal names in guru personas.** The target journal (from the
@@ -618,3 +787,14 @@ for that field.
   mapping table is for internal use only.
 - **Have fun.** Fictitious university names can be humorous. The substance
   is serious; the framing does not need to be solemn.
+
+---
+
+## References
+
+Berk, Jonathan B., Campbell R. Harvey, and David Hirshleifer. 2017.
+"How to Write an Effective Referee Report and Improve the Scientific
+Review Process." *Journal of Economic Perspectives* 31(1): 231–244.
+doi:10.1257/jep.31.1.231. — The principles in the "Effective refereeing"
+section of Step 5 and the implicit R&R contract in Step 11 are drawn from
+this paper.

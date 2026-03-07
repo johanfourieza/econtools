@@ -20,10 +20,23 @@ actionable recommendations to improve productivity, reduce token usage, and
 expand capabilities through skills and agents. Every metric uses economic
 language; every recommendation includes a specific action.
 
-## Data locations
+## Data location
 
-- Session log: `~/.claude/workflow-tracker/sessions.jsonl`
-- Decision queue: `~/.claude/workflow-tracker/decisions.jsonl`
+Kabbo stores its data in a single directory containing two files:
+- `sessions.jsonl` — session log
+- `decisions.jsonl` — decision queue
+
+**On first invocation**, check whether a `kabbo_data_path` is set in the
+user's CLAUDE.md (global or project-level). Look for a line like:
+```
+kabbo_data_path: /path/to/kabbo
+```
+If found, use that directory. If not found, ask the user:
+"Where should Kabbo store its session data? Provide a directory path.
+A cloud-synced folder (e.g., Dropbox, OneDrive, iCloud) will keep your
+data consistent across machines."
+
+Create the directory if it doesn't exist. Remember the path for the session.
 
 ---
 
@@ -32,7 +45,7 @@ language; every recommendation includes a specific action.
 ## Mode 1: LOG (end of session)
 
 If the session contains substantive work, append ONE JSON line to
-`sessions.jsonl`:
+`sessions.jsonl` in the Kabbo data directory:
 
 ```json
 {
@@ -400,7 +413,7 @@ Frame: "You're leaving capability on the table."
 
 **Purpose:** Turn recommendations into tracked, accountable actions.
 
-### Schema (`decisions.jsonl`)
+### Schema (`decisions.jsonl` in the Kabbo data directory)
 
 ```json
 {

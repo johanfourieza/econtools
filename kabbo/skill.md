@@ -621,3 +621,378 @@ Use these consistently across modules:
 | Progress bar | `██████░░░░░░░░░░ 30%` | Coverage, targets |
 | Table | Markdown with alignment | Matrices, rankings |
 | Header line | `━━━━━━━━━━━━━━━━━` | Section dividers |
+
+---
+
+# PART IV: PRESCRIPTIVE ENGINE
+
+The analytics in Part II identify patterns. This part **acts on them**.
+Every review (Tier 2 or Tier 3) must end with prescriptive outputs from
+the components below. The goal: close the loop between insight and action.
+
+## Data location
+
+- Decision queue: `~/.claude/workflow-tracker/decisions.jsonl`
+- Each line is a JSON object representing one recommendation and its lifecycle.
+
+---
+
+## Component 1: Skill Auto-Drafting
+
+**Trigger:** Module 4 (AMI) identifies a repeated multi-step sequence with
+no existing skill.
+
+**Action:** Draft a complete skill.md skeleton for the highest-ROI automation
+candidate. Not a one-liner — a working spec.
+
+### Draft format
+
+Present to the user:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DRAFT SKILL: /deploy-site
+
+Trigger: User says "deploy site", "push website", edits .qmd and wants to publish
+Inputs: Source directory (e.g., Website/), target GitHub Pages repo
+Steps:
+  1. Copy changed .qmd files + assets to local repo clone
+  2. Run `quarto render` on changed files
+  3. `git add -A && git commit -m "Update site" && git push`
+  4. Report: "Deployed. Changes live in ~2 min."
+Edge cases: Handle render errors, uncommitted changes, new files
+
+Estimated build: 30 min  |  Est. ROI: 3.2x in first month
+Based on: 4 manual deploy cycles in session log
+
+[APPROVE & BUILD NOW]  [MODIFY FIRST]  [DEFER]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+### Rules
+
+- Draft **at most 1 skill per review**. The highest-ROI candidate only.
+- The draft must include: name, description, trigger, steps, inputs/outputs,
+  edge cases, estimated build time, and ROI estimate.
+- On APPROVE: Write the skill.md to `~/.claude/skills/{name}/skill.md` and
+  log a `completed` decision.
+- On MODIFY: Ask the user what to change, revise, and re-present.
+- On DEFER: Log to decision queue as `deferred` with date.
+
+---
+
+## Component 2: Skill Discovery Engine
+
+**Trigger:** Every `/kabbo analytics` or `/kabbo deep` review.
+
+**Action:** Search online for existing skills matching the top 3 automation
+candidates AND for scope-expanding skills the user hasn't considered.
+
+### Search protocol
+
+1. **Match automation candidates** — search these sources for each candidate:
+   - GitHub repos: `awesome-claude-skills`, `ComposioHQ/awesome-claude-skills`,
+     `travisvn/awesome-claude-skills`, `alirezarezvani/claude-skills`
+   - LobeHub marketplace: `lobehub.com/skills`
+   - General: `github.com/topics/claude-skills`
+   - Search query: the candidate's core function (e.g., "quarto deploy github pages")
+
+2. **Expand scope** — based on the user's task categories in the session log,
+   search for skills in **adjacent** domains the user hasn't used:
+
+   | If user does... | Search for... |
+   |-----------------|---------------|
+   | paper-editing | citation checker, LaTeX linter, BibTeX deduplicator, abstract generator |
+   | data-analysis | R code reviewer, data validation, replication checker, codebook generator |
+   | website-management | SEO checker, broken link auditor, accessibility validator |
+   | writing | grammar checker, readability scorer, argument structure analyzer |
+   | teaching | slide generator from papers, exam question drafter, rubric builder |
+   | github-ops | PR template builder, release notes generator, repo health checker |
+
+3. **Also check the user's CLAUDE.md profile** for capabilities mentioned but
+   never used in sessions:
+   - "publication-quality PDF + PNG, 300 dpi" → figure QA checker
+   - "kableExtra or modelsummary for tables" → table formatting validator
+   - "10–20 active research projects" → project triage agent
+   - "Blog: www.ourlongwalk.com" → blog workflow, podcast show notes
+   - "LEAP style guide" → style compliance checker
+
+### Report format
+
+For each skill found:
+
+```
+EXISTING SKILL: deploy-quarto (by user123)
+Source: github.com/user123/claude-skills/deploy-quarto
+Stars: 45 | Updated: Feb 2026 | Security: [CLEAN]
+Does: Renders Quarto sites and pushes to GitHub Pages
+Match: Your website deploy pattern (4x last session)
+vs. custom: Saves 30 min build time; may need config tweaks
+
+[INSTALL]  [REVIEW FIRST]  [BUILD CUSTOM INSTEAD]
+```
+
+For scope expansion suggestions:
+
+```
+SCOPE EXPANSION: Have you considered?
+
+1. /cite-audit — Cross-references .bib files against Crossref/DOI.
+   Catches missing DOIs, wrong years, retracted papers.
+   You edit papers frequently but have no citation QA.
+   Found: lobehub.com/skills/cite-checker (8 stars)
+   Security: [REVIEW CAREFULLY — low star count]
+
+2. /fig-check — Validates figure DPI, colour space, font embedding.
+   You produce publication figures but have no automated QA.
+   Status: No existing skill found. Draft spec available on request.
+
+3. /project-triage — Weekly scan of all project dirs, flags dormant
+   projects, estimates knowledge depreciation.
+   You manage 10–20 projects with no portfolio monitoring.
+   Status: No existing skill found. Draft spec available on request.
+```
+
+### Rules
+
+- Show max 3 existing skill matches + max 3 scope expansions per review.
+- Always include security assessment. Flag anything with <10 stars or
+  unclear provenance.
+- If no matches found, say so explicitly: "No existing skills match your
+  top automation candidates. Custom builds recommended."
+- Log all suggestions to the decision queue.
+
+---
+
+## Component 3: Agent Playbooks
+
+**Trigger:** Module 4 (agent recommendations) or Module 5 (dormant projects).
+
+**Purpose:** Pre-built, copy-paste-ready agent invocation templates specific
+to the user's observed workflow patterns. Not generic — tailored to the
+tasks in the session log.
+
+### Starter library
+
+These are built-in. Present the relevant ones during review:
+
+```
+AGENT PLAYBOOK: Literature Scout
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Trigger: Starting a new paper or revising an R&R
+Type: Background agent (general-purpose)
+Invocation:
+  Agent tool, subagent_type: "general-purpose", run_in_background: true
+  Prompt: "Search Google Scholar, NBER, and SSRN for papers published
+  in the last 2 years citing [key reference]. Return: title, authors,
+  journal, one-line relevance note."
+When: Start of any paper-editing session
+Value: Saves 20–30 min of manual literature scanning
+```
+
+```
+AGENT PLAYBOOK: Link Auditor
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Trigger: After any website deployment
+Type: Background agent (general-purpose)
+Invocation:
+  Agent tool, subagent_type: "general-purpose", run_in_background: true
+  Prompt: "Read all .qmd files in [Website dir]. Extract every URL.
+  Check each with WebFetch. Report any 404, 403, or timeout with
+  file name and line number."
+When: After /deploy-site or manual website push
+Value: Catches broken links before visitors do
+```
+
+```
+AGENT PLAYBOOK: Project Context Refresher
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Trigger: Returning to a project dormant >14 days (flagged by Module 5)
+Type: Explore agent (foreground)
+Invocation:
+  Agent tool, subagent_type: "Explore"
+  Prompt: "Read the CLAUDE.md and last 3 modified files in [project dir].
+  Summarise: where did I leave off, what is the next step, what
+  decisions are pending?"
+When: Before diving into a neglected project
+Value: Recovers context in 2 min instead of 15 min of re-reading
+```
+
+```
+AGENT PLAYBOOK: Style Compliance Checker
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Trigger: Before submitting a paper draft
+Type: Background agent (general-purpose)
+Invocation:
+  Agent tool, subagent_type: "general-purpose", run_in_background: true
+  Prompt: "Read [paper.tex] and the /leapstyle skill. Check: correct
+  preamble, colour palette used in figures, citation format, writing
+  register. Report any deviations."
+When: Final check before circulating a draft
+Value: Catches style violations that delay submission
+```
+
+```
+AGENT PLAYBOOK: Parallel Research Assistant
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Trigger: Working on a paper while waiting for data/feedback on another
+Type: Background agent (general-purpose)
+Invocation:
+  Agent tool, subagent_type: "general-purpose", run_in_background: true
+  Prompt: "[Specific task for the other project, e.g., 'Clean the
+  auction rolls CSV in [path]: standardise column names, remove
+  duplicates, flag missing values. Save cleaned version as _clean.csv']"
+When: Any session where you have idle capacity on a second project
+Value: Turns single-project sessions into multi-project sessions (scope)
+```
+
+### Growing the library
+
+When Kabbo identifies a new agent-suitable pattern in the session log:
+1. Draft a new playbook following the format above
+2. Present it during the next review
+3. On approval, it becomes part of the permanent library (add to this section
+   of the skill.md)
+4. Log to decision queue
+
+---
+
+## Component 4: Scope Expander
+
+**Trigger:** Every `/kabbo deep` review (monthly).
+
+**Purpose:** Proactively identify capabilities the user isn't using but
+should be — the "economies of scope" engine.
+
+### Logic
+
+1. Read `~/.claude/CLAUDE.md` (user profile: roles, tools, defaults)
+2. Read the full session log (what they actually do)
+3. Identify **gaps**: capabilities in the profile never used in sessions
+4. Identify **adjacencies**: tasks the user does that have natural extensions
+5. Search for skills/agents that fill those gaps
+
+### Profile-gap analysis
+
+| Profile signal | Gap if never seen in log | Suggestion |
+|---|---|---|
+| "R with tidyverse" | No R code review tasks | Code review agent, test generation |
+| "kableExtra or modelsummary" | No table QA tasks | Table formatting validator |
+| "PDF + PNG, 300 dpi" | No figure QA tasks | Figure quality checker |
+| "LaTeX .tex files" | No LaTeX linting tasks | LaTeX linter, cross-ref checker |
+| "10–20 active projects" | <5 projects in log | Project triage agent |
+| "Blog: ourlongwalk.com" | No blog tasks in log | Blog workflow skill |
+| "teaching" in categories | No slide/exam tasks | Slide generator, exam drafter |
+| "LEAP style guide" | /leapstyle unused | Style compliance checker agent |
+| Director of LEAP | No team coordination | Meeting notes skill, task delegator |
+
+### Report format (in `/kabbo deep` only)
+
+```
+SCOPE EXPANSION REPORT — Untapped Capabilities
+
+Your profile mentions capabilities you haven't used with Claude Code yet:
+
+1. FIGURE QA [high relevance — you produce pub-quality figures]
+   Profile: "publication-quality, PDF + PNG, 300 dpi"
+   Log: 0 figure validation tasks in N sessions
+   Action: /fig-check skill or agent to validate DPI, colour space,
+   font embedding before journal submission
+   Search result: [link if found, "draft available" if not]
+
+2. BLOG WORKFLOW [medium relevance — you maintain ourlongwalk.com]
+   Profile: "Blog: www.ourlongwalk.com" + /olwstyle skill installed
+   Log: /olwstyle unused in N sessions
+   Action: Blog drafting + formatting pipeline using /olwstyle
+   Could also: Generate podcast show notes from blog posts
+
+3. PROJECT MONITORING [high relevance — 10-20 projects, only N tracked]
+   Profile: "10–20 active research projects simultaneously"
+   Log: Only N distinct projects appear
+   Action: Weekly /project-triage agent scans 0Claude0 for dormant projects
+   Estimated value: Prevents knowledge depreciation across portfolio
+```
+
+### Rules
+
+- Show max 3 scope expansions per deep review.
+- Rank by relevance to the user's actual work (not theoretical usefulness).
+- Always indicate whether an existing skill was found or a custom build is needed.
+- Frame as opportunity: "You're leaving capability on the table."
+
+---
+
+## Component 5: Decision Queue
+
+**Purpose:** Turn recommendations into tracked, accountable actions.
+Prevents the analytics-action gap where good advice is ignored.
+
+### Data schema
+
+Store in `~/.claude/workflow-tracker/decisions.jsonl`:
+
+```json
+{
+  "id": "d001",
+  "date_proposed": "2026-03-07",
+  "type": "build_skill|install_skill|try_agent|scope_expansion|workflow_change",
+  "description": "Build /deploy-site skill for website deployment automation",
+  "source_module": "Module 4 (AMI)",
+  "estimated_roi": "3.2x in first month",
+  "status": "proposed|approved|completed|deferred|rejected",
+  "date_resolved": null,
+  "times_shown": 1,
+  "notes": ""
+}
+```
+
+### Lifecycle
+
+1. **Proposed**: Kabbo generates a recommendation → logged with status `proposed`
+2. **Shown**: Each subsequent `/kabbo` invocation shows pending decisions
+3. **Escalation**: After 3 reviews without action, escalate with loss-aversion:
+   "You've deferred /deploy-site for 3 weeks. Estimated cumulative loss:
+   6,000 tokens and 3 hours of research time forgone."
+4. **Resolution**: User acts → status becomes `approved` (building),
+   `completed` (built), `deferred` (conscious delay with reason), or
+   `rejected` (not useful — remove from queue)
+
+### Display format
+
+Show at the end of every review (all tiers):
+
+```
+PENDING DECISIONS (from previous reviews)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Build /deploy-site [proposed Mar 7, shown 3x]
+   Still #1 ROI candidate. Cumulative loss since proposal: ~4,800 tokens
+2. Install cite-checker from LobeHub [proposed Mar 7, shown 2x]
+3. Try Literature Scout agent on cape-wages paper [proposed Mar 7]
+
+Act on any of these? Or defer/reject?
+```
+
+### Rules
+
+- Max 5 pending decisions at any time. If a 6th is proposed, force-resolve
+  the oldest (ask user to approve, defer with reason, or reject).
+- Completed decisions are celebrated: "Decision d001 completed: /deploy-site
+  built. Estimated savings activated: 2,000 tokens/month."
+- Track decision velocity: "You resolve decisions in an average of N days.
+  Faster resolution = faster ROI."
+
+---
+
+## Integration with Analytics Modules
+
+The prescriptive engine is triggered by specific modules:
+
+| Module | Triggers | Prescriptive component |
+|--------|----------|----------------------|
+| Module 4 (AMI) | Top automation candidate identified | → Component 1 (Skill Auto-Draft) for #1 candidate |
+| Module 4 (AMI) | Top 3 candidates listed | → Component 2 (Skill Discovery) search for all 3 |
+| Module 4 (AMI) | Agent-suitable task found | → Component 3 (Agent Playbook) — present relevant playbook |
+| Module 5 (Portfolio) | Dormant project flagged | → Component 3 (Agent Playbook: Context Refresher) |
+| Module 6 (Nudges) | End of nudge section | → Component 5 (Decision Queue) — show pending decisions |
+| `/kabbo deep` | Monthly review | → Component 4 (Scope Expander) — full gap analysis |
+| Every review | Always | → Component 5 (Decision Queue) — show pending decisions |

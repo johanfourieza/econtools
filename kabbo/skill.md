@@ -444,3 +444,58 @@ Act on any? Or defer/reject?
 ```
 
 **Rules:** Max 5 pending. Celebrate completions. Track decision velocity.
+
+---
+
+# PART V: THE WIND'S WORDS
+
+Every `/kabbo` invocation — whether log, quick, analytics, or deep — ends
+with a single sentence drawn from |Xam narratives, printed in italics after
+all other output. No preamble, no attribution beyond the narrator's name.
+Just the line, standing alone, like wind crossing the veld.
+
+```
+— ||kabbo
+```
+
+**Rules:**
+- One quote per invocation. Never repeat the same quote in consecutive sessions.
+- Rotate through the collection. Track the last-used index in `sessions.jsonl`
+  (add `"last_quote_index": N` to the logged session).
+- Do not explain the quote. Let it breathe.
+
+## Collection
+
+Sources: Bleek & Lloyd, *Specimens of Bushman Folklore* (1911); Rusch,
+"Root and Tip of the ||Kwanna" (2017); Antjie Krog, *The Stars Say 'Tsau'*.
+
+1. "I am waiting that the moon may turn back for me, that I may set my feet forward in the path." — ||kabbo
+2. "Thou knowest that I sit waiting for the moon to turn back for me, that I may return to my place." — ||kabbo
+3. "A story is the wind." — ||kabbo
+4. "I must sit a little, cooling my arms, that the fatigue may go out of them, because I sit. I do merely listen, watching for a story." — ||kabbo
+5. "The Bushmen's letters are in their bodies. They speak, they move, they make their bodies move." — ||kabbo
+6. "The wind is one with the man." — ||kabbo
+7. "The moon is another thing. The sun is different. She is warm. The moon is different. He is cold. The stars are different. They are many." — ||kabbo
+8. "Strangers were those who walked at the place. Their place it is not; for ||kabbo's father's father's it was." — ||kabbo
+9. "I am listening with all my ears." — ||kabbo
+10. "One man feels the other who comes." — ||kabbo
+11. "And autumn will quickly be upon us there, when I am sitting at my own place." — ||kabbo
+12. "I want to hear — I must wait listening." — ||kabbo
+13. "It seemed as if it were about to die, because it had been obliged to run about. Therefore it went to lie down to die, because fatigue had killed it, while it had run about in the heat." — ||kabbo
+14. "The sun's darkness resembles night." — ||kabbo
+15. "When you have died, Moon, you return, alive again. We no longer saw you, and then you came again." — |Xam moon prayer
+16. "Star, O Star, yonder in the sky! Take my face there. When you have died, you return, alive again." — |Xam address to the stars
+17. "The girl arose; she put her hands into the wood ashes; she threw the wood ashes up into the sky. She said: the wood ashes must become the Milky Way." — |Xam, the girl who made stars
+18. "People were those who broke for me the string. The string broke; therefore the place became like this, because the string was that which broke." — Dia!kwain
+19. "We, who are human beings, we possess wind; we, who are people, we possess wind." — ||kabbo
+20. "For I sit. I do merely listen, watching for a story, which I want to hear, while I sit waiting for it, that it may float to me." — ||kabbo
+21. "He is a man to whom the rain has given its body." — |Xam, on the rain's person
+22. "The sun is behind us. He is cold. We feel cold. He who is behind us, he is the one from whom coldness comes." — Dia!kwain
+23. "Things which are flesh must die. The wind alone endures." — |Xam
+24. "My thinking strings are in place." — ||kabbo
+25. "The springbok also love the rain; for they also go to drink water when the rain falls." — ||kabbo
+26. "The Mantis is one who cheated the children, by becoming a different thing." — ||kabbo
+27. "For, we who are human beings, our thinking strings bring us news." — ||kabbo
+28. "A dream speaks falsely; it is a thing which deceives. The presentiment is that which speaks the truth." — ||kabbo
+29. "I feel that I was the one who chased it." — ||kabbo
+30. "For the stories float from afar." — ||kabbo

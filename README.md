@@ -6,16 +6,7 @@ Custom skills for [Claude Code](https://claude.com/claude-code) designed for eco
 
 ### EconGuru
 
-Simulated academic peer review for economics papers. Creates expert referee personas who write detailed reports, then iterates through revision rounds until the paper is publication-ready.
-
-**What it does:**
-
-- Acts as the managing editor of a user-specified target journal
-- Assembles a panel of 2–5 referee personas matched to the paper's subspecialisations
-- Generates ~1000-word referee reports with summary, major comments, minor comments, and a recommendation
-- Supports iterative revision rounds with response-to-referees letters
-- Runs new R analyses when referees request robustness checks, and verifies all numerical claims
-- Produces an Overleaf-ready folder with the revised paper, bibliography, figures, tables, and referee reports
+A simulated peer review system for economics working papers. EconGuru creates a panel of independent referee agents — each with a distinct subspecialisation, personality, and fictitious university affiliation — who review your paper in isolation, with strict information barriers mirroring real peer review. An editor synthesises their feedback into a prioritised briefing. You choose which changes to implement, and the tool revises your LaTeX files accordingly. Referees persist in a local library that grows over time, building a roster of specialists with track records and seniority scores.
 
 **Installation:**
 
@@ -33,6 +24,17 @@ Or copy `econguru/skill.md` to your Claude Code skills directory.
 ```
 
 Then follow the prompts to select a paper, target journal, and referee panel.
+
+### TannieDi
+
+A LaTeX-to-Word round-trip tool for language editing. *Pack* converts your LaTeX project into a clean Word manuscript, and *unpack* applies the editor's tracked changes back into your original .tex files — preserving all LaTeX formatting, equations, and cross-references.
+
+**Usage:**
+
+```
+/tanniedi pack
+/tanniedi unpack
+```
 
 ## License
 

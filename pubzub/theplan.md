@@ -3,7 +3,34 @@
 
 **Author:** Johan Fourie (with Claude)
 **Date:** 2026-04-01
-**Status:** Planning
+**Last updated:** 2026-04-01
+**Status:** Phase 1 complete, Phase 2 next
+
+---
+
+## 0. Progress Log
+
+### Phase 1: Platform Independence — COMPLETE (2026-04-01)
+
+**What was done:**
+- [x] Purchased domain: `pubzub.com` (Porkbun)
+- [x] Decoupled from Lovable: removed all Lovable OAuth, tagger, and dependencies (5 files)
+- [x] Deployed frontend on Vercel (project: pubzubcom, root directory: pubzub)
+- [x] DNS configured: A record + CNAME pointing to Vercel
+- [x] Created new Supabase project (ID: jydnsbaztvmjkebhmoia) — fully owned
+- [x] Migrated all 41 database migrations to new Supabase project
+- [x] Email/password authentication working
+- [x] Google OAuth set up (Google Cloud Console → Supabase)
+- [x] Site live at https://pubzub.com
+- [x] Credentials stored locally in `credentials.md` (gitignored)
+- [x] README rewritten, .env.example created
+
+**Still outstanding from Phase 1:**
+- [ ] Set up Resend for production email (SMTP), then re-enable email confirmation
+- [ ] Redeploy edge functions (MCP server, REST API, GitHub webhook, ingest) to new Supabase project
+- [ ] Update `supabase/config.toml` with new project ID
+- [ ] Set up Vercel Analytics (free)
+- [ ] Create OG image for social sharing
 
 ---
 
@@ -15,7 +42,7 @@ PubZub is a **Kanban-style academic publication pipeline manager** that lets res
 ### Tech Stack
 - **Frontend:** React 18 + TypeScript 5.8, Vite 5.4, Tailwind CSS 3.4, shadcn/ui (Radix primitives)
 - **Backend:** Supabase (PostgreSQL 14 + Auth + Realtime + Edge Functions on Deno)
-- **Deployment:** Currently on Lovable platform; Supabase at `mbopyumuykfdskclhocr.supabase.co`
+- **Deployment:** Vercel (frontend) + Supabase at `jydnsbaztvmjkebhmoia.supabase.co` (backend)
 
 ### Current Feature Set
 
@@ -273,7 +300,7 @@ The `ProfileSettingsModal.tsx` already has an MCP Server section. Enhance it:
     "mcpServers": {
       "pubzub": {
         "type": "url",
-        "url": "https://mbopyumuykfdskclhocr.supabase.co/functions/v1/mcp-server?api_key=pz_YOUR_KEY_HERE"
+        "url": "https://jydnsbaztvmjkebhmoia.supabase.co/functions/v1/mcp-server?api_key=pz_YOUR_KEY_HERE"
       }
     }
   }

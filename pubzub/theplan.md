@@ -186,7 +186,7 @@ pubzub/
 **Goal:** Own the domain, decouple from Lovable, deploy independently
 
 #### 1.1 Domain Registration
-- **Recommended:** `pubzub.app`
+- **Recommended:** `pubzub.com`
   - `.app` domains are HTTPS-enforced by default
   - Signals "this is an application" (not a blog or docs site)
   - Short, memorable, professional
@@ -210,14 +210,14 @@ There are exactly **5 files** to modify:
 | 2 | `src/pages/Auth.tsx` | Remove `import { lovable }` (line 4), replace `lovable.auth.signInWithOAuth("google", ...)` (line 135) with Supabase call |
 | 3 | `vite.config.ts` | Remove `import { componentTagger } from "lovable-tagger"` and the plugin from the plugins array |
 | 4 | `package.json` | Remove `@lovable.dev/cloud-auth-js` from dependencies, `lovable-tagger` from devDependencies |
-| 5 | `index.html` | Update OG image URL (currently `lovable.dev/opengraph-image-p98pqg.png`), update `twitter:site` from `@Lovable`, set canonical URL to `pubzub.app` |
+| 5 | `index.html` | Update OG image URL (currently `lovable.dev/opengraph-image-p98pqg.png`), update `twitter:site` from `@Lovable`, set canonical URL to `pubzub.com` |
 
 #### 1.4 Post-Migration Checklist
-- [ ] Add `https://pubzub.app` to Supabase Dashboard → Authentication → URL Configuration (redirect URLs + site URL)
+- [ ] Add `https://pubzub.com` to Supabase Dashboard → Authentication → URL Configuration (redirect URLs + site URL)
 - [ ] Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in Vercel environment variables
-- [ ] Configure Google OAuth app redirect URI to `https://pubzub.app` (in Google Cloud Console)
+- [ ] Configure Google OAuth app redirect URI to `https://pubzub.com` (in Google Cloud Console)
 - [ ] Rewrite `README.md` as proper public-facing documentation
-- [ ] Create OG image for `pubzub.app` social sharing
+- [ ] Create OG image for `pubzub.com` social sharing
 - [ ] Test auth flow end-to-end on new domain
 - [ ] Set up Vercel Analytics (free) for basic usage tracking
 
@@ -317,7 +317,7 @@ PubZub tracks academic publications through: Idea → Draft → Submitted → Re
 ```
 
 This skill file could be:
-- Downloadable from `pubzub.app/skill`
+- Downloadable from `pubzub.com/skill`
 - Auto-installed by `npx pubzub-setup`
 - Linked in the ProfileSettingsModal setup instructions
 
@@ -480,7 +480,7 @@ Implementation: A `useInsights` hook that computes these from existing publicati
 
 #### 4.3 Landing Page & Growth Strategy
 
-**Landing Page at `pubzub.app` (P2)**
+**Landing Page at `pubzub.com` (P2)**
 - Transform the existing About page into a proper marketing landing page
 - Sections: Hero with screenshot, Feature highlights, "Claude Code integration" story, Quick-start guide, Team features callout
 - Social proof: "Used by researchers at Stellenbosch University"
@@ -539,7 +539,7 @@ Implementation: A `useInsights` hook that computes these from existing publicati
 **Goal:** Security, performance, reliability, testing
 
 #### Security
-- **CORS:** Tighten from `Access-Control-Allow-Origin: "*"` to `pubzub.app` on all 4 edge functions
+- **CORS:** Tighten from `Access-Control-Allow-Origin: "*"` to `pubzub.com` on all 4 edge functions
 - **Rate limiting:** Add rate limits to API endpoints (Supabase Edge Function middleware or Cloudflare)
 - **API key security:** Document that MCP query-param API keys are for MCP transport compatibility only; prefer header-based auth where possible
 - **Content Security Policy:** Add CSP headers via Vercel config
@@ -566,7 +566,7 @@ Implementation: A `useInsights` hook that computes these from existing publicati
 
 | Priority | Item | Impact | Effort | Phase |
 |----------|------|--------|--------|-------|
-| **P0** | Domain registration (`pubzub.app`) | Unblocking | 1 hour | 1 |
+| **P0** | Domain registration (`pubzub.com`) | Unblocking | 1 hour | 1 |
 | **P0** | Lovable decoupling (5 files) | Unblocking | 4-6 hours | 1 |
 | **P0** | Vercel deployment | Unblocking | 1-2 hours | 1 |
 | **P1** | Enhanced MCP tools (10 new tools) | Very High | 3-5 days | 2 |

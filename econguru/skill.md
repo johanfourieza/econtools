@@ -1,6 +1,6 @@
 ---
 name: econguru
-description: Simulated academic peer review for economics papers. Creates independent referee agents — including Codex-powered methodology referees — who review your paper in isolation with strict information barriers.
+description: Simulated academic peer review for economics papers. Creates independent referee agents who review your paper in isolation. If Codex is available, adds independent methodology auditing and R script verification by a second model family (GPT-5.4).
 user-invocable: true
 ---
 
@@ -35,14 +35,17 @@ Before proceeding, check whether the Codex runtime is available. Run the
 command via Bash). Examine the output:
 
 - If Codex is **available and authenticated**: inform the user:
-  > Codex is available. Two of your methodology referees will be powered by
-  > GPT-5.4 via Codex, giving you independent technical assessment from a
-  > second model family. The remaining referees will run on Claude.
+  > Codex is available. All five referees will run on Claude with the full
+  > paper. Codex (GPT-5.4) will independently audit the methodology
+  > referees' reports, cross-verify R scripts against reported statistics,
+  > and write new R scripts during revisions — giving you two-model
+  > verification where it matters most.
   Store `codex_available = true`.
 
 - If Codex is **not installed or not authenticated**: inform the user:
-  > Codex is not available. All referees will run on Claude. If you'd like
-  > Codex-powered methodology referees in future, install Codex with
+  > Codex is not available. All referees and verification will run on
+  > Claude. If you'd like independent methodology auditing and R script
+  > verification by a second model, install Codex with
   > `npm install -g @openai/codex` and run `/codex:setup`.
   Store `codex_available = false`.
 
@@ -91,11 +94,9 @@ subspecialisations** for refereeing this paper. Rank them by relevance.
 - If the paper uses a specific technique (RDD, IV, survival analysis, DID,
   synthetic control, etc.), at least one guru should have deep expertise in
   that technique.
-- If Codex is available (see Step 1b), **two** of the three methodology gurus
-  will be designated as **Codex referees** and run on GPT-5.4 via the Codex
-  runtime. The remaining methodology guru (and all non-methodology gurus) run
-  as Claude subagents. This gives you genuinely independent technical
-  assessment from two different model families.
+- If Codex is available (see Step 1b), the methodology gurus' reports will
+  be independently audited by Codex after generation (see Step 5b). All
+  gurus — including methodology gurus — run on Claude with the full paper.
 
 Present the 5 subspecialisations to the user. The user may:
 - Accept all 5
@@ -312,49 +313,6 @@ and equations in the paper. Generic feedback is not acceptable.
 
 #### Running the guru agents
 
-**If `codex_available = true`:**
-
-Split the gurus into two groups:
-
-1. **Codex referees** — the two methodology gurus designated in Step 3.
-   Run each via the Codex runtime using Bash to call the codex-companion
-   task command:
-
-   ```bash
-   node ~/.claude/plugins/cache/openai-codex/codex/1.0.1/scripts/codex-companion.mjs task --write "PROMPT"
-   ```
-
-   The PROMPT for each Codex referee must include:
-   - The full paper text (inline or via file reference)
-   - Their persona description (name, credentials, personality)
-   - The target journal
-   - The round number
-   - The exact report structure required (Summary, Major Comments, Minor
-     Comments, Recommendation — see above)
-   - The methodology guru protocol (search for current literature, cite
-     specific references, no AI slop)
-   - (For rounds 2+) Their own previous report and the author's response
-   - An explicit instruction: "You are an independent referee. Write your
-     report in the first person, in character. Do not mention that you are
-     an AI or that you are running on Codex/GPT."
-
-   Run the two Codex referee tasks in parallel (two separate Bash calls).
-   Parse their `finalMessage` output as the referee report text.
-
-2. **Claude referees** — all remaining gurus (the third methodology guru
-   and all non-methodology gurus). Run these in parallel using the Agent
-   tool (subagent_type: general-purpose). Each agent receives:
-   - The full paper text
-   - Their persona description (name, credentials, personality, field journal)
-   - The target journal
-   - The round number
-   - (For rounds 2+) Their own previous report and the author's response
-
-Run both groups simultaneously — Codex tasks and Claude agents launch
-in parallel.
-
-**If `codex_available = false`:**
-
 Run **all** guru agents in parallel using the Agent tool (subagent_type:
 general-purpose). Each agent receives:
 - The full paper text
@@ -362,6 +320,128 @@ general-purpose). Each agent receives:
 - The target journal
 - The round number
 - (For rounds 2+) Their own previous report and the author's response
+
+#### Codex Task 1 — R Script Audit (parallel with referees)
+
+**If `codex_available = true`**, launch this Codex task simultaneously with
+the Claude referee agents. It runs in the background while referees write
+their reports.
+
+Run via Bash:
+
+```bash
+node ~/.claude/plugins/cache/openai-codex/codex/1.0.1/scripts/codex-companion.mjs task "PROMPT"
+```
+
+The prompt must be compact (instructions and file paths only — no paper text
+inline). Codex reads files directly from the working directory in its sandbox.
+Use the XML-tagged structure from `codex:gpt-5-4-prompting`:
+
+```xml
+<task>
+You are an independent statistical auditor for an economics working paper.
+Read the following files from the working directory:
+1. The main paper: {paper_filename}
+2. All R scripts: {list each .R file by name}
+3. All CSV/output files: {list each .csv file by name}
+
+Cross-verify every reported statistic in the paper (coefficients, standard
+errors, p-values, R-squared, sample sizes, percentages) against the R code
+and its output. Flag any discrepancy, any statistic in the paper with no
+corresponding code output, and any code output not reported in the paper.
+</task>
+
+<structured_output_contract>
+Return:
+1. A table of verified statistics (paper location, reported value, code
+   output value, match/mismatch)
+2. Statistics in the paper with no code backing
+3. Code outputs not reported in the paper
+4. Concerns about the R code (deprecated functions, potential bugs,
+   missing seed-setting for randomisation, package version dependencies)
+</structured_output_contract>
+
+<grounding_rules>
+Ground every claim in the actual file contents you read. Do not infer or
+approximate values. If a file cannot be read or parsed, state that explicitly.
+</grounding_rules>
+
+<verification_loop>
+After your initial pass, re-read any mismatched values to confirm they are
+genuine discrepancies, not parsing errors on your part.
+</verification_loop>
+```
+
+Store the Codex audit output for use in Steps 6 and 10. If the Codex task
+fails (timeout, authentication error, runtime crash), proceed without it —
+Step 10's Claude-only verification remains the fallback.
+
+### Step 5b — Codex Task 2: Methodology Audit (after referees complete)
+
+**If `codex_available = true`**, launch this task after all Claude referee
+reports have been generated. This is sequential — it needs the reports as input.
+
+Run via Bash:
+
+```bash
+node ~/.claude/plugins/cache/openai-codex/codex/1.0.1/scripts/codex-companion.mjs task "PROMPT"
+```
+
+The prompt includes the methodology referee reports inline (typically ~6,000
+tokens total for 3 reports) and instructs Codex to read the full paper from
+the working directory:
+
+```xml
+<task>
+You are an independent methodology auditor reviewing referee reports for an
+economics working paper submitted to {target_journal}.
+
+The following referee reports assessed the paper's methodology. Read them
+carefully, then read the full paper at {paper_filename} in the working
+directory to verify their claims independently.
+
+--- Methodology Referee Report 1: {Name} ({Subspecialisation}) ---
+{methodology_referee_report_1}
+
+--- Methodology Referee Report 2: {Name} ({Subspecialisation}) ---
+{methodology_referee_report_2}
+
+--- Methodology Referee Report 3: {Name} ({Subspecialisation}) ---
+{methodology_referee_report_3}
+
+Your job is to:
+1. Identify methodological concerns the referees MISSED
+2. Challenge any referee claims that are incorrect or overstated
+3. Validate referee claims that are well-grounded
+4. Check that cited methodological references are real and relevant
+</task>
+
+<structured_output_contract>
+Return:
+1. Missed concerns (issues the referees did not raise but should have)
+2. Challenged claims (referee assertions you disagree with, and why)
+3. Validated claims (referee assertions you confirm, with independent reasoning)
+4. Reference check (are cited papers real? are the methodological claims
+   about them accurate?)
+</structured_output_contract>
+
+<grounding_rules>
+Ground every claim in the paper text you read from the working directory.
+If you cite a methodological reference, verify it against your knowledge.
+Do not fabricate citations.
+</grounding_rules>
+
+<dig_deeper_nudge>
+After your initial assessment, check for second-order issues: does the
+identification strategy have threats the referees did not consider? Are the
+standard errors clustered at the right level? Is the sample selection
+procedure fully described? Are pre-trends adequately tested?
+</dig_deeper_nudge>
+```
+
+Store the audit output for inclusion in the referee report file (Step 6).
+If the task fails, proceed without it — the referee reports stand on their
+own, as they would without Codex.
 
 ### Step 6 — Save referee reports
 
@@ -390,8 +470,7 @@ Create a `.tex` file named `{papername}_referee_round{N}.tex` in the
 % One section per guru:
 \section{Referee 1: {Name} ({Subspecialisation})}
 \textit{{Fictitious University Name}.
-{One-line credentials summary}.
-{If Codex referee: \textbf{[Codex/GPT-5.4]}}}
+{One-line credentials summary}.}
 
 \subsection*{Summary}
 ...
@@ -411,8 +490,33 @@ Create a `.tex` file named `{papername}_referee_round{N}.tex` in the
 
 % Repeat for each referee
 
+% If Codex audit results are available, include them here:
+\section*{Independent Methodology Audit \textbf{[Codex/GPT-5.4]}}
+\textit{This audit was conducted independently by GPT-5.4 after reviewing
+the methodology referees' reports. It serves as a cross-check from a second
+model family, not a sixth referee.}
+
+\subsection*{Missed Concerns}
+...
+
+\subsection*{Challenged Claims}
+...
+
+\subsection*{Validated Claims}
+...
+
+\subsection*{Reference Check}
+...
+
+% If Codex R script audit results are available:
+\section*{R Script Verification Report \textbf{[Codex/GPT-5.4]}}
+\textit{Independent cross-verification of reported statistics against R code
+output, conducted by GPT-5.4.}
+...
+
 \section*{Editorial Verdict}
-{Your formal verdict and reasoning.}
+{Your formal verdict and reasoning. Incorporate findings from the Codex
+methodology audit and R script verification where relevant.}
 
 \end{document}
 ```
@@ -514,6 +618,62 @@ was changed.}}
 When referee comments require **new empirical work** (additional robustness
 checks, alternative specifications, new tests):
 
+**If `codex_available = true` — Codex Task 3: R Script Generation**
+
+Use Codex to write the R scripts, creating a two-model verification loop
+(Codex writes the code, Claude reviews and runs it):
+
+1. **Compile the list of required analyses** from the accepted referee
+   recommendations (e.g., "run placebo test with randomised treatment
+   assignment", "add alternative clustering at the district level").
+2. **Launch a Codex task** in `workspace-write` mode:
+
+   ```bash
+   node ~/.claude/plugins/cache/openai-codex/codex/1.0.1/scripts/codex-companion.mjs task --write "PROMPT"
+   ```
+
+   The prompt instructs Codex to read the existing R scripts and data files
+   from the working directory, then write new scripts into `EconGuru/`:
+
+   ```xml
+   <task>
+   You are a research assistant writing R scripts for an economics paper
+   revision. Read the existing R scripts in the working directory to
+   understand the data structure, variable names, and estimation approach.
+
+   Write a new R script at EconGuru/{papername}_revisions.R that performs
+   the following analyses requested by referees:
+   {numbered_list_of_required_analyses}
+
+   Requirements:
+   - Use tidyverse conventions
+   - Set seeds for any randomisation (set.seed(12345))
+   - Save all output as CSV files in EconGuru/
+   - Include clear comments explaining each analysis
+   - Match variable names and data loading from the existing scripts
+   </task>
+
+   <completeness_contract>
+   Write the complete script. Do not leave placeholder code or TODO comments.
+   Every requested analysis must produce a saved output file.
+   </completeness_contract>
+
+   <action_safety>
+   Only create files inside the EconGuru/ subdirectory. Do not modify any
+   existing files in the project.
+   </action_safety>
+   ```
+
+3. **Claude reviews** the Codex-generated R script for correctness.
+4. **Run the script** and verify it completes without error.
+5. **Read the output files** (CSV tables, figures) to extract exact values.
+6. **Only then** write those values into the paper and response letter.
+
+If the Codex task fails, Claude writes the R scripts itself (fallback to
+the standard path below).
+
+**If `codex_available = false` — standard path**
+
 1. **Write the R code** in a new script (e.g., `{papername}_revisions.R`)
    placed in the `EconGuru/` subfolder.
 2. **Run the script** and verify it completes without error.
@@ -563,6 +723,19 @@ run a cross-check of all numerical claims:
 
 If any discrepancy is found, fix it before proceeding. Do not assume the
 user will catch it later.
+
+**Two-model verification (if `codex_available = true`):**
+
+If a Codex R script audit (Task 1) was performed for this round,
+cross-reference its findings with your own numerical verification above.
+Any discrepancy flagged by either check — Codex or Claude — must be
+resolved before proceeding. Where Codex and Claude disagree about a
+value, re-read the source file to determine which is correct.
+
+If Codex generated R scripts during revisions (Task 3), verify the output
+of the Codex-written scripts independently. Do not assume Codex's code is
+correct simply because it ran without error — check the output values
+against the paper and response letter.
 
 ### Step 11 — Next round (if applicable)
 
@@ -674,14 +847,15 @@ for that field.
 - **Never overwrite the original paper**. Always create new files.
 - **Use LEAP colours** in the response file (plum `#5C2346` and blue
   `#3D8EB9`) for visual distinction between referee comments and responses.
-- **Run guru agents in parallel** for efficiency. Codex and Claude agents
-  launch simultaneously.
-- **Codex referees produce genuinely independent assessments.** Do not
-  post-process or harmonise Codex output to match Claude referee style.
-  Differences in emphasis between the two model families are a feature.
-- **If a Codex task fails** (timeout, authentication error, runtime crash),
-  fall back to running that referee as a Claude subagent. Inform the user
-  which referee was rerouted and why.
+- **Run guru agents in parallel** for efficiency. Launch Codex Task 1
+  (R script audit) simultaneously with the Claude referee agents.
+- **Codex audits are additive, never blocking.** If any Codex task fails
+  (timeout, authentication error, runtime crash), proceed without it.
+  Inform the user which task was skipped and why. The Claude-only path
+  handles everything; Codex adds independent verification on top.
+- **Do not harmonise Codex audit output.** Present the methodology audit
+  and R script verification as-is. Differences in emphasis between Claude
+  and Codex are a feature — they reveal genuine disagreements.
 - **Never fabricate statistics.** Run the code, read the output, then cite it.
   This is the single most important rule for maintaining credibility.
 - **Verify numbers across all documents** before delivering files to the user.
@@ -693,7 +867,11 @@ for that field.
   all-Anglo-American panels.
 - **At least three methodology gurus.** They must search for and cite current
   econometrics literature. No AI slop — specific references, specific concerns.
-  Two run on Codex (if available), one on Claude.
+  All run on Claude; their reports are audited by Codex (if available).
+- **Two-model verification for R scripts.** When Codex writes R scripts
+  (Task 3), Claude must independently verify the output. When Claude writes
+  R scripts, Codex Task 1 audits them. Neither model should check only its
+  own work.
 - **No real journal names in guru personas.** The target journal (from the
   user) is real; guru affiliations are fictitious universities. The journal
   mapping table is for internal use only.

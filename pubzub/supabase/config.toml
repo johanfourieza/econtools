@@ -1,0 +1,7 @@
+project_id = "mbopyumuykfdskclhocr"
+
+[functions.ingest-publication]
+verify_jwt = false
+
+[functions.github-webhook]
+verify_jwt = false

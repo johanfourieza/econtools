@@ -1,0 +1,864 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* PubFlow Design System - Clean Scandinavian */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    /* Refined Scandinavian Palette */
+    --slate-deep: 220 20% 18%;
+    --slate-mid: 220 15% 35%;
+    --stone: 30 8% 58%;
+    --sage: 160 18% 48%;
+    --nordic-blue: 210 45% 52%;
+    --warm-coral: 12 65% 58%;
+    --soft-amber: 38 60% 55%;
+    --cream: 40 25% 96%;
+    
+    /* Semantic tokens */
+    --background: 40 20% 98%;
+    --foreground: 220 20% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 12%;
+
+    --primary: 220 20% 18%;
+    --primary-foreground: 40 20% 98%;
+
+    --secondary: 40 15% 94%;
+    --secondary-foreground: 220 20% 18%;
+
+    --muted: 40 12% 92%;
+    --muted-foreground: 220 10% 50%;
+
+    --accent: 210 45% 52%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 65% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 12% 88%;
+    --input: 40 12% 88%;
+    --ring: 210 45% 52%;
+
+    --radius: 0.75rem;
+
+    /* Funnel stage colors - gradient from warm to cool */
+    --stage-1: 38 60% 55%;
+    --stage-2: 30 50% 50%;
+    --stage-3: 12 65% 58%;
+    --stage-4: 25 40% 30%; /* Dark brown for Revise & Resubmit */
+    --stage-5: 210 45% 52%;
+    --stage-6: 160 18% 48%;
+    --stage-7: 220 20% 18%;
+    
+    /* Published button color - uses the old R&R red */
+    --published: 0 50% 55%;
+    --published-foreground: 0 0% 100%;
+
+    /* Warm button color */
+    --warm: 12 65% 58%;
+    --warm-foreground: 0 0% 100%;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px hsl(220 20% 18% / 0.03);
+    --shadow-md: 0 4px 12px hsl(220 20% 18% / 0.05);
+    --shadow-lg: 0 12px 32px hsl(220 20% 18% / 0.08);
+    --shadow-card: 0 1px 4px hsl(220 20% 18% / 0.04);
+
+    /* Typography - All Sans-Serif */
+    --font-display: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
+
+    --sidebar-background: 40 15% 96%;
+    --sidebar-foreground: 220 20% 12%;
+    --sidebar-primary: 220 20% 18%;
+    --sidebar-primary-foreground: 40 20% 98%;
+    --sidebar-accent: 40 15% 94%;
+    --sidebar-accent-foreground: 220 20% 18%;
+    --sidebar-border: 40 12% 88%;
+    --sidebar-ring: 210 45% 52%;
+  }
+
+  .dark {
+    --background: 220 18% 8%;
+    --foreground: 40 15% 95%;
+
+    --card: 220 16% 11%;
+    --card-foreground: 40 15% 95%;
+
+    --popover: 220 16% 11%;
+    --popover-foreground: 40 15% 95%;
+
+    --primary: 40 15% 95%;
+    --primary-foreground: 220 18% 8%;
+
+    --secondary: 220 14% 16%;
+    --secondary-foreground: 40 15% 95%;
+
+    --muted: 220 14% 16%;
+    --muted-foreground: 40 10% 60%;
+
+    --accent: 210 45% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 60% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 14% 18%;
+    --input: 220 14% 18%;
+    --ring: 210 45% 55%;
+
+    --sidebar-background: 220 16% 10%;
+    --sidebar-foreground: 40 15% 95%;
+    --sidebar-primary: 210 45% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 14%;
+    --sidebar-accent-foreground: 40 15% 95%;
+    --sidebar-border: 220 14% 16%;
+    --sidebar-ring: 210 45% 55%;
+  }
+
+}
+
+/* ========== PALETTE OVERRIDES (outside @layer for higher specificity) ========== */
+
+/* Ndebele Laboratory */
+html.palette-ndebele-laboratory {
+  --slate-deep: 0 0% 10%;
+  --slate-mid: 0 0% 25%;
+  --stone: 0 0% 95%;
+  --sage: 170 80% 35%;
+  --nordic-blue: 215 75% 45%;
+  --warm-coral: 5 85% 50%;
+  --soft-amber: 50 95% 50%;
+  --cream: 0 0% 98%;
+  
+  --background: 0 0% 98%;
+  --foreground: 0 0% 10%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 10%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 10%;
+
+  --primary: 5 85% 50%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 50 95% 92%;
+  --secondary-foreground: 0 0% 10%;
+
+  --muted: 0 0% 94%;
+  --muted-foreground: 0 0% 40%;
+
+  --accent: 215 75% 45%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 5 85% 50%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 0 0% 85%;
+  --input: 0 0% 85%;
+  --ring: 170 80% 35%;
+
+  --stage-1: 50 95% 50%;
+  --stage-2: 30 85% 50%;
+  --stage-3: 5 85% 50%;
+  --stage-4: 25 70% 30%;
+  --stage-5: 215 75% 45%;
+  --stage-6: 170 80% 35%;
+  --stage-7: 0 0% 15%;
+
+  --published: 170 80% 35%;
+  --published-foreground: 0 0% 100%;
+
+  --warm: 5 85% 50%;
+  --warm-foreground: 0 0% 100%;
+
+  --sidebar-background: 0 0% 96%;
+  --sidebar-foreground: 0 0% 10%;
+  --sidebar-primary: 5 85% 50%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 50 95% 92%;
+  --sidebar-accent-foreground: 0 0% 10%;
+  --sidebar-border: 0 0% 85%;
+  --sidebar-ring: 170 80% 35%;
+}
+
+html.palette-ndebele-laboratory.dark {
+  --background: 0 0% 8%;
+  --foreground: 0 0% 95%;
+
+  --card: 0 0% 12%;
+  --card-foreground: 0 0% 95%;
+
+  --popover: 0 0% 12%;
+  --popover-foreground: 0 0% 95%;
+
+  --primary: 5 85% 55%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 0 0% 18%;
+  --secondary-foreground: 0 0% 95%;
+
+  --muted: 0 0% 18%;
+  --muted-foreground: 0 0% 60%;
+
+  --accent: 215 75% 50%;
+  --accent-foreground: 0 0% 100%;
+
+  --border: 0 0% 20%;
+  --input: 0 0% 20%;
+  --ring: 170 80% 40%;
+
+  --sidebar-background: 0 0% 10%;
+  --sidebar-foreground: 0 0% 95%;
+  --sidebar-primary: 5 85% 55%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 0 0% 15%;
+  --sidebar-accent-foreground: 0 0% 95%;
+  --sidebar-border: 0 0% 18%;
+  --sidebar-ring: 170 80% 40%;
+}
+
+/* Nordic Methodology */
+html.palette-nordic-methodology {
+  --slate-deep: 210 50% 15%;
+  --slate-mid: 210 35% 30%;
+  --stone: 200 15% 70%;
+  --sage: 195 40% 55%;
+  --nordic-blue: 200 50% 45%;
+  --warm-coral: 200 25% 60%;
+  --soft-amber: 195 30% 75%;
+  --cream: 200 30% 97%;
+  
+  --background: 200 30% 97%;
+  --foreground: 210 50% 15%;
+
+  --card: 200 25% 99%;
+  --card-foreground: 210 50% 15%;
+
+  --popover: 200 25% 99%;
+  --popover-foreground: 210 50% 15%;
+
+  --primary: 210 50% 25%;
+  --primary-foreground: 200 30% 97%;
+
+  --secondary: 200 25% 92%;
+  --secondary-foreground: 210 50% 15%;
+
+  --muted: 200 20% 90%;
+  --muted-foreground: 210 25% 45%;
+
+  --accent: 195 40% 55%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 55% 50%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 200 20% 85%;
+  --input: 200 20% 85%;
+  --ring: 195 40% 55%;
+
+  --stage-1: 195 30% 75%;
+  --stage-2: 200 35% 65%;
+  --stage-3: 195 40% 55%;
+  --stage-4: 210 40% 40%;
+  --stage-5: 200 50% 45%;
+  --stage-6: 210 45% 35%;
+  --stage-7: 210 50% 20%;
+
+  --published: 210 45% 35%;
+  --published-foreground: 0 0% 100%;
+
+  --warm: 195 40% 55%;
+  --warm-foreground: 0 0% 100%;
+
+  --sidebar-background: 200 25% 95%;
+  --sidebar-foreground: 210 50% 15%;
+  --sidebar-primary: 210 50% 25%;
+  --sidebar-primary-foreground: 200 30% 97%;
+  --sidebar-accent: 200 25% 92%;
+  --sidebar-accent-foreground: 210 50% 15%;
+  --sidebar-border: 200 20% 85%;
+  --sidebar-ring: 195 40% 55%;
+}
+
+html.palette-nordic-methodology.dark {
+  --background: 210 50% 8%;
+  --foreground: 200 25% 95%;
+
+  --card: 210 45% 12%;
+  --card-foreground: 200 25% 95%;
+
+  --popover: 210 45% 12%;
+  --popover-foreground: 200 25% 95%;
+
+  --primary: 195 40% 60%;
+  --primary-foreground: 210 50% 10%;
+
+  --secondary: 210 40% 18%;
+  --secondary-foreground: 200 25% 95%;
+
+  --muted: 210 40% 18%;
+  --muted-foreground: 200 20% 60%;
+
+  --accent: 195 45% 50%;
+  --accent-foreground: 0 0% 100%;
+
+  --border: 210 40% 20%;
+  --input: 210 40% 20%;
+  --ring: 195 45% 50%;
+
+  --sidebar-background: 210 48% 10%;
+  --sidebar-foreground: 200 25% 95%;
+  --sidebar-primary: 195 40% 55%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 210 40% 15%;
+  --sidebar-accent-foreground: 200 25% 95%;
+  --sidebar-border: 210 40% 18%;
+  --sidebar-ring: 195 45% 50%;
+}
+
+/* Oxbridge Library */
+html.palette-oxbridge-library {
+  --slate-deep: 210 30% 12%;
+  --slate-mid: 210 25% 25%;
+  --stone: 30 20% 50%;
+  --sage: 45 65% 50%;
+  --nordic-blue: 215 60% 35%;
+  --warm-coral: 45 65% 50%;
+  --soft-amber: 45 70% 55%;
+  --cream: 40 30% 96%;
+  
+  --background: 40 30% 96%;
+  --foreground: 210 30% 12%;
+
+  --card: 40 25% 99%;
+  --card-foreground: 210 30% 12%;
+
+  --popover: 40 25% 99%;
+  --popover-foreground: 210 30% 12%;
+
+  --primary: 215 60% 35%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 40 25% 92%;
+  --secondary-foreground: 210 30% 12%;
+
+  --muted: 40 20% 90%;
+  --muted-foreground: 30 15% 45%;
+
+  --accent: 45 65% 50%;
+  --accent-foreground: 210 30% 12%;
+
+  --destructive: 0 55% 45%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 40 18% 82%;
+  --input: 40 18% 82%;
+  --ring: 215 60% 35%;
+
+  --stage-1: 45 70% 55%;
+  --stage-2: 30 50% 45%;
+  --stage-3: 215 60% 35%;
+  --stage-4: 25 35% 25%;
+  --stage-5: 215 55% 45%;
+  --stage-6: 45 65% 50%;
+  --stage-7: 210 30% 15%;
+
+  --published: 45 65% 50%;
+  --published-foreground: 210 30% 12%;
+
+  --warm: 45 65% 50%;
+  --warm-foreground: 210 30% 12%;
+
+  --sidebar-background: 40 25% 94%;
+  --sidebar-foreground: 210 30% 12%;
+  --sidebar-primary: 215 60% 35%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 40 25% 90%;
+  --sidebar-accent-foreground: 210 30% 12%;
+  --sidebar-border: 40 18% 82%;
+  --sidebar-ring: 215 60% 35%;
+}
+
+html.palette-oxbridge-library.dark {
+  --background: 25 25% 8%;
+  --foreground: 40 20% 92%;
+
+  --card: 25 22% 12%;
+  --card-foreground: 40 20% 92%;
+
+  --popover: 25 22% 12%;
+  --popover-foreground: 40 20% 92%;
+
+  --primary: 45 65% 55%;
+  --primary-foreground: 25 25% 10%;
+
+  --secondary: 25 20% 18%;
+  --secondary-foreground: 40 20% 92%;
+
+  --muted: 25 20% 18%;
+  --muted-foreground: 40 15% 55%;
+
+  --accent: 215 55% 50%;
+  --accent-foreground: 0 0% 100%;
+
+  --border: 25 18% 22%;
+  --input: 25 18% 22%;
+  --ring: 45 65% 55%;
+
+  --published: 45 65% 55%;
+  --published-foreground: 25 25% 10%;
+
+  --sidebar-background: 25 24% 10%;
+  --sidebar-foreground: 40 20% 92%;
+  --sidebar-primary: 45 65% 55%;
+  --sidebar-primary-foreground: 25 25% 10%;
+  --sidebar-accent: 25 20% 15%;
+  --sidebar-accent-foreground: 40 20% 92%;
+  --sidebar-border: 25 18% 18%;
+  --sidebar-ring: 45 65% 55%;
+}
+
+/* Conference Lanyard */
+html.palette-conference-lanyard {
+  --slate-deep: 0 0% 13%;
+  --slate-mid: 0 0% 38%;
+  --stone: 0 0% 62%;
+  --sage: 0 0% 55%;
+  --nordic-blue: 0 0% 40%;
+  --warm-coral: 0 0% 50%;
+  --soft-amber: 0 0% 70%;
+  --cream: 0 0% 98%;
+  
+  --background: 0 0% 98%;
+  --foreground: 0 0% 13%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 13%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 13%;
+
+  --primary: 0 0% 20%;
+  --primary-foreground: 0 0% 98%;
+
+  --secondary: 0 0% 95%;
+  --secondary-foreground: 0 0% 13%;
+
+  --muted: 0 0% 93%;
+  --muted-foreground: 0 0% 45%;
+
+  --accent: 0 0% 40%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 50% 50%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 0 0% 88%;
+  --input: 0 0% 88%;
+  --ring: 0 0% 40%;
+
+  --stage-1: 0 0% 70%;
+  --stage-2: 0 0% 60%;
+  --stage-3: 0 0% 50%;
+  --stage-4: 0 0% 35%;
+  --stage-5: 0 0% 45%;
+  --stage-6: 0 0% 55%;
+  --stage-7: 0 0% 20%;
+
+  --published: 0 0% 30%;
+  --published-foreground: 0 0% 100%;
+
+  --warm: 0 0% 50%;
+  --warm-foreground: 0 0% 100%;
+
+  --sidebar-background: 0 0% 96%;
+  --sidebar-foreground: 0 0% 13%;
+  --sidebar-primary: 0 0% 20%;
+  --sidebar-primary-foreground: 0 0% 98%;
+  --sidebar-accent: 0 0% 93%;
+  --sidebar-accent-foreground: 0 0% 13%;
+  --sidebar-border: 0 0% 88%;
+  --sidebar-ring: 0 0% 40%;
+}
+
+html.palette-conference-lanyard.dark {
+  --background: 0 0% 8%;
+  --foreground: 0 0% 92%;
+
+  --card: 0 0% 12%;
+  --card-foreground: 0 0% 92%;
+
+  --popover: 0 0% 12%;
+  --popover-foreground: 0 0% 92%;
+
+  --primary: 0 0% 85%;
+  --primary-foreground: 0 0% 10%;
+
+  --secondary: 0 0% 18%;
+  --secondary-foreground: 0 0% 92%;
+
+  --muted: 0 0% 18%;
+  --muted-foreground: 0 0% 55%;
+
+  --accent: 0 0% 50%;
+  --accent-foreground: 0 0% 100%;
+
+  --border: 0 0% 22%;
+  --input: 0 0% 22%;
+  --ring: 0 0% 50%;
+
+  --published: 0 0% 70%;
+  --published-foreground: 0 0% 10%;
+
+  --sidebar-background: 0 0% 10%;
+  --sidebar-foreground: 0 0% 92%;
+  --sidebar-primary: 0 0% 85%;
+  --sidebar-primary-foreground: 0 0% 10%;
+  --sidebar-accent: 0 0% 15%;
+  --sidebar-accent-foreground: 0 0% 92%;
+  --sidebar-border: 0 0% 18%;
+  --sidebar-ring: 0 0% 50%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: var(--font-body);
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01", "ss02";
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer components {
+  .stage-dot {
+    @apply w-2.5 h-2.5 rounded-full;
+    box-shadow: 0 0 0 3px hsl(var(--stage-1) / 0.2);
+  }
+
+  .card-publication {
+    @apply bg-card border border-border rounded-xl p-3 cursor-pointer transition-all duration-200;
+    box-shadow: var(--shadow-card);
+  }
+
+  .card-publication:hover {
+    @apply border-accent;
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+
+  .card-publication.dragging {
+    @apply opacity-60;
+  }
+
+  .chip {
+    @apply text-xs px-2 py-0.5 rounded-full border border-border bg-secondary/50 text-foreground/80;
+  }
+
+  .chip-accent {
+    @apply border-accent/30 bg-accent/10 text-accent;
+  }
+
+  .chip-wp {
+    @apply border-dashed border-destructive/30 bg-destructive/10 text-destructive;
+  }
+
+  .dropzone {
+    @apply flex flex-col gap-2 p-2 min-h-[200px] rounded-lg transition-colors;
+  }
+
+  .dropzone.over {
+    @apply bg-accent/5 border-2 border-dashed border-accent/30;
+  }
+
+  .dropzone.empty::before {
+    content: "Drop publications here";
+    @apply text-muted-foreground/50 text-sm text-center py-8 border border-dashed border-border rounded-lg;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  .font-body {
+    font-family: var(--font-body);
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.25s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideInRight {
+    from { 
+      opacity: 0;
+      transform: translateX(100%);
+    }
+    to { 
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .grain {
+    position: relative;
+  }
+
+  .grain::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+/* ========== PRINT STYLES FOR PDF EXPORT ========== */
+@media print {
+  @page {
+    size: landscape;
+    margin: 0.3in;
+  }
+
+  body.printing-pdf {
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  /* Hide everything not needed */
+  body.printing-pdf header,
+  body.printing-pdf .no-print,
+  body.printing-pdf [data-radix-dialog-overlay],
+  body.printing-pdf [data-radix-dialog-content],
+  body.printing-pdf .sonner-toast,
+  body.printing-pdf [role="dialog"] {
+    display: none !important;
+  }
+
+  /* Make main container flow naturally */
+  body.printing-pdf .h-screen {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  body.printing-pdf main {
+    overflow: visible !important;
+    height: auto !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+
+  /* Show the print header */
+  body.printing-pdf #pdf-print-header {
+    display: block !important;
+    visibility: visible !important;
+    margin-bottom: 12px;
+  }
+
+  body.printing-pdf #pdf-print-header * {
+    visibility: visible !important;
+  }
+
+  /* Hide filter bar when printing */
+  body.printing-pdf main > div:first-child {
+    display: none !important;
+  }
+
+  /* Pipeline stages: flow naturally, scale down for fit */
+  body.printing-pdf [data-pdf-pipeline] {
+    display: flex !important;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+    gap: 4px !important;
+    font-size: 9px !important;
+  }
+
+  body.printing-pdf [data-pdf-pipeline] > section {
+    min-width: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    break-inside: avoid;
+  }
+
+  body.printing-pdf [data-pdf-pipeline] .dropzone {
+    min-height: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  body.printing-pdf [data-pdf-pipeline] .card-publication {
+    padding: 4px 6px !important;
+    margin-bottom: 2px !important;
+    font-size: 8px !important;
+    break-inside: avoid;
+  }
+
+  body.printing-pdf [data-pdf-pipeline] .card-publication h3 {
+    font-size: 9px !important;
+    line-height: 1.2 !important;
+    margin-bottom: 2px !important;
+  }
+
+  body.printing-pdf [data-pdf-pipeline] .chip {
+    font-size: 7px !important;
+    padding: 0 4px !important;
+  }
+
+  body.printing-pdf [data-pdf-pipeline] header {
+    display: flex !important;
+    padding: 4px 6px !important;
+  }
+
+  /* Published section */
+  body.printing-pdf [data-pdf-published] {
+    overflow: visible !important;
+    height: auto !important;
+    break-before: auto;
+  }
+
+  /* Funnel-only: hide published */
+  body.printing-pdf[data-print-option="funnel"] [data-pdf-published] {
+    display: none !important;
+  }
+
+  /* Hide docks, offline indicator, collaboration info */
+  body.printing-pdf [class*="BinDock"],
+  body.printing-pdf [class*="PublishedDock"],
+  body.printing-pdf [class*="OfflineIndicator"] {
+    display: none !important;
+  }
+
+  /* Make cards print nicely */
+  body.printing-pdf .bg-card {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+
+  /* Ensure colors print */
+  body.printing-pdf [class*="bg-"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide WP badge rotation for cleaner print */
+  body.printing-pdf .chip-wp {
+    transform: none !important;
+  }
+}
+
+/* ========== PRINT STYLES FOR TEAM PIPELINE ========== */
+@media print {
+  body.printing-team-pipeline {
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  body.printing-team-pipeline header {
+    padding: 8px 16px !important;
+    border-bottom: 1px solid #ccc !important;
+  }
+
+  body.printing-team-pipeline [role="tablist"],
+  body.printing-team-pipeline .no-print,
+  body.printing-team-pipeline button:has(.lucide-printer),
+  body.printing-team-pipeline button:has(.lucide-file-spreadsheet) {
+    display: none !important;
+  }
+
+  body.printing-team-pipeline .flex-1.flex.gap-2 {
+    display: flex !important;
+    overflow: visible !important;
+    height: auto !important;
+    gap: 4px !important;
+    font-size: 9px !important;
+  }
+
+  body.printing-team-pipeline .flex-1.flex.gap-2 > section {
+    min-width: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    break-inside: avoid;
+  }
+
+  body.printing-team-pipeline article {
+    padding: 4px 6px !important;
+    margin-bottom: 2px !important;
+    font-size: 8px !important;
+    break-inside: avoid;
+  }
+
+  body.printing-team-pipeline article h3 {
+    font-size: 9px !important;
+    line-height: 1.2 !important;
+  }
+
+  body.printing-team-pipeline .chip {
+    font-size: 7px !important;
+    padding: 0 4px !important;
+  }
+
+  body.printing-team-pipeline .bg-card {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+
+  body.printing-team-pipeline [class*="bg-"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

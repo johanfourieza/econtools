@@ -18,6 +18,11 @@ dist-ssr
 vercel.env
 credentials.md
 
+# Logo generation dev artifacts (regeneratable via `node generate-logo.mjs`)
+kabbo-logo-preview.png
+kabbo-logo-sizes.png
+kabbo-favicon16-preview.png
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -5,56 +5,83 @@ interface KabboLogoProps {
   size?: number;
 }
 
+/**
+ * Kabbo logo — a stylised kanna flower (Sceletium tortuosum).
+ *
+ * Two interleaved rings of thin filament petals radiate from a small central
+ * disc. The visual metaphor: many ideas funnelling inward to form a single
+ * finished paper.
+ *
+ * Single-colour via `currentColor` so it themes with the rest of the app.
+ */
 export function KabboLogo({ className, size = 40 }: KabboLogoProps) {
-  // Center point is x=22, all elements are perfectly mirrored
+  const cx = 24;
+  const cy = 24;
+  const petalCount = 32;
+
+  // Outer ring — long petals, with a clear gap from the central disc
+  const longPetals = Array.from({ length: petalCount }, (_, i) => {
+    const angle = (i * 2 * Math.PI) / petalCount;
+    return {
+      key: `L${i}`,
+      x1: cx + 8 * Math.cos(angle),
+      y1: cy + 8 * Math.sin(angle),
+      x2: cx + 23 * Math.cos(angle),
+      y2: cy + 23 * Math.sin(angle),
+    };
+  });
+
+  // Inner ring — shorter petals, offset by half a step to fill the gaps
+  const shortPetals = Array.from({ length: petalCount }, (_, i) => {
+    const angle = ((i + 0.5) * 2 * Math.PI) / petalCount;
+    return {
+      key: `S${i}`,
+      x1: cx + 7.5 * Math.cos(angle),
+      y1: cy + 7.5 * Math.sin(angle),
+      x2: cx + 17.5 * Math.cos(angle),
+      y2: cy + 17.5 * Math.sin(angle),
+    };
+  });
+
   return (
     <svg
       width={size}
-      height={size * 1.1}
-      viewBox="0 0 44 48"
+      height={size}
+      viewBox="0 0 48 48"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={cn('text-primary', className)}
     >
-      {/* Eye/lens shape - perfectly symmetrical around x=22 */}
-      <path
-        d="M2 12 C12 4 32 4 42 12 C32 20 12 20 2 12 Z"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
+      {/* Long filament petals — outer ring */}
+      {longPetals.map((p) => (
+        <line
+          key={p.key}
+          x1={p.x1}
+          y1={p.y1}
+          x2={p.x2}
+          y2={p.y2}
+          stroke="currentColor"
+          strokeWidth="0.9"
+          strokeLinecap="round"
+        />
+      ))}
 
-      {/* Left funnel line - mirrored with right */}
-      <path
-        d="M6 12 C12 22 18 30 22 36"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        fill="none"
-      />
+      {/* Shorter filament petals — interleaved inner ring */}
+      {shortPetals.map((p) => (
+        <line
+          key={p.key}
+          x1={p.x1}
+          y1={p.y1}
+          x2={p.x2}
+          y2={p.y2}
+          stroke="currentColor"
+          strokeWidth="0.9"
+          strokeLinecap="round"
+        />
+      ))}
 
-      {/* Right funnel line - mirrored with left */}
-      <path
-        d="M38 12 C32 22 26 30 22 36"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        fill="none"
-      />
-
-      {/* Output box - centered at x=22 */}
-      <rect
-        x="16"
-        y="40"
-        width="12"
-        height="6"
-        rx="1"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        fill="none"
-      />
+      {/* Central disc — where the ideas converge */}
+      <circle cx={cx} cy={cy} r={4.5} fill="currentColor" />
     </svg>
   );
 }

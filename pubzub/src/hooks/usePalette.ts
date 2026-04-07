@@ -42,7 +42,7 @@ export const PALETTES: Palette[] = [
   },
 ];
 
-const PALETTE_STORAGE_KEY = 'pubzub-palette';
+const PALETTE_STORAGE_KEY = 'kabbo-palette';
 
 export function usePalette() {
   const [paletteId, setPaletteId] = useState<PaletteId>(() => {

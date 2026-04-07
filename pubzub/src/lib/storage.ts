@@ -1,6 +1,6 @@
 import { PubFlowState, Publication, BinItem, DEFAULT_STAGES } from '@/types/publication';
 
-const STORAGE_KEY = 'pubzub.local.v1';
+const STORAGE_KEY = 'kabbo.local.v1';
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -134,7 +134,7 @@ export function createEmptyState(): PubFlowState {
   
   return {
     board: {
-      title: 'PubZub',
+      title: 'Kabbo',
       subtitle: 'Your publication pipeline, simplified.',
       paletteId: 'burnt-fieldnotes',
       stages: [...DEFAULT_STAGES],

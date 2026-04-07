@@ -91,10 +91,10 @@ const Index = () => {
   const [showPublished, setShowPublished] = useState(false);
   const [showCollaborations, setShowCollaborations] = useState(false);
   const [pipelineView, setPipelineView] = useState<'vertical' | 'horizontal'>(() => {
-    return (localStorage.getItem('pubzub-pipeline-view') as 'vertical' | 'horizontal') || 'vertical';
+    return (localStorage.getItem('kabbo-pipeline-view') as 'vertical' | 'horizontal') || 'vertical';
   });
   const [publishedYearsLimit, setPublishedYearsLimit] = useState<number>(() => {
-    const stored = localStorage.getItem('pubzub-published-years-limit');
+    const stored = localStorage.getItem('kabbo-published-years-limit');
     return stored ? parseInt(stored, 10) : 5;
   });
   const [celebrationData, setCelebrationData] = useState<{ isOpen: boolean; title: string }>({
@@ -321,7 +321,7 @@ const Index = () => {
       });
       return;
     }
-    downloadBibtex(allPubs, 'pubzub-export.bib');
+    downloadBibtex(allPubs, 'kabbo-export.bib');
     toast({
       title: 'BibTeX exported',
       description: `Exported ${allPubs.length} publication${allPubs.length > 1 ? 's' : ''}.`,
@@ -366,9 +366,9 @@ const Index = () => {
             showCollaborations={showCollaborations}
             pendingInvitations={invitationPendingCount}
             pipelineView={pipelineView}
-            onPipelineViewChange={(view) => { setPipelineView(view); localStorage.setItem('pubzub-pipeline-view', view); }}
+            onPipelineViewChange={(view) => { setPipelineView(view); localStorage.setItem('kabbo-pipeline-view', view); }}
             publishedYearsLimit={publishedYearsLimit}
-            onPublishedYearsLimitChange={(limit) => { setPublishedYearsLimit(limit); localStorage.setItem('pubzub-published-years-limit', String(limit)); }}
+            onPublishedYearsLimitChange={(limit) => { setPublishedYearsLimit(limit); localStorage.setItem('kabbo-published-years-limit', String(limit)); }}
           />
         </div>
 
@@ -630,7 +630,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="mt-auto py-1.5 md:py-2 px-3 md:px-6 hidden md:block">
         <div className="flex items-center justify-end gap-3 text-xs text-muted-foreground">
-          <span>PubZub v1.0.0</span>
+          <span>Kabbo v1.0.0</span>
           <span className="text-border">•</span>
           <Link 
             to="/about" 

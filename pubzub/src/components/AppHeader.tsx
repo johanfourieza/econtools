@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { LogOut, Settings, Moon, Sun, Info, Users } from 'lucide-react';
 import { UserProfile } from '@/types/publication';
-import { PubZubLogo } from './PubZubLogo';
+import { KabboLogo } from './KabboLogo';
 import { ProfileSettingsModal } from './ProfileSettingsModal';
 import { PaletteSelector } from './PaletteSelector';
 import { useTheme } from 'next-themes';
@@ -44,7 +44,7 @@ export function AppHeader({ title, subtitle, profile, onSignOut, onProfileUpdate
         <div className="max-w-[1440px] mx-auto px-2 py-2 md:px-4 md:py-3 flex items-center justify-between gap-2 md:gap-3">
           <div className="flex items-center gap-2 md:gap-3">
             {/* Logo */}
-            <PubZubLogo size={28} className="md:w-8 md:h-8" />
+            <KabboLogo size={28} className="md:w-8 md:h-8" />
             
             <div className="min-w-0">
               <h1 className="font-display font-semibold text-base md:text-xl leading-tight tracking-tight">
@@ -125,7 +125,7 @@ export function AppHeader({ title, subtitle, profile, onSignOut, onProfileUpdate
                   <Link to="/about">
                     <DropdownMenuItem>
                       <Info className="w-4 h-4 mr-2" />
-                      About PubZub
+                      About Kabbo
                     </DropdownMenuItem>
                   </Link>
                   <DropdownMenuSeparator />

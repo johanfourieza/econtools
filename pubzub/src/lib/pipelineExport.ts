@@ -115,7 +115,7 @@ export function exportPipelineToExcel({ publications, userName, customTitle }: E
   const datePart = new Date().toISOString().split('T')[0];
   const namePart = userName ? `_${userName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}` : '';
   const titlePart = customTitle ? `_${customTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}` : '';
-  const filename = `pubzub_pipeline${titlePart}${namePart}_${datePart}.xlsx`;
+  const filename = `kabbo_pipeline${titlePart}${namePart}_${datePart}.xlsx`;
 
   XLSX.writeFile(workbook, filename);
 }
@@ -169,7 +169,7 @@ export function exportTeamPipelineToExcel({ publications, teamName, customTitle 
   const datePart = new Date().toISOString().split('T')[0];
   const teamPart = teamName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
   const titlePart = customTitle ? `_${customTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}` : '';
-  const filename = `pubzub_team_${teamPart}${titlePart}_${datePart}.xlsx`;
+  const filename = `kabbo_team_${teamPart}${titlePart}_${datePart}.xlsx`;
 
   XLSX.writeFile(workbook, filename);
 }

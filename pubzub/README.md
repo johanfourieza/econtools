@@ -1,4 +1,4 @@
-# PubZub — Academic Publication Pipeline
+# Kabbo — Academic Publication Pipeline
 
 A Kanban-style publication pipeline manager for academics. Track papers from Idea through Draft, Submitted, Revise & Resubmit, Resubmitted, Accepted, to Published.
 
@@ -51,7 +51,7 @@ The frontend is deployed on Vercel with the root directory set to `pubzub`. The 
 
 ## Claude Code (MCP) Integration
 
-PubZub includes an MCP server that lets Claude Code interact with your pipeline. See Profile Settings > MCP Server in the app for setup instructions.
+Kabbo includes an MCP server that lets Claude Code interact with your pipeline. See Profile Settings > MCP Server in the app for setup instructions.
 
 ## License
 

@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
-import { PubZubLogo } from '@/components/PubZubLogo';
+import { KabboLogo } from '@/components/KabboLogo';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -153,9 +153,9 @@ export default function Auth() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <PubZubLogo size={40} />
+            <KabboLogo size={40} />
             <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">
-              PubZub
+              Kabbo
             </h1>
           </div>
           <p className="text-muted-foreground">

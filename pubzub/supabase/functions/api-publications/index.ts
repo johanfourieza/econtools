@@ -116,7 +116,7 @@ async function handleGet(
       source: "api",
       action: "listed",
       details: { query: q, stage, limit, offset, total: count },
-      pubzub_yaml_detected: false,
+      kabbo_yaml_detected: false,
     });
   }
 
@@ -174,7 +174,7 @@ async function handlePatch(
     publication_id: id,
     publication_title: pub?.title,
     details: updates.stage ? { stage: updates.stage } : { fields: Object.keys(updates).filter(k => k !== "updated_at") },
-    pubzub_yaml_detected: false,
+    kabbo_yaml_detected: false,
   });
 
   return jsonResponse({ success: true, publication_id: id });
@@ -222,7 +222,7 @@ async function handleDelete(
     publication_id: id,
     publication_title: pub.title,
     details: { previous_stage: pub.stage },
-    pubzub_yaml_detected: false,
+    kabbo_yaml_detected: false,
   });
 
   return jsonResponse({ success: true, action: "binned", publication_id: id });

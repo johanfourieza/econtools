@@ -68,8 +68,8 @@ function extractStageTag(message: string): string | null {
   return normalizeStage(match[1]);
 }
 
-// Fetch and parse .pubzub.yaml from a GitHub repo's default branch
-interface PubzubYaml {
+// Fetch and parse .kabbo.yaml from a GitHub repo's default branch
+interface KabboYaml {
   title?: string;
   authors?: string[];
   stage?: string;
@@ -82,14 +82,14 @@ interface PubzubYaml {
   links?: string[];
 }
 
-async function fetchPubzubYaml(
+async function fetchKabboYaml(
   repoFullName: string,
   defaultBranch: string
-): Promise<PubzubYaml | null> {
+): Promise<KabboYaml | null> {
   try {
-    const url = `https://raw.githubusercontent.com/${repoFullName}/${defaultBranch}/.pubzub.yaml`;
+    const url = `https://raw.githubusercontent.com/${repoFullName}/${defaultBranch}/.kabbo.yaml`;
     const resp = await fetch(url, {
-      headers: { "User-Agent": "PubZub-Webhook/1.0" },
+      headers: { "User-Agent": "Kabbo-Webhook/1.0" },
     });
     if (!resp.ok) return null;
     const text = await resp.text();
@@ -100,7 +100,7 @@ async function fetchPubzubYaml(
 }
 
 // Minimal YAML parser for flat key-value + simple arrays (no dependency needed)
-function parseSimpleYaml(text: string): PubzubYaml {
+function parseSimpleYaml(text: string): KabboYaml {
   const result: Record<string, unknown> = {};
   const lines = text.split("\n");
   let currentKey = "";
@@ -157,7 +157,7 @@ function parseSimpleYaml(text: string): PubzubYaml {
     result[currentKey] = currentArray;
   }
 
-  return result as PubzubYaml;
+  return result as KabboYaml;
 }
 
 // Hash function for API key validation (same as ingest-publication)
@@ -302,15 +302,15 @@ Deno.serve(async (req) => {
       const defaultBranch = repo?.default_branch || "main";
       const commits = body.commits || [];
 
-      // Check if .pubzub.yaml was added/modified in this push
+      // Check if .kabbo.yaml was added/modified in this push
       const yamlTouched = commits.some((c: any) =>
-        [...(c.added || []), ...(c.modified || [])].includes(".pubzub.yaml")
+        [...(c.added || []), ...(c.modified || [])].includes(".kabbo.yaml")
       );
 
-      // Fetch .pubzub.yaml from repo (always try, but prioritize if touched)
-      const yamlConfig = await fetchPubzubYaml(repoFullName, defaultBranch);
+      // Fetch .kabbo.yaml from repo (always try, but prioritize if touched)
+      const yamlConfig = await fetchKabboYaml(repoFullName, defaultBranch);
 
-      // Title: .pubzub.yaml > repo name
+      // Title: .kabbo.yaml > repo name
       const title = yamlConfig?.title || repoNameToTitle(repoName);
 
       // Check all commits for stage tags (use the latest one found)
@@ -324,7 +324,7 @@ Deno.serve(async (req) => {
         latestMessage = commit.message || latestMessage;
       }
 
-      // Stage priority: commit tag > .pubzub.yaml > existing
+      // Stage priority: commit tag > .kabbo.yaml > existing
       if (!stage && yamlConfig?.stage) {
         const normalized = normalizeStage(yamlConfig.stage);
         if (normalized) stage = normalized;
@@ -359,7 +359,7 @@ Deno.serve(async (req) => {
         github_repo: repoUrl,
       };
 
-      // Apply .pubzub.yaml metadata (lower priority than explicit API fields)
+      // Apply .kabbo.yaml metadata (lower priority than explicit API fields)
       if (yamlConfig) {
         if (yamlConfig.authors) pubData.authors = yamlConfig.authors;
         if (yamlConfig.output_type) pubData.output_type = yamlConfig.output_type;
@@ -430,7 +430,7 @@ Deno.serve(async (req) => {
           commit_message: latestMessage,
           repo: repoFullName,
         },
-        pubzub_yaml_detected: !!yamlConfig,
+        kabbo_yaml_detected: !!yamlConfig,
       });
 
       return new Response(
@@ -441,7 +441,7 @@ Deno.serve(async (req) => {
           title,
           stage: stage || match?.stage || "idea",
           commit_message: latestMessage,
-          pubzub_yaml_detected: !!yamlConfig,
+          kabbo_yaml_detected: !!yamlConfig,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );

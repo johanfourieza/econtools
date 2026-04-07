@@ -35,7 +35,7 @@ async function callApi(
 // Create an MCP server factory per API key
 function createMcpServer(apiKey: string) {
   const server = new McpServer({
-    name: "pubzub",
+    name: "kabbo",
     version: "1.0.0",
   });
 
@@ -229,7 +229,7 @@ function createMcpServer(apiKey: string) {
   server.tool({
     name: "delete_publication",
     description:
-      "Move a publication to the bin (soft delete). Can be restored later from the PubZub UI.",
+      "Move a publication to the bin (soft delete). Can be restored later from the Kabbo UI.",
     inputSchema: {
       type: "object" as const,
       properties: {

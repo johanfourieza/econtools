@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const ONBOARDING_STORAGE_KEY = 'pubzub_onboarding_completed';
-const TOOLTIPS_DISMISSED_KEY = 'pubzub_tooltips_dismissed';
+const ONBOARDING_STORAGE_KEY = 'kabbo_onboarding_completed';
+const TOOLTIPS_DISMISSED_KEY = 'kabbo_tooltips_dismissed';
 
 export interface OnboardingStep {
   id: string;

@@ -199,7 +199,7 @@ function IntegrationGuide() {
     "github_repo": "https://github.com/user/repo"
   }'`;
 
-  const overleafPrompt = `I have a PubZub ingest API at:
+  const overleafPrompt = `I have a Kabbo ingest API at:
 ${ingestUrl}
 
 It accepts POST with header "x-api-key: <key>" and JSON body:
@@ -215,7 +215,7 @@ Write a script that:
 4. Skips projects that haven't changed since last sync (use a local .last-sync file)
 5. Runs via cron daily at 9am`;
 
-  const dropboxPrompt = `I have a PubZub ingest API at:
+  const dropboxPrompt = `I have a Kabbo ingest API at:
 ${ingestUrl}
 
 It accepts POST with header "x-api-key: <key>" and JSON body:
@@ -241,7 +241,7 @@ Write a script that:
 4. Only syncs papers modified since last run
 5. Runs via cron every 6 hours`;
 
-  const githubSyncPrompt = `I have a PubZub ingest API at:
+  const githubSyncPrompt = `I have a Kabbo ingest API at:
 ${ingestUrl}
 
 It accepts POST with header "x-api-key: <key>" and JSON body:
@@ -252,9 +252,9 @@ Valid stages: idea, draft, submitted, revise_resubmit, resubmitted, accepted, pu
 I also have a GitHub webhook endpoint at:
 ${webhookUrl}?api_key=<key>
 
-I keep my academic papers in separate GitHub repos. Each repo may contain a .pubzub.yaml file at the root that declares metadata:
+I keep my academic papers in separate GitHub repos. Each repo may contain a .kabbo.yaml file at the root that declares metadata:
 
-# .pubzub.yaml
+# .kabbo.yaml
 title: "My Paper Title"
 stage: draft
 authors:
@@ -265,23 +265,23 @@ themes:
 output_type: journal-article
 target_year: 2025
 
-If .pubzub.yaml exists, use its metadata instead of inferring from the repo name. Otherwise, fall back to extracting the title from the repo name (converting kebab-case/snake_case to Title Case) and checking commit messages for [stage:xxx] tags.
+If .kabbo.yaml exists, use its metadata instead of inferring from the repo name. Otherwise, fall back to extracting the title from the repo name (converting kebab-case/snake_case to Title Case) and checking commit messages for [stage:xxx] tags.
 
 Write a script that:
 1. Uses the GitHub API (with a personal access token) to list all my repos
-2. For each repo, checks for .pubzub.yaml first — if found, use its metadata
-3. If no .pubzub.yaml, extracts the paper title from the repo name and checks recent commits for [stage:xxx] tags
+2. For each repo, checks for .kabbo.yaml first — if found, use its metadata
+3. If no .kabbo.yaml, extracts the paper title from the repo name and checks recent commits for [stage:xxx] tags
 4. POSTs each paper to the ingest API with the detected metadata and the GitHub repo URL
-5. Optionally sets up the PubZub webhook on each repo that doesn't have it yet (using the webhook URL above)
-6. Saves a .pubzub-last-sync file to skip repos that haven't changed
+5. Optionally sets up the Kabbo webhook on each repo that doesn't have it yet (using the webhook URL above)
+6. Saves a .kabbo-last-sync file to skip repos that haven't changed
 7. Can be run manually or via cron daily at 9am
 
 The script should:
-- Accept --github-token, --pubzub-api-key, and --github-username as CLI arguments
+- Accept --github-token, --kabbo-api-key, and --github-username as CLI arguments
 - Have a --dry-run flag to preview changes without pushing
 - Print a summary table of all repos and their detected stages
 - Skip repos that are forks or archived
-- Have an --init flag that creates a .pubzub.yaml template in repos that don't have one`;
+- Have an --init flag that creates a .kabbo.yaml template in repos that don't have one`;
 
   return (
     <div className="space-y-3 pt-2 border-t border-border">
@@ -415,7 +415,7 @@ The script should:
           </AccordionTrigger>
           <AccordionContent>
             <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">Give this prompt to Claude Code to scan all your GitHub repos and sync them to PubZub. Complements the webhook for a full periodic reconciliation.</p>
+              <p className="text-xs text-muted-foreground">Give this prompt to Claude Code to scan all your GitHub repos and sync them to Kabbo. Complements the webhook for a full periodic reconciliation.</p>
               <div className="relative">
                 <pre className="text-[11px] bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap font-mono leading-relaxed">{githubSyncPrompt}</pre>
                 <Button size="sm" variant="ghost" className="absolute top-1 right-1 h-6 w-6 p-0" onClick={() => copyToClipboard(githubSyncPrompt)}>
@@ -426,21 +426,21 @@ The script should:
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="pubzub-yaml">
+        <AccordionItem value="kabbo-yaml">
           <AccordionTrigger className="text-sm py-2">
             <span className="flex items-center gap-1.5">
               <FileCode className="w-3.5 h-3.5" />
-              .pubzub.yaml Config Convention
+              .kabbo.yaml Config Convention
             </span>
           </AccordionTrigger>
           <AccordionContent>
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground">
-                Add a <code className="bg-muted px-1 rounded">.pubzub.yaml</code> file to the root of any paper repo to declare its metadata. The webhook and sync scripts auto-discover it — no manual configuration needed.
+                Add a <code className="bg-muted px-1 rounded">.kabbo.yaml</code> file to the root of any paper repo to declare its metadata. The webhook and sync scripts auto-discover it — no manual configuration needed.
               </p>
 
               <div className="relative">
-                <pre className="text-[11px] bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap font-mono leading-relaxed">{`# .pubzub.yaml — drop this in any paper repo root
+                <pre className="text-[11px] bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap font-mono leading-relaxed">{`# .kabbo.yaml — drop this in any paper repo root
 title: "Effect of Climate Policy on Trade Flows"
 stage: draft
 authors:
@@ -457,7 +457,7 @@ overleaf_url: https://www.overleaf.com/project/abc123
 notes: "Working on methods section"
 links:
   - https://data.worldbank.org/dataset/xyz`}</pre>
-                <Button size="sm" variant="ghost" className="absolute top-1 right-1 h-6 w-6 p-0" onClick={() => copyToClipboard(`# .pubzub.yaml — drop this in any paper repo root
+                <Button size="sm" variant="ghost" className="absolute top-1 right-1 h-6 w-6 p-0" onClick={() => copyToClipboard(`# .kabbo.yaml — drop this in any paper repo root
 title: "Effect of Climate Policy on Trade Flows"
 stage: draft
 authors:
@@ -481,8 +481,8 @@ links:
               <div className="text-[11px] text-muted-foreground space-y-2">
                 <p className="font-medium">How it works:</p>
                 <ul className="list-disc ml-4 space-y-1">
-                  <li><strong>GitHub Webhook:</strong> On every push, the webhook fetches <code className="bg-muted px-1 rounded">.pubzub.yaml</code> from your repo's default branch and applies the metadata automatically.</li>
-                  <li><strong>Claude Code Sync:</strong> The full sync script checks each repo for <code className="bg-muted px-1 rounded">.pubzub.yaml</code> before falling back to repo-name inference.</li>
+                  <li><strong>GitHub Webhook:</strong> On every push, the webhook fetches <code className="bg-muted px-1 rounded">.kabbo.yaml</code> from your repo's default branch and applies the metadata automatically.</li>
+                  <li><strong>Claude Code Sync:</strong> The full sync script checks each repo for <code className="bg-muted px-1 rounded">.kabbo.yaml</code> before falling back to repo-name inference.</li>
                   <li><strong>Commit tags override:</strong> A <code className="bg-muted px-1 rounded">[stage:submitted]</code> commit tag always takes priority over the yaml's stage field.</li>
                 </ul>
 
@@ -501,7 +501,7 @@ links:
                 </div>
 
                 <p className="font-medium pt-2">Quick init with Claude Code:</p>
-                <p><em>"Run the sync script with --init to generate .pubzub.yaml templates in all my paper repos"</em></p>
+                <p><em>"Run the sync script with --init to generate .kabbo.yaml templates in all my paper repos"</em></p>
               </div>
             </div>
           </AccordionContent>
@@ -517,7 +517,7 @@ links:
           <AccordionContent>
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground">
-                Connect Claude Code directly to PubZub using the <strong>Model Context Protocol</strong>. Claude Code can then list, create, update, move, and delete publications natively — no scripts needed.
+                Connect Claude Code directly to Kabbo using the <strong>Model Context Protocol</strong>. Claude Code can then list, create, update, move, and delete publications natively — no scripts needed.
               </p>
 
               <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
@@ -536,13 +536,13 @@ links:
                 <div className="relative">
                   <pre className="text-[11px] bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre font-mono leading-relaxed">{`{
   "mcpServers": {
-    "pubzub": {
+    "kabbo": {
       "type": "url",
       "url": "${mcpUrl}?api_key=YOUR_API_KEY"
     }
   }
 }`}</pre>
-                  <Button size="sm" variant="ghost" className="absolute top-1 right-1 h-6 w-6 p-0" onClick={() => copyToClipboard(`{\n  "mcpServers": {\n    "pubzub": {\n      "type": "url",\n      "url": "${mcpUrl}?api_key=YOUR_API_KEY"\n    }\n  }\n}`)}>
+                  <Button size="sm" variant="ghost" className="absolute top-1 right-1 h-6 w-6 p-0" onClick={() => copyToClipboard(`{\n  "mcpServers": {\n    "kabbo": {\n      "type": "url",\n      "url": "${mcpUrl}?api_key=YOUR_API_KEY"\n    }\n  }\n}`)}>
                     <Copy className="w-3 h-3" />
                   </Button>
                 </div>

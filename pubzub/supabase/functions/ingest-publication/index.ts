@@ -201,7 +201,7 @@ Deno.serve(async (req) => {
       publication_id: resultId,
       publication_title: title.trim(),
       details: { stage: normalizedStage || existing?.stage || "idea" },
-      pubzub_yaml_detected: false,
+      kabbo_yaml_detected: false,
     });
 
     return new Response(

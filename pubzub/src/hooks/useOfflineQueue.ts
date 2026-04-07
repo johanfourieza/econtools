@@ -11,7 +11,7 @@ interface QueuedOperation {
   timestamp: number;
 }
 
-const QUEUE_STORAGE_KEY = 'pubzub_offline_queue';
+const QUEUE_STORAGE_KEY = 'kabbo_offline_queue';
 
 export function useOfflineQueue() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);

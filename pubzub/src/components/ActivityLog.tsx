@@ -13,7 +13,7 @@ interface ActivityEntry {
   publication_id: string | null;
   publication_title: string | null;
   details: Record<string, unknown> | null;
-  pubzub_yaml_detected: boolean;
+  kabbo_yaml_detected: boolean;
   created_at: string;
 }
 
@@ -117,9 +117,9 @@ export function ActivityLog({ userId }: { userId: string }) {
                       <span className="font-medium">
                         {actionLabels[entry.action] || entry.action}
                       </span>
-                      {entry.pubzub_yaml_detected && (
+                      {entry.kabbo_yaml_detected && (
                         <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4 bg-amber-500/10 text-amber-600 dark:text-amber-400 border-0">
-                          .pubzub.yaml
+                          .kabbo.yaml
                         </Badge>
                       )}
                     </div>

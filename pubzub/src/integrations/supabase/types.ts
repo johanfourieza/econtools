@@ -22,7 +22,7 @@ export type Database = {
           id: string
           publication_id: string | null
           publication_title: string | null
-          pubzub_yaml_detected: boolean | null
+          kabbo_yaml_detected: boolean | null
           source: string
           user_id: string
         }
@@ -33,7 +33,7 @@ export type Database = {
           id?: string
           publication_id?: string | null
           publication_title?: string | null
-          pubzub_yaml_detected?: boolean | null
+          kabbo_yaml_detected?: boolean | null
           source: string
           user_id: string
         }
@@ -44,7 +44,7 @@ export type Database = {
           id?: string
           publication_id?: string | null
           publication_title?: string | null
-          pubzub_yaml_detected?: boolean | null
+          kabbo_yaml_detected?: boolean | null
           source?: string
           user_id?: string
         }

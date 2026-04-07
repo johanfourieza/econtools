@@ -15,7 +15,7 @@ import {
   Keyboard,
   Sparkles
 } from 'lucide-react';
-import { PubZubLogo } from './PubZubLogo';
+import { KabboLogo } from './KabboLogo';
 
 interface QuickStartGuideProps {
   open: boolean;
@@ -29,15 +29,15 @@ export function QuickStartGuide({ open, onOpenChange, onShowShortcuts }: QuickSt
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
-            <PubZubLogo size={32} />
-            <span>Welcome to PubZub!</span>
+            <KabboLogo size={32} />
+            <span>Welcome to Kabbo!</span>
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 py-2">
           {/* Intro */}
           <p className="text-sm text-muted-foreground">
-            PubZub helps you manage your research publications from initial idea to final publication. 
+            Kabbo helps you manage your research publications from initial idea to final publication. 
             Here's how to get started:
           </p>
 

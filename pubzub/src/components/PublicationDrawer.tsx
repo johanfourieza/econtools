@@ -222,7 +222,7 @@ export function PublicationDrawer({
         return;
       }
 
-      // Check if email belongs to an existing PubZub user using secure RPC
+      // Check if email belongs to an existing Kabbo user using secure RPC
       const { data: existingUserId } = await supabase
         .rpc('find_user_id_by_email', { _email: trimmedEmail });
 

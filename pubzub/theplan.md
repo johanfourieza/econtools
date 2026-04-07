@@ -1,4 +1,4 @@
-# PubZub Strategic Plan
+# Kabbo Strategic Plan
 ## From Lovable Prototype to the Academic Publication Tool of Choice
 
 **Author:** Johan Fourie (with Claude)
@@ -13,15 +13,15 @@
 ### Phase 1: Platform Independence — COMPLETE (2026-04-01)
 
 **What was done:**
-- [x] Purchased domain: `pubzub.com` (Porkbun)
+- [x] Purchased domain: `kabbo.app` (Porkbun)
 - [x] Decoupled from Lovable: removed all Lovable OAuth, tagger, and dependencies (5 files)
-- [x] Deployed frontend on Vercel (project: pubzubcom, root directory: pubzub)
+- [x] Deployed frontend on Vercel (project: kabboapp, root directory: pubzub)
 - [x] DNS configured: A record + CNAME pointing to Vercel
 - [x] Created new Supabase project (ID: jydnsbaztvmjkebhmoia) — fully owned
 - [x] Migrated all 41 database migrations to new Supabase project
 - [x] Email/password authentication working
 - [x] Google OAuth set up (Google Cloud Console → Supabase)
-- [x] Site live at https://pubzub.com
+- [x] Site live at https://kabbo.app
 - [x] Credentials stored locally in `credentials.md` (gitignored)
 - [x] README rewritten, .env.example created
 
@@ -34,10 +34,10 @@
 
 ---
 
-## 1. What PubZub Is Today
+## 1. What Kabbo Is Today
 
 ### Overview
-PubZub is a **Kanban-style academic publication pipeline manager** that lets researchers drag-and-drop papers through seven stages: Idea → Draft → Submitted → Revise & Resubmit → Resubmitted → Accepted → Published.
+Kabbo is a **Kanban-style academic publication pipeline manager** that lets researchers drag-and-drop papers through seven stages: Idea → Draft → Submitted → Revise & Resubmit → Resubmitted → Accepted → Published.
 
 ### Tech Stack
 - **Frontend:** React 18 + TypeScript 5.8, Vite 5.4, Tailwind CSS 3.4, shadcn/ui (Radix primitives)
@@ -90,7 +90,7 @@ PubZub is a **Kanban-style academic publication pipeline manager** that lets res
 **API & Integration:**
 - MCP server with 6 tools (list, get, create, update, move_stage, delete)
 - REST API (GET list/search, PATCH update, DELETE soft-delete) with API key auth
-- GitHub webhook (HMAC-verified, parses `.pubzub.yaml`, reads `[stage:xxx]` commit tags)
+- GitHub webhook (HMAC-verified, parses `.kabbo.yaml`, reads `[stage:xxx]` commit tags)
 - Ingest endpoint (upsert by title match)
 - Activity logging (tracks source: web/api/webhook/mcp)
 - API key management (SHA-256 hashed, prefix display, usage tracking)
@@ -109,7 +109,7 @@ PubZub is a **Kanban-style academic publication pipeline manager** that lets res
 | `team_members` | Membership: team_id, user_id, invited_email, role (admin/member), status, has_dashboard_access |
 | `visibility_settings` | Per-user per-team: min_visible_stage (enum) |
 | `api_keys` | Auth: user_id, name, key_hash, key_prefix, last_used_at |
-| `activity_log` | Audit: user_id, source, action, publication_id, publication_title, details JSONB, pubzub_yaml_detected |
+| `activity_log` | Audit: user_id, source, action, publication_id, publication_title, details JSONB, kabbo_yaml_detected |
 
 All tables have comprehensive RLS (Row-Level Security) policies. 43 incremental SQL migrations.
 
@@ -213,11 +213,11 @@ pubzub/
 **Goal:** Own the domain, decouple from Lovable, deploy independently
 
 #### 1.1 Domain Registration
-- **Recommended:** `pubzub.com`
+- **Recommended:** `kabbo.app`
   - `.app` domains are HTTPS-enforced by default
   - Signals "this is an application" (not a blog or docs site)
   - Short, memorable, professional
-- **Fallbacks:** `pubzub.io` (more developer-coded), `pubzub.dev` (also developer-coded)
+- **Fallbacks:** `kabbo.io` (more developer-coded), `kabbo.dev` (also developer-coded)
 
 #### 1.2 Hosting: Vercel
 - Zero-config Vite deployment (connect GitHub repo → done)
@@ -237,14 +237,14 @@ There are exactly **5 files** to modify:
 | 2 | `src/pages/Auth.tsx` | Remove `import { lovable }` (line 4), replace `lovable.auth.signInWithOAuth("google", ...)` (line 135) with Supabase call |
 | 3 | `vite.config.ts` | Remove `import { componentTagger } from "lovable-tagger"` and the plugin from the plugins array |
 | 4 | `package.json` | Remove `@lovable.dev/cloud-auth-js` from dependencies, `lovable-tagger` from devDependencies |
-| 5 | `index.html` | Update OG image URL (currently `lovable.dev/opengraph-image-p98pqg.png`), update `twitter:site` from `@Lovable`, set canonical URL to `pubzub.com` |
+| 5 | `index.html` | Update OG image URL (currently `lovable.dev/opengraph-image-p98pqg.png`), update `twitter:site` from `@Lovable`, set canonical URL to `kabbo.app` |
 
 #### 1.4 Post-Migration Checklist
-- [ ] Add `https://pubzub.com` to Supabase Dashboard → Authentication → URL Configuration (redirect URLs + site URL)
+- [ ] Add `https://kabbo.app` to Supabase Dashboard → Authentication → URL Configuration (redirect URLs + site URL)
 - [ ] Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in Vercel environment variables
-- [ ] Configure Google OAuth app redirect URI to `https://pubzub.com` (in Google Cloud Console)
+- [ ] Configure Google OAuth app redirect URI to `https://kabbo.app` (in Google Cloud Console)
 - [ ] Rewrite `README.md` as proper public-facing documentation
-- [ ] Create OG image for `pubzub.com` social sharing
+- [ ] Create OG image for `kabbo.app` social sharing
 - [ ] Test auth flow end-to-end on new domain
 - [ ] Set up Vercel Analytics (free) for basic usage tracking
 
@@ -253,7 +253,7 @@ There are exactly **5 files** to modify:
 ### Phase 2: Claude Code — The Killer Feature
 **Priority:** P1
 **Effort:** ~1-2 weeks
-**Goal:** Make PubZub indispensable for Claude Code users, and useful for everyone else
+**Goal:** Make Kabbo indispensable for Claude Code users, and useful for everyone else
 
 #### 2A. Enhanced MCP Server
 
@@ -298,7 +298,7 @@ The `ProfileSettingsModal.tsx` already has an MCP Server section. Enhance it:
   ```json
   {
     "mcpServers": {
-      "pubzub": {
+      "kabbo": {
         "type": "url",
         "url": "https://jydnsbaztvmjkebhmoia.supabase.co/functions/v1/mcp-server?api_key=pz_YOUR_KEY_HERE"
       }
@@ -316,15 +316,15 @@ The `ProfileSettingsModal.tsx` already has an MCP Server section. Enhance it:
 - Confirms connection with a test call
 - This is a separate npm package (`pubzub-setup`)
 
-#### 2C. PubZub Skill File for Claude Code
+#### 2C. Kabbo Skill File for Claude Code
 
 Create a distributable skill file that users can place at `~/.claude/skills/pubzub.md`:
 
 ```markdown
-# PubZub — Publication Pipeline Manager
+# Kabbo — Publication Pipeline Manager
 
-## What PubZub Is
-PubZub tracks academic publications through: Idea → Draft → Submitted → Revise & Resubmit → Resubmitted → Accepted → Published.
+## What Kabbo Is
+Kabbo tracks academic publications through: Idea → Draft → Submitted → Revise & Resubmit → Resubmitted → Accepted → Published.
 
 ## Available MCP Tools
 [list all tools with descriptions and parameter schemas]
@@ -344,7 +344,7 @@ PubZub tracks academic publications through: Idea → Draft → Submitted → Re
 ```
 
 This skill file could be:
-- Downloadable from `pubzub.com/skill`
+- Downloadable from `kabbo.app/skill`
 - Auto-installed by `npx pubzub-setup`
 - Linked in the ProfileSettingsModal setup instructions
 
@@ -418,7 +418,7 @@ Implementation: A `useInsights` hook that computes these from existing publicati
 **What to build:**
 - "Related Papers" accordion section in `PublicationDrawer`
 - List editor with title, URL, relationship type dropdown
-- Optional: if the related paper title matches another PubZub publication, auto-link it (cross-reference within own pipeline)
+- Optional: if the related paper title matches another Kabbo publication, auto-link it (cross-reference within own pipeline)
 
 **Why this matters:** Helps researchers see connections across their own work and track citation networks.
 
@@ -426,7 +426,7 @@ Implementation: A `useInsights` hook that computes these from existing publicati
 
 **What exists:** A fully implemented `github-webhook` edge function that:
 - Verifies HMAC-SHA256 signatures
-- Reads `.pubzub.yaml` config files from pushed repos
+- Reads `.kabbo.yaml` config files from pushed repos
 - Extracts `[stage:xxx]` tags from commit messages
 - Creates/updates publications automatically
 - Normalizes stage names (wip → draft, r&r → revise_resubmit, etc.)
@@ -434,7 +434,7 @@ Implementation: A `useInsights` hook that computes these from existing publicati
 **What to build:**
 - "GitHub Integration" section in `ProfileSettingsModal`
 - Step-by-step setup guide: how to add the webhook URL and secret to a GitHub repo
-- Example `.pubzub.yaml` file format
+- Example `.kabbo.yaml` file format
 - Example commit message with `[stage:submitted]` tag
 - List of connected repos (query activity_log where source='webhook')
 - Test/ping button
@@ -444,13 +444,13 @@ Implementation: A `useInsights` hook that computes these from existing publicati
 ### Phase 4: Features for Adoption
 **Priority:** P2-P3
 **Effort:** ~2-4 weeks
-**Goal:** Reduce onboarding friction, add features that make academics choose PubZub over spreadsheets
+**Goal:** Reduce onboarding friction, add features that make academics choose Kabbo over spreadsheets
 
 #### 4.1 For Individual Researchers
 
 **CSV/Spreadsheet Import (P2 — highest impact for adoption)**
 - Many academics currently track publications in Excel or Google Sheets
-- Build a CSV importer that maps columns to PubZub fields (title, authors, stage, journal, year, etc.)
+- Build a CSV importer that maps columns to Kabbo fields (title, authors, stage, journal, year, etc.)
 - Column auto-detection with preview before import
 - Add to existing import UI alongside BibTeX import
 - This is the single biggest onboarding friction reducer
@@ -458,9 +458,9 @@ Implementation: A `useInsights` hook that computes these from existing publicati
 **ORCID Import (P2)**
 - The `orcid_id` field already exists in the `profiles` table
 - Use the ORCID public API (`pub.orcid.org/v3.0/{orcid-id}/works`) to fetch a researcher's published works
-- Auto-import into PubZub as "Published" stage publications
+- Auto-import into Kabbo as "Published" stage publications
 - One-click: "Import your ORCID publications"
-- Powerful onboarding: new users immediately see their published work in PubZub
+- Powerful onboarding: new users immediately see their published work in Kabbo
 
 **Progress Visualization (P3)**
 - Enhance `AnalyticsModal` with:
@@ -476,7 +476,7 @@ Implementation: A `useInsights` hook that computes these from existing publicati
 
 **Zotero Integration (P3)**
 - Zotero has a web API
-- Import from a Zotero library into PubZub
+- Import from a Zotero library into Kabbo
 - Useful for researchers who already have organized references
 
 #### 4.2 For Team Leaders
@@ -507,7 +507,7 @@ Implementation: A `useInsights` hook that computes these from existing publicati
 
 #### 4.3 Landing Page & Growth Strategy
 
-**Landing Page at `pubzub.com` (P2)**
+**Landing Page at `kabbo.app` (P2)**
 - Transform the existing About page into a proper marketing landing page
 - Sections: Hero with screenshot, Feature highlights, "Claude Code integration" story, Quick-start guide, Team features callout
 - Social proof: "Used by researchers at Stellenbosch University"
@@ -552,7 +552,7 @@ Implementation: A `useInsights` hook that computes these from existing publicati
 - Rate limit: 10 queries per user per day
 - Use Claude Haiku (cheapest, still excellent for structured data analysis)
 - Cache common query patterns
-- Show cost transparency: "This feature is powered by Claude AI and rate-limited to keep PubZub free"
+- Show cost transparency: "This feature is powered by Claude AI and rate-limited to keep Kabbo free"
 
 **UI:**
 - Repurpose the `PublicationChat` component pattern for a global AI chat panel
@@ -566,7 +566,7 @@ Implementation: A `useInsights` hook that computes these from existing publicati
 **Goal:** Security, performance, reliability, testing
 
 #### Security
-- **CORS:** Tighten from `Access-Control-Allow-Origin: "*"` to `pubzub.com` on all 4 edge functions
+- **CORS:** Tighten from `Access-Control-Allow-Origin: "*"` to `kabbo.app` on all 4 edge functions
 - **Rate limiting:** Add rate limits to API endpoints (Supabase Edge Function middleware or Cloudflare)
 - **API key security:** Document that MCP query-param API keys are for MCP transport compatibility only; prefer header-based auth where possible
 - **Content Security Policy:** Add CSP headers via Vercel config
@@ -593,14 +593,14 @@ Implementation: A `useInsights` hook that computes these from existing publicati
 
 | Priority | Item | Impact | Effort | Phase |
 |----------|------|--------|--------|-------|
-| **P0** | Domain registration (`pubzub.com`) | Unblocking | 1 hour | 1 |
+| **P0** | Domain registration (`kabbo.app`) | Unblocking | 1 hour | 1 |
 | **P0** | Lovable decoupling (5 files) | Unblocking | 4-6 hours | 1 |
 | **P0** | Vercel deployment | Unblocking | 1-2 hours | 1 |
 | **P1** | Enhanced MCP tools (10 new tools) | Very High | 3-5 days | 2 |
 | **P1** | MCP setup UX (copy-paste config) | High | 4 hours | 2 |
 | **P1** | Reminders/deadlines UI | High | 2-3 days | 3 |
 | **P1** | Start at Stellenbosch (10 users) | High | Ongoing | 4 |
-| **P1** | PubZub skill file for Claude Code | High | 4 hours | 2 |
+| **P1** | Kabbo skill file for Claude Code | High | 4 hours | 2 |
 | **P2** | Rule-based smart suggestions | Medium-High | 2 days | 2 |
 | **P2** | CSV import | High | 2 days | 4 |
 | **P2** | ORCID import | High | 2-3 days | 4 |

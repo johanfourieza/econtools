@@ -1,11 +1,11 @@
 import { cn } from '@/lib/utils';
 
-interface PubZubLogoProps {
+interface KabboLogoProps {
   className?: string;
   size?: number;
 }
 
-export function PubZubLogo({ className, size = 40 }: PubZubLogoProps) {
+export function KabboLogo({ className, size = 40 }: KabboLogoProps) {
   // Center point is x=22, all elements are perfectly mirrored
   return (
     <svg
@@ -25,7 +25,7 @@ export function PubZubLogo({ className, size = 40 }: PubZubLogoProps) {
         strokeLinejoin="round"
         fill="none"
       />
-      
+
       {/* Left funnel line - mirrored with right */}
       <path
         d="M6 12 C12 22 18 30 22 36"
@@ -34,7 +34,7 @@ export function PubZubLogo({ className, size = 40 }: PubZubLogoProps) {
         strokeLinecap="round"
         fill="none"
       />
-      
+
       {/* Right funnel line - mirrored with left */}
       <path
         d="M38 12 C32 22 26 30 22 36"
@@ -43,7 +43,7 @@ export function PubZubLogo({ className, size = 40 }: PubZubLogoProps) {
         strokeLinecap="round"
         fill="none"
       />
-      
+
       {/* Output box - centered at x=22 */}
       <rect
         x="16"

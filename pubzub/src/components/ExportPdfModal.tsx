@@ -43,7 +43,7 @@ export function ExportPdfModal({ open, onOpenChange, userName, publications = []
       
       const titleEl = printHeader.querySelector('[data-print-title]');
       if (titleEl) {
-        titleEl.textContent = customTitle || 'PubZub Pipeline';
+        titleEl.textContent = customTitle || 'Kabbo Pipeline';
       }
       
       const subtitleEl = printHeader.querySelector('[data-print-subtitle]');
@@ -100,7 +100,7 @@ export function ExportPdfModal({ open, onOpenChange, userName, publications = []
               id="custom-title"
               value={customTitle}
               onChange={(e) => setCustomTitle(e.target.value)}
-              placeholder="PubZub Pipeline"
+              placeholder="Kabbo Pipeline"
               className="bg-card"
             />
           </div>
@@ -182,7 +182,7 @@ export function PrintHeader() {
     >
       <div className="flex items-center justify-between border-b border-gray-300 pb-4">
         <div>
-          <h1 data-print-title className="text-2xl font-bold text-gray-900">PubZub Pipeline</h1>
+          <h1 data-print-title className="text-2xl font-bold text-gray-900">Kabbo Pipeline</h1>
           <p data-print-subtitle className="text-sm text-gray-600">Publication Research Pipeline</p>
         </div>
         <div className="text-right">

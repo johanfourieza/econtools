@@ -15,7 +15,7 @@
 **What was done:**
 - [x] Purchased domain: `kabbo.app` (Porkbun)
 - [x] Decoupled from Lovable: removed all Lovable OAuth, tagger, and dependencies (5 files)
-- [x] Deployed frontend on Vercel (project: kabboapp, root directory: pubzub)
+- [x] Deployed frontend on Vercel (project: kabboapp, root directory: kabbo)
 - [x] DNS configured: A record + CNAME pointing to Vercel
 - [x] Created new Supabase project (ID: jydnsbaztvmjkebhmoia) — fully owned
 - [x] Migrated all 41 database migrations to new Supabase project
@@ -116,7 +116,7 @@ All tables have comprehensive RLS (Row-Level Security) policies. 43 incremental 
 ### Project Structure
 
 ```
-pubzub/
+kabbo/
 ├── src/
 │   ├── pages/           # 6 route pages (Index, Auth, TeamWorkspace, About, ResetPassword, NotFound)
 │   ├── components/      # 34 custom components + 41 shadcn/ui components
@@ -309,16 +309,16 @@ The `ProfileSettingsModal.tsx` already has an MCP Server section. Enhance it:
 - Clear step-by-step instructions: "1. Generate an API key above. 2. Copy the config below. 3. Add it to your Claude Code settings."
 - Link to Claude Code docs for where to paste the config
 
-**Step 2 (do later): `npx pubzub-setup` CLI**
+**Step 2 (do later): `npx kabbo-setup` CLI**
 - Interactive CLI that prompts for API key
 - Detects Claude Code installation
 - Writes config to `~/.claude.json` (global) or `.mcp.json` (project)
 - Confirms connection with a test call
-- This is a separate npm package (`pubzub-setup`)
+- This is a separate npm package (`kabbo-setup`)
 
 #### 2C. Kabbo Skill File for Claude Code
 
-Create a distributable skill file that users can place at `~/.claude/skills/pubzub.md`:
+Create a distributable skill file that users can place at `~/.claude/skills/kabbo.md`:
 
 ```markdown
 # Kabbo — Publication Pipeline Manager
@@ -345,7 +345,7 @@ Kabbo tracks academic publications through: Idea → Draft → Submitted → Rev
 
 This skill file could be:
 - Downloadable from `kabbo.app/skill`
-- Auto-installed by `npx pubzub-setup`
+- Auto-installed by `npx kabbo-setup`
 - Linked in the ProfileSettingsModal setup instructions
 
 #### 2D. Smart Suggestions for Non-Claude-Code Users
@@ -611,7 +611,7 @@ Implementation: A `useInsights` hook that computes these from existing publicati
 | **P2** | Academic social media launch | Medium | 1 day | 4 |
 | **P3** | GitHub integration docs/UI | Medium | 1 day | 3 |
 | **P3** | Progress visualization | Medium | 3 days | 4 |
-| **P3** | `npx pubzub-setup` CLI | Medium | 2 days | 2 |
+| **P3** | `npx kabbo-setup` CLI | Medium | 2 days | 2 |
 | **P3** | In-app AI assistant | Medium | 5-7 days | 4 |
 | **P3** | Publication velocity metrics | Medium | 2 days | 4 |
 | **P3** | Email notifications | Medium | 3 days | 4 |

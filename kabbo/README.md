@@ -24,7 +24,7 @@ A Kanban-style publication pipeline manager for academics. Track papers from Ide
 ```sh
 # Clone the repo
 git clone https://github.com/johanfourieza/EconTools.git
-cd EconTools/pubzub
+cd econtools/kabbo
 
 # Install dependencies
 npm install
@@ -47,7 +47,7 @@ The app runs at `http://localhost:8080`.
 
 ## Deployment
 
-The frontend is deployed on Vercel with the root directory set to `pubzub`. The Supabase backend (database, auth, edge functions) runs on Supabase's managed infrastructure.
+The frontend is deployed on Vercel with the root directory set to `kabbo`. The Supabase backend (database, auth, edge functions) runs on Supabase's managed infrastructure.
 
 ## Claude Code (MCP) Integration
 

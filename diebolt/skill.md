@@ -1,15 +1,42 @@
 ---
-name: econguru
-description: Simulated academic peer review for economics papers. Creates independent referee agents who review your paper in isolation. If Codex is available, adds independent methodology auditing and R script verification by a second model family (GPT-5.4).
+name: diebolt
+description: Simulated academic peer review for economics papers, named in honour of Claude Diebolt. Creates independent referee agents who review your paper in isolation. If Codex is available, adds independent methodology auditing and R script verification by a second model family (GPT-5.4).
 user-invocable: true
 ---
 
-# EconGuru — Simulated Peer Review for Economics Papers
+# Diebolt — Simulated Peer Review for Economics Papers
 
 You are running a simulated peer review process for an economics working paper.
 You will act as both the **managing editor** of a target journal and the
 orchestrator of multiple expert referee personas ("gurus"). The goal is to
 improve the paper through iterated review rounds until it is publication-ready.
+
+## About the name
+
+This skill is named after **Claude Diebolt**, Research Professor of Economics
+(cliometrics) at the French National Centre for Scientific Research (CNRS) and
+Director of the Bureau d'Économie Théorique et Appliquée (BETA), the CNRS
+institute hosted at the Universities of Strasbourg and Nancy. He is the
+founding President of the French Cliometric Society, founding Managing Editor
+of *Cliometrica* (Springer), and a member of the Board of Trustees of the
+American Cliometric Society.
+
+Claude was the first editor willing to give Johan Fourie and Dieter von Fintel
+a chance — shepherding their paper "The dynamics of inequality in a newly
+settled, pre-industrial society: the case of the Cape Colony" (*Cliometrica*
+4(3), 2010, 229–267) through the review process even when the referee reports
+did not strictly merit a revise-and-resubmit, and offering generous editorial
+advice along the way. He has remained a steadfast supporter of work at
+Stellenbosch — including invitations to contribute to the *Handbook of
+Cliometrics* (Fourie and Obikili, "Decolonizing with data: the cliometric turn
+in African economic history", 2024) and to *The State of Economic History*
+(2025). Naming the skill *Diebolt* is a small thank-you for the kind of
+editorial generosity that opens careers.
+
+Claude Diebolt's signature sign-off is **"Que la force"**. Whenever the editor
+in this skill issues an **accept** (or **accept with minor corrections**)
+verdict (see Steps 7 and 12), close the verdict with that line, in italics, on
+its own — *Que la force*.
 
 ---
 
@@ -258,14 +285,14 @@ econometrician who reads the journals.
 Create a subfolder for the review output if one does not already exist:
 
 ```
-{project_directory}/EconGuru/
+{project_directory}/Diebolt/
 ```
 
 **This folder must be fully self-contained.** The user should be able to
-copy the entire `EconGuru/` folder to Overleaf (or any other LaTeX
+copy the entire `Diebolt/` folder to Overleaf (or any other LaTeX
 environment) and compile the paper without any external dependencies.
 
-This means `EconGuru/` must contain:
+This means `Diebolt/` must contain:
 
 1. **The revised paper** (`{papername}_refereed.tex`) — the main deliverable.
 2. **The online appendix** (`{papername}_appendix.tex`) — if created.
@@ -273,8 +300,8 @@ This means `EconGuru/` must contain:
    wherever the original lives. Do not use a relative path back to the
    project root.
 4. **All figures** — copy any figure files (`.png`, `.pdf`, `.jpg`) that the
-   paper or appendix references into `EconGuru/` (or a subfolder like
-   `EconGuru/Figures/`). Update `\includegraphics` paths accordingly.
+   paper or appendix references into `Diebolt/` (or a subfolder like
+   `Diebolt/Figures/`). Update `\includegraphics` paths accordingly.
 5. **All tables** — if tables are stored as separate `.tex` files that are
    `\input`ed, copy them in.
 6. **The response letter** (`response_to_referees.tex`).
@@ -283,8 +310,8 @@ This means `EconGuru/` must contain:
 9. **CSV output files** produced by the R scripts.
 
 **Path rule**: All `\includegraphics`, `\bibliography`, and `\input`
-commands in files inside `EconGuru/` must use paths relative to
-`EconGuru/` itself — never `../` references to the parent directory.
+commands in files inside `Diebolt/` must use paths relative to
+`Diebolt/` itself — never `../` references to the parent directory.
 
 The original paper file in the project root is **never moved or
 overwritten**.
@@ -446,7 +473,7 @@ own, as they would without Codex.
 ### Step 6 — Save referee reports
 
 Create a `.tex` file named `{papername}_referee_round{N}.tex` in the
-`EconGuru/` subfolder. Use this structure:
+`Diebolt/` subfolder. Use this structure:
 
 ```latex
 \documentclass[11pt,a4paper]{article}
@@ -458,7 +485,7 @@ Create a `.tex` file named `{papername}_referee_round{N}.tex` in the
 
 \title{Referee Reports — Round {N}\\
 \large \textit{{Paper Title}}}
-\author{Simulated Peer Review (\texttt{/econguru})}
+\author{Simulated Peer Review (\texttt{/diebolt})}
 \date{\today}
 
 \begin{document}
@@ -540,6 +567,11 @@ After all reports are in, you (as the editor of the target journal) must:
 3. **Provide an ordered list of required changes** — prioritised by
    importance. Distinguish between changes you (the editor) consider essential
    vs those that are referee preferences.
+4. **If — and only if — the verdict is *accept* or *accept with minor
+   corrections***, close the editorial verdict with Claude Diebolt's
+   signature sign-off on its own line, in italics:
+
+   > *Que la force*
 
 Present this verdict to the user.
 
@@ -569,7 +601,7 @@ For options (a), (b), or (c):
 
 1. **Create a new file** named `{papername}_refereed.tex` (or
    `{papername}_refereed_v{N}.tex` for subsequent rounds). Place it in the
-   `EconGuru/` subfolder.
+   `Diebolt/` subfolder.
 2. **Never overwrite the original** `.tex` file.
 3. **Ask the user** whether to create a `response_to_referees.tex` file. If
    yes, create it with a point-by-point response to each referee comment,
@@ -633,7 +665,7 @@ Use Codex to write the R scripts, creating a two-model verification loop
    ```
 
    The prompt instructs Codex to read the existing R scripts and data files
-   from the working directory, then write new scripts into `EconGuru/`:
+   from the working directory, then write new scripts into `Diebolt/`:
 
    ```xml
    <task>
@@ -641,14 +673,14 @@ Use Codex to write the R scripts, creating a two-model verification loop
    revision. Read the existing R scripts in the working directory to
    understand the data structure, variable names, and estimation approach.
 
-   Write a new R script at EconGuru/{papername}_revisions.R that performs
+   Write a new R script at Diebolt/{papername}_revisions.R that performs
    the following analyses requested by referees:
    {numbered_list_of_required_analyses}
 
    Requirements:
    - Use tidyverse conventions
    - Set seeds for any randomisation (set.seed(12345))
-   - Save all output as CSV files in EconGuru/
+   - Save all output as CSV files in Diebolt/
    - Include clear comments explaining each analysis
    - Match variable names and data loading from the existing scripts
    </task>
@@ -659,7 +691,7 @@ Use Codex to write the R scripts, creating a two-model verification loop
    </completeness_contract>
 
    <action_safety>
-   Only create files inside the EconGuru/ subdirectory. Do not modify any
+   Only create files inside the Diebolt/ subdirectory. Do not modify any
    existing files in the project.
    </action_safety>
    ```
@@ -675,7 +707,7 @@ the standard path below).
 **If `codex_available = false` — standard path**
 
 1. **Write the R code** in a new script (e.g., `{papername}_revisions.R`)
-   placed in the `EconGuru/` subfolder.
+   placed in the `Diebolt/` subfolder.
 2. **Run the script** and verify it completes without error.
 3. **Read the output files** (CSV tables, figures) to extract exact values.
 4. **Only then** write those values into the paper and response letter.
@@ -686,7 +718,7 @@ $p = 0.022$, write $p = 0.022$ — not $p = 0.038$ or "approximately 0.04".
 #### Online appendix
 
 If revisions produce many new tables, figures, or robustness checks, create
-an **online appendix** file (`{papername}_appendix.tex`) in the `EconGuru/`
+an **online appendix** file (`{papername}_appendix.tex`) in the `Diebolt/`
 subfolder. Structure:
 
 - Use the same preamble as the main paper.
@@ -860,9 +892,9 @@ for that field.
   This is the single most important rule for maintaining credibility.
 - **Verify numbers across all documents** before delivering files to the user.
   The numerical verification protocol (Step 10) is not optional.
-- **EconGuru/ is self-contained and Overleaf-ready.** Copy the .bib file,
+- **Diebolt/ is self-contained and Overleaf-ready.** Copy the .bib file,
   all figures, and any \input'ed files into the folder. All paths must be
-  relative to EconGuru/ — no `../` references to the parent directory.
+  relative to Diebolt/ — no `../` references to the parent directory.
 - **Diverse guru names.** Reflect the paper's geographic context. No
   all-Anglo-American panels.
 - **At least three methodology gurus.** They must search for and cite current

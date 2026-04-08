@@ -4,23 +4,25 @@ Custom skills for [Claude Code](https://claude.com/claude-code) designed for eco
 
 ## Skills
 
-### EconGuru
+### Diebolt
 
-A simulated peer review system for economics working papers. EconGuru creates a panel of independent referee agents — each with a distinct subspecialisation, personality, and fictitious university affiliation — who review your paper in isolation, with strict information barriers mirroring real peer review. An editor synthesises their feedback into a prioritised briefing. You choose which changes to implement, and the tool revises your LaTeX files accordingly. Referees persist in a local library that grows over time, building a roster of specialists with track records and seniority scores.
+A simulated peer review system for economics working papers, named in honour of [Claude Diebolt](https://en.wikipedia.org/wiki/Claude_Diebolt) — Research Professor at CNRS, Director of BETA, and founding Managing Editor of *Cliometrica* — whose editorial generosity gave Johan Fourie and Dieter von Fintel their first chance with their 2010 *Cliometrica* paper on inequality in the Cape Colony, and who has been a steadfast supporter of work at Stellenbosch ever since.
+
+Diebolt creates a panel of independent referee agents — each with a distinct subspecialisation, personality, and fictitious university affiliation — who review your paper in isolation, with strict information barriers mirroring real peer review. An editor synthesises their feedback into a prioritised briefing. You choose which changes to implement, and the tool revises your LaTeX files accordingly. Accepted papers are signed off with Claude Diebolt's own *Que la force*.
 
 **Installation:**
 
 ```bash
 # In your Claude Code settings, add the skill path:
-# ~/.claude/skills/econguru/skill.md
+# ~/.claude/skills/diebolt/skill.md
 ```
 
-Or copy `econguru/skill.md` to your Claude Code skills directory.
+Or copy `diebolt/skill.md` to your Claude Code skills directory.
 
 **Usage:**
 
 ```
-/econguru
+/diebolt
 ```
 
 Then follow the prompts to select a paper, target journal, and referee panel.

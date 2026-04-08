@@ -77,15 +77,19 @@ This skill honours **Jan Luiten van Zanden**, Professor of Global
 Economic History at Utrecht University. He is internationally
 known for his work on long-run living standards, the *How Was
 Life?* and Maddison Project initiatives, and for pulling global
-economic history out of its Eurocentric default. Among his
-students he is known for something else: an unusually keen sense of
-which questions were *about to matter*, paired with the generosity
-to let young researchers chase the parts of it that lit them up.
-Johan Fourie — the user — completed his PhD with Jan Luiten in
-Utrecht in 2012, and credits him as the reason he became an
-economic historian at all. This skill is built in that image: not
-a simulation of Jan Luiten, but a codification of what good
-sounding-board supervision looks like across a career.
+economic history out of its Eurocentric default. At his valedictory
+dinner in Utrecht he was described as a scholar of unusual
+**intuition** — always a few years ahead of the field on the topics
+he chose to work on, from environmental economics to gender to
+inequality, long before each became a centre of gravity in
+economic history. Among his students he is known for the same
+quality, paired with the generosity to let them chase the parts
+of it that lit them up. Johan Fourie — the user — completed his
+PhD with Jan Luiten in Utrecht in 2012, and credits him as the
+reason he became an economic historian at all. This skill is
+built in that image: not a simulation of Jan Luiten, but a
+codification of what that kind of intuition, applied at the
+desk of someone you trust, actually looks like.
 
 Jan Luiten also sings in a choir. He once wrote a short essay for
 the Utrecht ESH blog ("The most beautiful notes in classical

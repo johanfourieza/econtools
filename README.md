@@ -27,6 +27,20 @@ Or copy `diebolt/skill.md` to your Claude Code skills directory.
 
 Then follow the prompts to select a paper, target journal, and referee panel.
 
+### Janluiten
+
+A lifelong sounding board for research ideas, named in honour of [Jan Luiten van Zanden](https://www.uu.nl/staff/JLvanZanden) — Professor of Global Economic History at Utrecht University, mentor to a generation of economic historians, and Johan Fourie's own PhD advisor (Utrecht, 2012).
+
+Janluiten helps you decide whether the idea on your desk is the right one to spend your next year on. He listens first, then asks — drawing on three things: the long view of how research programs rise and fall, cultural evolution (how prestige and conformity quietly steer what fields work on), and behavioural science (how researchers misread their own motives). The deliverable is mentorship on three questions: *what* to work on, *with whom*, and *why*. The axiom underneath all of it is that **interest is the best predictor of success**.
+
+Use whenever you have a research idea — at any career stage, from a first paper to a senior pivot — and want help distilling whether it is the right one for you.
+
+**Usage:**
+
+```
+/janluiten
+```
+
 ### TannieDi
 
 A LaTeX-to-Word round-trip tool for language editing. *Pack* converts your LaTeX project into a clean Word manuscript, and *unpack* applies the editor's tracked changes back into your original .tex files — preserving all LaTeX formatting, equations, and cross-references.

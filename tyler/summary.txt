@@ -1,0 +1,11 @@
+Tyler converts a folder of academic PDFs into a token-efficient markdown wiki that Claude Code can navigate cheaply.
+
+The problem: a typical 25-page economics paper costs ~12,000 tokens to read as a PDF. With 100 papers, that's 1.2 million tokens — more than the entire context window. You'd get through maybe 8 papers before running out.
+
+Tyler fixes this with a two-tier architecture. Tier 1 is an auto-generated index (~400 tokens per paper) containing each paper's title, authors, year, abstract, JEL codes, keywords, and optional BibTeX citation key. Tier 2 is the full cleaned markdown, read only on demand. For 100 papers, the index costs ~40,000 tokens — leaving room to selectively read 10-20 full papers in detail.
+
+The Python conversion script extracts structured metadata using heuristics, strips JSTOR boilerplate, repeated headers/footers, page numbers, and trims the references section. It supports incremental updates (only re-converts changed files), recursive directory scanning, and BibTeX matching.
+
+Practical capacity: ~200 papers per session comfortably. Claude reads the index to understand the full literature, then dips into individual papers as needed. Roughly a 25x improvement over reading PDFs directly.
+
+Invoke with /tyler.

@@ -2,48 +2,47 @@
 
 Custom skills for [Claude Code](https://claude.com/claude-code) designed for economics research workflows.
 
-## Skills
+This folder is the development home for four skills (`diebolt`, `janluiten`, `tanniedi`, `tyler`) that have subfolders below. Other skills listed at the end live only in the global skills directory (`~/.claude/skills/`).
 
-### Diebolt
+## Skills in this folder
+
+Each of these has a subfolder here that mirrors the installed copy in `~/.claude/skills/`. Edits made here are the source of truth.
+
+### Diebolt — `diebolt/`
 
 A simulated peer review system for economics working papers, named in honour of [Claude Diebolt](https://en.wikipedia.org/wiki/Claude_Diebolt) — Research Professor at CNRS, Director of BETA, and founding Managing Editor of *Cliometrica* — whose editorial generosity gave Johan Fourie and Dieter von Fintel their first chance with their 2010 *Cliometrica* paper on inequality in the Cape Colony, and who has been a steadfast supporter of work at Stellenbosch ever since.
 
 Diebolt creates a panel of independent referee agents — each with a distinct subspecialisation, personality, and fictitious university affiliation — who review your paper in isolation, with strict information barriers mirroring real peer review. An editor synthesises their feedback into a prioritised briefing. You choose which changes to implement, and the tool revises your LaTeX files accordingly. Accepted papers are signed off with Claude Diebolt's own *Que la force*.
 
-**Installation:**
+The `diebolt/` folder is both source and runtime state:
 
-```bash
-# In your Claude Code settings, add the skill path:
-# ~/.claude/skills/diebolt/skill.md
-```
+- `skill.md` — the skill definition (mirrored to `~/.claude/skills/diebolt/`)
+- `gurus/` — individual referee persona files
+- `guru_registry.json` — registry of all reviewer personas
+- `review_log.json` — history of reviews performed
 
-Or copy `diebolt/skill.md` to your Claude Code skills directory.
+**Usage:** `/diebolt`
 
-**Usage:**
-
-```
-/diebolt
-```
-
-Then follow the prompts to select a paper, target journal, and referee panel.
-
-### Janluiten
+### Janluiten — `janluiten/`
 
 A lifelong sounding board for research ideas, named in honour of [Jan Luiten van Zanden](https://www.uu.nl/staff/JLvanZanden) — Professor of Global Economic History at Utrecht University, mentor to a generation of economic historians, and Johan Fourie's own PhD advisor (Utrecht, 2012). At his Utrecht valedictory dinner, van Zanden was described as a scholar of unusual **intuition** — always a few years ahead of the field on the topics he chose, from environmental economics to gender to inequality. The skill is built in that image.
 
 Janluiten helps you decide whether the idea on your desk is the right one to spend your next year on. He listens first, then asks — drawing on three things: the long view of how research programs rise and fall, cultural evolution (how prestige and conformity quietly steer what fields work on), and behavioural science (how researchers misread their own motives). The deliverable is mentorship on three questions: *what* to work on, *with whom*, and *why*. The axiom underneath all of it is that **interest is the best predictor of success**.
 
+The `janluiten/` folder contains:
+
+- `skill.md` — the skill definition
+- `references/` — reading material the skill draws on at runtime (van Zanden's writings and related sources)
+
 Use whenever you have a research idea — at any career stage, from a first paper to a senior pivot — and want help distilling whether it is the right one for you.
 
-**Usage:**
+**Usage:** `/janluiten`
 
-```
-/janluiten
-```
+### TannieDi — `tanniedi/`
 
-### TannieDi
+A LaTeX-to-Word round-trip tool for language editing. *Pack* converts your LaTeX project into a clean Word manuscript for Di Kilpert; *unpack* applies the editor's tracked changes back into your original `.tex` files — preserving LaTeX formatting, equations, and cross-references.
 
-A LaTeX-to-Word round-trip tool for language editing. *Pack* converts your LaTeX project into a clean Word manuscript, and *unpack* applies the editor's tracked changes back into your original .tex files — preserving all LaTeX formatting, equations, and cross-references.
+The `tanniedi/` folder contains only `skill.md`.
 
 **Usage:**
 
@@ -51,6 +50,32 @@ A LaTeX-to-Word round-trip tool for language editing. *Pack* converts your LaTeX
 /tanniedi pack
 /tanniedi unpack
 ```
+
+### Tyler — `tyler/`
+
+A literature-review helper that converts a folder of academic PDFs into a token-efficient markdown wiki, so Claude Code can read the papers cheaply when working on a project. Named in honour of economist Tyler Cowen — a famously voracious reader whose [Marginal Revolution](https://marginalrevolution.com) blog pioneered the practice of rapid, generous synthesis across fields.
+
+Point Tyler at a folder of PDFs and it produces one `.md` file per paper plus a `summary.txt` index, letting you load literature into context without burning tokens on raw PDF parsing.
+
+The `tyler/` folder contains:
+
+- `SKILL.md` — the skill definition
+- `convert.py` — the PDF-to-markdown conversion script
+- `summary.txt` — template/example summary index
+
+**Usage:** `/tyler`
+
+## Other custom skills (global only)
+
+These live in `~/.claude/skills/` and have no subfolder here. Short summaries:
+
+- **`/leapstyle`** — Apply the LEAP Economics house style to LaTeX working papers, beamer slides, R graphs, and academic writing. Covers preambles, colour palette, ggplot2 theme, and writing guidelines.
+- **`/leapletter`** — Create a reference letter or formal letter on LEAP letterhead, using the LaTeX letterhead template with logo, accent strip, watermark, and signature block.
+- **`/olwstyle`** — Apply the Our Long Walk house style to R graphs, beamer slides, and blog writing for [ourlongwalk.com](https://www.ourlongwalk.com). Colour palette, graph theme, beamer template, writing voice, content guidelines.
+- **`/olwsocial`** — Build a social media package from an Our Long Walk blog post. Produces platform-specific text posts (LinkedIn, X, Substack Notes, Instagram), quote cards, and adapted graphs.
+- **`/deploy-jf`** — Deploy [johanfourie.com](https://www.johanfourie.com): renders changed Quarto pages, commits, and pushes to GitHub Pages.
+- **`/deslop`** — Remove AI writing patterns from prose. Invoke when drafting, editing, or reviewing any text to strip out predictable AI tells.
+- **`/avoid-ai-writing`** — Audit and rewrite existing content to remove "AI-isms" — the formulaic patterns that give AI-generated prose away.
 
 ## License
 

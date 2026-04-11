@@ -42,18 +42,25 @@ export function AppHeader({ title, subtitle, profile, onSignOut, onProfileUpdate
     <>
       <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border flex-shrink-0">
         <div className="max-w-[1440px] mx-auto px-2 py-2 md:px-4 md:py-3 flex items-center justify-between gap-2 md:gap-3">
-          <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0">
             {/* Logo */}
-            <KabboLogo size={28} className="md:w-8 md:h-8" />
-            
-            <div className="min-w-0">
-              <h1 className="font-display font-semibold text-base md:text-xl leading-tight tracking-tight">
-                {title}
-              </h1>
-              <p className="text-muted-foreground text-[10px] md:text-xs mt-0.5 hidden sm:block">
-                {subtitle}
-              </p>
-            </div>
+            <KabboLogo size={28} className="md:w-8 md:h-8 flex-shrink-0" />
+
+            {/* Wordmark — sized to match logo height */}
+            <h1 className="font-display font-semibold text-[28px] md:text-[32px] leading-none tracking-tight">
+              Kabbo
+            </h1>
+
+            {/* Divider — matches logo height, spaced a logo-height away on each side */}
+            <div
+              aria-hidden="true"
+              className="hidden sm:block w-px h-7 md:h-8 bg-border ml-7 mr-7 md:ml-8 md:mr-8 flex-shrink-0"
+            />
+
+            {/* Byline */}
+            <p className="text-muted-foreground text-xs md:text-sm leading-none hidden sm:block truncate">
+              Your publication pipeline, simplified.
+            </p>
           </div>
 
           <div className="flex items-center gap-2">

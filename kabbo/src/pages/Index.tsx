@@ -18,7 +18,7 @@ import { PublicationDrawer } from '@/components/PublicationDrawer';
 import { BinModal } from '@/components/BinModal';
 import { BinDock } from '@/components/BinDock';
 import { PublishedDock } from '@/components/PublishedDock';
-import { CelebrationModal } from '@/components/CelebrationModal';
+import { pickKabboQuote } from '@/data/kabboQuotes';
 import { AnalyticsModal } from '@/components/AnalyticsModal';
 import { BibtexImportModal, ParsedEntry } from '@/components/BibtexImportModal';
 import { InvitationsModal } from '@/components/InvitationsModal';
@@ -96,10 +96,6 @@ const Index = () => {
   const [publishedYearsLimit, setPublishedYearsLimit] = useState<number>(() => {
     const stored = localStorage.getItem('kabbo-published-years-limit');
     return stored ? parseInt(stored, 10) : 5;
-  });
-  const [celebrationData, setCelebrationData] = useState<{ isOpen: boolean; title: string }>({
-    isOpen: false,
-    title: '',
   });
 
   // Onboarding
@@ -224,39 +220,49 @@ const Index = () => {
   };
 
   const handleStageCardDrop = (stageId: string) => (cardId: string) => {
+    const card = getCard(cardId);
+    const oldIndex = card ? pipelineStages.findIndex(s => s.id === card.stageId) : -1;
+    const newIndex = pipelineStages.findIndex(s => s.id === stageId);
+    const isForward = oldIndex >= 0 && newIndex > oldIndex;
+
     moveToStage(cardId, stageId);
-    const stageName = pipelineStages.find(s => s.id === stageId)?.name || stageId;
-    toast({
-      title: 'Publication moved',
-      description: `Moved to ${stageName}`,
-    });
+
+    if (isForward) {
+      toast({
+        title: 'Congratulations!',
+        description: `"${pickKabboQuote().text}" — ||kabbo`,
+      });
+    } else {
+      const stageName = pipelineStages.find(s => s.id === stageId)?.name || stageId;
+      toast({
+        title: 'Publication moved',
+        description: `Moved to ${stageName}`,
+      });
+    }
   };
 
   const handlePublishedDrop = (cardId: string, year: number) => {
     moveToStage(cardId, 'published', year);
     toast({
-      title: 'Published!',
-      description: `Filed under ${year}`,
+      title: 'Congratulations!',
+      description: `"${pickKabboQuote().text}" — ||kabbo`,
     });
   };
 
   const handlePublishedDockDrop = (cardId: string) => {
     const card = getCard(cardId);
     const currentYear = new Date().getFullYear();
-    
-    // Only show celebration if not already published
     const isAlreadyPublished = card?.stageId === 'published';
-    
+
     moveToStage(cardId, 'published', currentYear);
-    
-    // Show celebration modal only for newly published papers
+
     if (!isAlreadyPublished) {
-      setCelebrationData({
-        isOpen: true,
-        title: card?.title || 'Your publication',
+      toast({
+        title: 'Congratulations!',
+        description: `"${pickKabboQuote().text}" — ||kabbo`,
       });
     }
-    
+
     // Auto-show published section if hidden
     if (!showPublished) {
       setShowPublished(true);
@@ -556,13 +562,6 @@ const Index = () => {
         }}
       />
 
-
-      {/* Celebration Modal */}
-      <CelebrationModal
-        isOpen={celebrationData.isOpen}
-        onClose={() => setCelebrationData({ isOpen: false, title: '' })}
-        publicationTitle={celebrationData.title}
-      />
 
       {/* PDF Export Modal */}
       <ExportPdfModal

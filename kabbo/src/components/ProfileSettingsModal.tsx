@@ -44,7 +44,7 @@ function ApiKeysSection({ userId }: { userId: string }) {
   const [revealedKey, setRevealedKey] = useState<string | null>(null);
 
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-  const ingestUrl = `https://${projectId}.supabase.co/functions/v1/ingest-publication`;
+  const ingestUrl = `https://${projectId}.supabase.co/functions/v1/ingest-publications`;
 
   const fetchKeys = async () => {
     const { data } = await supabase
@@ -177,7 +177,7 @@ function ApiKeysSection({ userId }: { userId: string }) {
 
 function IntegrationGuide() {
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-  const ingestUrl = `https://${projectId}.supabase.co/functions/v1/ingest-publication`;
+  const ingestUrl = `https://${projectId}.supabase.co/functions/v1/ingest-publications`;
   const apiUrl = `https://${projectId}.supabase.co/functions/v1/api-publications`;
   const mcpUrl = `https://${projectId}.supabase.co/functions/v1/mcp-server`;
   const webhookUrl = `https://${projectId}.supabase.co/functions/v1/github-webhook`;

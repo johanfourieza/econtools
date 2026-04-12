@@ -1,0 +1,484 @@
+# Kabbo — The Killer App for Research Teams
+# From pipeline tracker to the operating system for academic research
+# Strategic Plan — April 2026
+
+---
+
+## Context
+
+Kabbo is a publication pipeline tracker named after ||kabbo, the |Xam storyteller.
+It currently lets individual researchers drag cards through seven stages
+(Idea -> Published) and has a functional teams layer (invitations, visibility
+settings, team workspaces, analytics, report export). An MCP server with 6
+tools provides Claude Code integration.
+
+The goal is to transform Kabbo from a free personal tool into the one-stop
+platform for the entire research publication workflow — from idea generation
+to paper dissemination — with a clear monetisation path:
+
+- Free tier: Individual researchers. Full pipeline, MCP integration, Claude
+  Code skill.
+- Paid tier (Team Leader): Create and manage research teams, see team
+  analytics, set targets, track bottlenecks, export reports. Team members
+  stay on free — only the leader pays.
+- Future scaling: Team -> Department -> Faculty -> School -> University.
+
+The strategic differentiator is twofold: (1) Claude Code / Codex integration
+via MCP — no other academic tool offers this, and (2) the only tool that gives
+research leaders visibility into the pre-publication pipeline, where papers are
+invisible to bibliometric systems.
+
+---
+
+## What already exists (surprisingly a lot)
+
+### Fully built
+- Core pipeline UI (7 stages, drag-and-drop, undo, offline queue)
+- Teams: create, invite by email, admin/member roles, per-member visibility
+  settings, team workspace with filtering, team analytics view, Excel report
+  export
+- MCP server (6 tools: list, get, create, update, move_stage, delete)
+- Collaborations (share individual papers with co-authors)
+- Activity log (tracks web, API, MCP, webhook actions)
+- GitHub webhook integration (.kabbo.yaml, [stage:xxx] commit tags)
+- BibTeX import
+- Publication drawer with notes, links, authors, themes, grants, output type
+- ||kabbo biographical content on About page with quote-based celebration
+  toasts (36 curated quotes from Bleek & Lloyd 1911, public domain)
+
+### DB schema exists but UI missing
+- reminders table (deadlines, due dates)
+- data_sources column on publications
+- related_papers column on publications
+
+### Not started
+- Billing / Stripe / subscription management
+- Publication targets
+- Media/social media coverage tracking
+- ORCID / Semantic Scholar / Zotero import
+- Landing page (marketing)
+- Performance evaluation framework
+- Department/faculty/school hierarchy
+
+---
+
+## The Plan: Six Waves
+
+The plan is structured as six waves, each building on the last. Waves 1-2 can
+ship in weeks. Wave 3 introduces revenue. Waves 4-6 are the long game.
+
+---
+
+### WAVE 1: CLAUDE CODE — THE KILLER FEATURE (1-2 weeks)
+
+This is the strategic differentiator. Ship it first because it costs nothing,
+creates word-of-mouth among technical academics, and builds the data layer
+that Waves 2-4 depend on.
+
+#### 1A. Expand MCP server from 6 -> 16 tools
+
+New tools (each is a handler in supabase/functions/mcp-server/index.ts):
+
+ #  | Tool                  | What it does                                               | Example prompt
+----|-----------------------|------------------------------------------------------------|------------------------------------------
+ 7  | get_pipeline_summary  | Counts by stage, recently updated, stalled (30+ days)      | "How's my pipeline looking?"
+ 8  | search_publications   | Full-text search across title, authors, notes, themes      | "Find all papers about colonial wages"
+ 9  | bulk_update           | Accept array of {id, updates} for batch operations         | "Add grant NRF-2026 to all submitted papers"
+10  | get_activity_log      | Recent activity from all sources with date-range filter    | "What changed this week?"
+11  | manage_reminders      | CRUD on reminders table                                    | "Remind me to resubmit by June 15"
+12  | get_analytics         | Conversion rates, avg time per stage, velocity             | "How many papers did I publish this year vs last?"
+13  | get_team_summary      | Team pipeline: papers by stage per member, stalled papers  | "How are my students' papers progressing?"
+14  | export_bibtex         | Generate BibTeX for selected/all publications              | "BibTeX for all published papers since 2024"
+15  | add_note              | Append to publication notes without overwriting             | "Note on climate paper: reviewer 2 wants robustness checks"
+16  | get_stalled_papers    | Papers unchanged in N days, sorted by staleness            | "Which papers have been stuck longest?"
+
+#### 1B. One-click MCP setup UX
+
+In ProfileSettingsModal.tsx:
+- "Copy MCP config" button -> copies JSON block to clipboard
+- "Test Connection" button -> pings MCP server, shows success/failure toast
+- Step-by-step setup instructions with screenshots
+
+#### 1C. Kabbo skill file for Claude Code
+
+Distributable at ~/.claude/skills/kabbo/skill.md:
+- All 16 tool descriptions with parameter schemas
+- Common workflow recipes ("morning check-in", "weekly review", "prepare
+  annual report")
+- Tips (search before creating; use bulk_update for batch ops)
+
+Also publish on the econtools GitHub repo and link from the Kabbo website.
+
+#### 1D. Codex integration
+
+Codex uses the same MCP protocol as Claude Code. The existing MCP server works
+with Codex out of the box — the only requirement is that Codex can reach the
+Supabase edge function URL. Document this in the skill file and on the website.
+No separate implementation needed.
+
+#### 1E. Smart Insights panel (non-Claude-Code users)
+
+A collapsible InsightsPanel on the main dashboard with rule-based suggestions:
+
+ Category         | Example                                              | Logic
+------------------|------------------------------------------------------|-------------------------------
+ Stalled          | "Colonial Wages has been in R&R for 92 days"         | now - last_stage_change > 30d
+ Missing data     | "3 papers have no target year"                       | Check completionYear
+ Momentum         | "You submitted 5 papers this year, up from 3 last"   | Stage transitions by year
+ Quick wins       | "2 accepted papers — ready to mark Published?"       | Count accepted
+ Celebration      | "You published 3 papers this year!"                  | Count published
+
+This gives non-technical users a taste of what Claude Code offers, creating
+pull toward the full integration.
+
+---
+
+### WAVE 2: COMPLETE THE INDIVIDUAL RESEARCHER EXPERIENCE (1 week)
+
+Finish half-built features that make Kabbo indispensable for individuals
+before asking anyone to pay.
+
+#### 2A. Reminders & Deadlines
+- useReminders hook (CRUD on existing reminders table)
+- "Reminders" section in PublicationDrawer
+- Global "Upcoming Deadlines" widget on dashboard
+- Visual indicator on PublicationCard when reminder is due
+- Browser Notification API (opt-in)
+
+#### 2B. Data Sources UI
+- List-editor accordion in PublicationDrawer (uses existing data_sources column)
+
+#### 2C. Related Papers UI
+- List-editor with relationship-type dropdown (cites, cited-by, extends,
+  replicates)
+- Auto-link if title matches another Kabbo publication
+
+#### 2D. CSV / Spreadsheet Import
+- Upload CSV, auto-detect columns, preview mapping, import
+- This is the single biggest onboarding friction reducer — most academics track
+  papers in Excel
+
+#### 2E. ORCID Import
+- Fetch published works from ORCID public API
+- One-click "Import your ORCID publications"
+- Instant gratification: new users see their published work immediately
+
+#### 2F. GitHub Integration documentation
+- "GitHub Integration" section in ProfileSettingsModal
+- Setup guide, .kabbo.yaml template, example commit messages
+- List of connected repos (from activity_log)
+
+---
+
+### WAVE 3: THE PAID TIER — TEAM LEADER (2-3 weeks)
+
+This is where revenue begins. The pricing model:
+
+FREE (Individual Researcher)
+- Full pipeline (all 7 stages)
+- MCP / Claude Code / Codex integration
+- Reminders, data sources, related papers
+- CSV, ORCID, BibTeX import
+- Join unlimited teams as a member
+- Basic personal analytics
+
+TEAM LEADER ($9/month or $89/year per team)
+- Create and manage up to 1 research team (additional teams: same price each)
+- Invite unlimited members (members stay free)
+- Team dashboard with aggregate analytics
+- Per-member pipeline visibility (what stages you can see)
+- Publication targets (set goals, track progress against them)
+- Bottleneck analysis (where do papers get stuck?)
+- Team activity log
+- Annual review export (per-member PDF/Excel)
+- Grant progress view (papers grouped by grant)
+- Priority support
+
+Why $9/month: Low enough that a PI can expense it without procurement. High
+enough to signal value. Annual discount encourages commitment. A department
+head with 5 teams pays $45/month — still trivial against a research budget.
+
+#### 3A. Stripe integration
+
+- Create a Stripe account with two products: "Team Leader Monthly" ($9) and
+  "Team Leader Annual" ($89)
+- Use Stripe Checkout (hosted payment page — no PCI compliance burden)
+- Stripe Customer Portal for subscription management (cancel, update card)
+- Webhook: stripe-webhook edge function to handle checkout.session.completed,
+  customer.subscription.updated, customer.subscription.deleted
+
+#### 3B. Database changes
+
+New table: subscriptions
+  id uuid primary key
+  user_id uuid references profiles(id)
+  stripe_customer_id text
+  stripe_subscription_id text
+  status text ('active', 'canceled', 'past_due', 'trialing')
+  plan text ('team_leader_monthly', 'team_leader_annual')
+  current_period_end timestamptz
+  created_at, updated_at timestamptz
+
+New column on teams: subscription_id uuid references subscriptions(id)
+
+#### 3C. Enforcement logic
+
+- Creating a team checks subscriptions for an active subscription
+- Existing teams (created before billing launch) get a 30-day grace period
+- Team members are never billed — only the team creator
+- If subscription lapses: team dashboard becomes read-only (data preserved,
+  not deleted), team leader sees "Resubscribe to manage your team"
+
+#### 3D. Team Leader features (the value proposition)
+
+PUBLICATION TARGETS
+- Team leader sets annual targets per member: "I expect 2 published papers and
+  3 submissions this year"
+- Dashboard shows progress-to-target with a simple bar chart
+- New table: publication_targets (team_id, member_user_id, year,
+  target_published, target_submitted, target_drafts)
+
+BOTTLENECK ANALYSIS
+- Visual heatmap: which stage holds the most papers, for how long?
+- Per-member breakdown: "Dr X has 4 papers stuck in R&R averaging 120 days"
+- Aggregate: "60% of your team's papers stall at the submission stage"
+- Data source: stage_history JSON array already stored on every publication
+
+STRAGGLER / SUPERSTAR DETECTION
+- Rank team members by publication velocity (papers moving per quarter)
+- Flag members with zero stage transitions in 60+ days
+- Highlight members with unusually high throughput
+- Present as a neutral "Activity Summary" — avoid punitive framing
+
+TEAM ACTIVITY FEED
+- Real-time feed of stage transitions across the team: "Alice moved 'Climate
+  Paper' to Submitted — 2 hours ago"
+- Uses existing activity_log table, filtered by team membership
+- Accessible from team dashboard
+
+ANNUAL REVIEW EXPORT (enhanced)
+- Per-member PDF with: publications by stage, targets vs actuals,
+  time-in-stage averages, activity timeline
+- "Generate Annual Review for [Member] — [Year]" button in team dashboard
+- Uses existing TeamReportExport.tsx pattern, extended with target data
+
+GRANT PROGRESS VIEW
+- Group papers by grant tag
+- Show: total papers per grant, papers by stage, stalled papers, published
+  output
+- Useful for grant reporting: "NRF-2026 has produced 3 publications and has
+  5 in pipeline"
+
+---
+
+### WAVE 4: DISSEMINATION TRACKING (2-4 weeks, after Wave 3)
+
+Extend Kabbo beyond the pipeline exit (Published) to track what happens after
+publication. This closes the loop from idea to impact.
+
+#### 4A. Citation tracking
+
+- Integrate OpenAlex API (free, no rate limit) or Semantic Scholar API
+- For each published paper with a DOI: fetch citation count periodically
+  (weekly cron job via Supabase pg_cron or a scheduled edge function)
+- Display on PublicationCard: "12 citations" badge
+- Team dashboard: citation velocity, h-index approximation, most-cited papers
+
+#### 4B. Altmetric / media coverage
+
+- Integrate Altmetric API (free tier available) or PlumX
+- Track mentions in news, blogs, social media, policy documents
+- Display Altmetric "donut" or a simplified score on published papers
+- Team dashboard: "Papers in the media this month"
+- Alternative (simpler, no API): let users manually log media appearances
+  (title, outlet, URL, date) via a media_coverage table
+
+#### 4C. Social media package generation
+
+- Reuse the existing /olwsocial skill pattern
+- When a paper is published: generate platform-specific social posts
+  (LinkedIn, X/Bluesky, institutional newsletter)
+- Store templates per team (some teams want formal, others casual)
+- This is a natural extension of the ||kabbo "story" metaphor — every
+  published paper deserves its own telling
+
+---
+
+### WAVE 5: SCALE FROM TEAM TO INSTITUTION (long-term, 3-6 months)
+
+The hierarchy: Researcher -> Team -> Department -> Faculty -> University
+
+#### 5A. Organisational hierarchy
+
+New tables:
+  organisations (id, name, type, parent_id references organisations)
+    type: 'department' | 'faculty' | 'school' | 'university'
+  organisation_teams (organisation_id, team_id)
+  organisation_admins (organisation_id, user_id, role: 'admin'|'viewer')
+
+A department head sees all teams in their department. A dean sees all
+departments in their faculty. Roll-up analytics at each level.
+
+#### 5B. Institutional pricing
+
+ Tier          | Price       | What you get
+---------------|-------------|----------------------------------------------
+ Team Leader   | $9/month    | 1 team, unlimited members
+ Department    | $49/month   | Up to 10 teams, department analytics, reviews
+ Faculty       | $199/month  | Unlimited teams, faculty roll-up, branding
+ University    | Custom      | Multi-faculty, SSO integration, support
+
+#### 5C. SSO / institutional identity
+
+- SAML or OpenID Connect integration for university single sign-on
+- Auto-provisioning: university login -> placed in the right department
+- This is the enterprise unlock — universities won't adopt without it
+
+#### 5D. Performance evaluation framework (careful — defer unless requested)
+
+- Team leader defines evaluation criteria (publication count, citations,
+  grant success, mentoring load)
+- System generates a draft evaluation report from Kabbo data
+- Leader reviews and adjusts before sharing
+- CRITICAL: never auto-share evaluations with evaluated members. The leader
+  always controls what's shared.
+- Position as "evidence-based review support" not "performance monitoring"
+
+---
+
+### WAVE 6: AI-NATIVE RESEARCH ASSISTANT (ongoing)
+
+#### 6A. In-app AI assistant (for non-Claude-Code users)
+
+- Edge function calling Claude Haiku
+- Natural language queries: "Which journals should I submit this to?",
+  "Summarize my pipeline for my annual review", "What should I focus on next?"
+- Rate-limited: 10 queries/user/day on free tier, unlimited on paid
+- Context: the assistant sees the user's full pipeline data
+
+#### 6B. AI-powered insights (paid tier)
+
+- "Smart bottleneck detection" — Claude analyses stage_history patterns:
+  "Papers co-authored with Dr X take 3x longer in R&R than average"
+- "Journal recommendation" — based on themes, output type, team history
+- "Risk flagging" — "This paper has been in Submitted for 180 days — consider
+  withdrawing and resubmitting elsewhere"
+
+#### 6C. Idea generation assistant
+
+- Connects to the /janluiten skill pattern
+- "I have data on colonial wages. What questions are alive in this field?"
+- Uses the researcher's pipeline (themes, grants, co-authors) as context
+- This closes the loop: Kabbo helps from before the idea to after the
+  publication
+
+---
+
+## Implementation priority matrix
+
+ Wave                  | Effort       | Revenue impact        | User impact    | Ship target
+-----------------------|--------------|-----------------------|----------------|-------------------
+ 1: Claude Code        | 1-2 weeks    | None (creates buzz)   | High (tech)    | April 2026
+ 2: Individual polish  | 1 week       | None (reduces churn)  | High (all)     | May 2026
+ 3: Paid team tier     | 2-3 weeks    | FIRST REVENUE         | High (leaders) | May-June 2026
+ 4: Dissemination      | 2-4 weeks    | Retention driver      | Medium         | July 2026
+ 5: Institutional      | 3-6 months   | SCALE REVENUE         | High (depts)   | Q4 2026
+ 6: AI assistant       | Ongoing      | Differentiator        | Medium-High    | Incremental
+
+---
+
+## Competitive positioning
+
+What exists today for academics:
+- Spreadsheets (Excel, Google Sheets) — no collaboration, no analytics, no AI
+- Trello/Notion — generic, not built for research workflow
+- Manuscript Central / ScholarOne — journal-side, not researcher-side
+- ORCID — tracks published output only, not the pipeline
+- Pure (Elsevier) — enterprise CRIS, expensive, heavyweight
+
+Kabbo's unique position:
+- The only tool that tracks the pre-publication pipeline (where papers are
+  invisible to every other system)
+- The only tool with Claude Code / Codex integration via MCP
+- Free for individuals, affordable for team leaders
+- Named after a storyteller who understood that every journey has stages,
+  seasons, and waiting
+
+The pitch (one sentence):
+  Kabbo is where your research lives between the idea and the publication —
+  and the only tool that lets you ask Claude how it's going.
+
+---
+
+## Files that will be modified (by wave)
+
+Wave 1:
+  supabase/functions/mcp-server/index.ts — add 10 new tools
+  src/components/ProfileSettingsModal.tsx — MCP setup UX
+  src/components/InsightsPanel.tsx — NEW
+  src/hooks/useInsights.ts — NEW
+  ~/.claude/skills/kabbo/skill.md — NEW (also published to econtools repo)
+
+Wave 2:
+  src/hooks/useReminders.ts — NEW
+  src/components/PublicationDrawer.tsx — reminders, data sources, related papers
+  src/components/CSVImportModal.tsx — NEW
+  src/components/ORCIDImportModal.tsx — NEW
+  src/components/ProfileSettingsModal.tsx — GitHub integration docs
+
+Wave 3:
+  supabase/functions/stripe-webhook/index.ts — NEW
+  supabase/migrations/ — subscriptions, publication_targets, teams.subscription_id
+  src/hooks/useSubscription.ts — NEW
+  src/components/PricingModal.tsx — NEW
+  src/components/TeamTargets.tsx — NEW
+  src/components/BottleneckAnalysis.tsx — NEW
+  src/components/TeamActivityFeed.tsx — NEW
+  src/components/TeamAnalyticsView.tsx — enhanced with targets, bottlenecks
+  src/components/TeamsModal.tsx — gate team creation on subscription
+
+Wave 4:
+  supabase/functions/citation-tracker/index.ts — NEW (scheduled)
+  src/hooks/useCitations.ts — NEW
+  src/components/DisseminationPanel.tsx — NEW
+
+Wave 5:
+  supabase/migrations/ — organisations tables
+  src/pages/OrgDashboard.tsx — NEW
+  SSO integration (SAML/OIDC middleware)
+
+Wave 6:
+  supabase/functions/ai-assistant/index.ts — NEW
+  src/components/AIChat.tsx — NEW
+
+---
+
+## What to build first (next session)
+
+Wave 1A: Expand MCP server from 6 -> 16 tools. This is the highest-leverage
+work: it costs nothing, differentiates Kabbo from every competitor, and the
+data layer it builds (analytics queries, stalled-paper detection, team
+summaries) is reused by Waves 2-5.
+
+Start with get_pipeline_summary and get_stalled_papers — these are the two
+tools that make the "How's my pipeline looking?" prompt work, and they are the
+demo moment that sells Kabbo to other researchers.
+
+---
+
+## Technical reference
+
+Project: johanfourieza/econtools (GitHub)
+Hosting: Vercel (project: kabboapp, root directory: kabbo)
+Database: Supabase project ID jydnsbaztvmjkebhmoia
+Domain: kabbo.app (Porkbun) + pubzub.com redirect (Porkbun -> kabbo.app)
+OAuth: Google Cloud Console (renamed from PubZub to Kabbo, April 2026)
+Edge functions (4 deployed):
+  mcp-server, api-publications, github-webhook, ingest-publications
+Core data layer: src/hooks/useSupabasePublications.ts (~860 lines)
+Teams hook: src/hooks/useTeams.ts (~435 lines)
+Activity log: activity_log table (sources: web, api, mcp, webhook)
+
+---
+
+Plan authored: 12 April 2026

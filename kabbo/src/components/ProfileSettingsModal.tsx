@@ -130,9 +130,25 @@ function ApiKeysSection({ userId }: { userId: string }) {
             </Button>
           </div>
           <p className="text-[11px] text-muted-foreground">This key won't be shown again.</p>
-          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setRevealedKey(null)}>
-            Dismiss
-          </Button>
+          <div className="flex gap-2 pt-1">
+            <Button size="sm" variant="default" className="h-7 text-xs gap-1" onClick={() => {
+              const config = JSON.stringify({
+                mcpServers: {
+                  kabbo: {
+                    type: "url",
+                    url: `https://${projectId}.supabase.co/functions/v1/mcp-server?api_key=${revealedKey}`
+                  }
+                }
+              }, null, 2);
+              copyToClipboard(config, 'MCP config');
+            }}>
+              <Server className="w-3 h-3" />
+              Copy MCP Config
+            </Button>
+            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setRevealedKey(null)}>
+              Dismiss
+            </Button>
+          </div>
         </div>
       )}
 
@@ -353,7 +369,7 @@ The script should:
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">Test the API with this curl command. Replace <code className="text-[11px] bg-muted px-1 rounded">YOUR_API_KEY</code> with a key from above.</p>
               <div className="relative">
-                <pre className="text-[11px] bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap font-mono leading-relaxed">{curlExample}</pre>
+                <pre className="text-[11px] bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap break-all font-mono leading-relaxed">{curlExample}</pre>
                 <Button size="sm" variant="ghost" className="absolute top-1 right-1 h-6 w-6 p-0" onClick={() => copyToClipboard(curlExample)}>
                   <Copy className="w-3 h-3" />
                 </Button>
@@ -377,7 +393,7 @@ The script should:
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">Give this prompt to Claude Code to auto-sync your Overleaf projects. Requires Overleaf premium (git access).</p>
               <div className="relative">
-                <pre className="text-[11px] bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap font-mono leading-relaxed">{overleafPrompt}</pre>
+                <pre className="text-[11px] bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap break-all font-mono leading-relaxed">{overleafPrompt}</pre>
                 <Button size="sm" variant="ghost" className="absolute top-1 right-1 h-6 w-6 p-0" onClick={() => copyToClipboard(overleafPrompt)}>
                   <Copy className="w-3 h-3" />
                 </Button>
@@ -397,7 +413,7 @@ The script should:
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">Give this prompt to Claude Code to sync papers from your Dropbox folder structure.</p>
               <div className="relative">
-                <pre className="text-[11px] bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap font-mono leading-relaxed">{dropboxPrompt}</pre>
+                <pre className="text-[11px] bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap break-all font-mono leading-relaxed">{dropboxPrompt}</pre>
                 <Button size="sm" variant="ghost" className="absolute top-1 right-1 h-6 w-6 p-0" onClick={() => copyToClipboard(dropboxPrompt)}>
                   <Copy className="w-3 h-3" />
                 </Button>
@@ -417,7 +433,7 @@ The script should:
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">Give this prompt to Claude Code to scan all your GitHub repos and sync them to Kabbo. Complements the webhook for a full periodic reconciliation.</p>
               <div className="relative">
-                <pre className="text-[11px] bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap font-mono leading-relaxed">{githubSyncPrompt}</pre>
+                <pre className="text-[11px] bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap break-all font-mono leading-relaxed">{githubSyncPrompt}</pre>
                 <Button size="sm" variant="ghost" className="absolute top-1 right-1 h-6 w-6 p-0" onClick={() => copyToClipboard(githubSyncPrompt)}>
                   <Copy className="w-3 h-3" />
                 </Button>
@@ -440,7 +456,7 @@ The script should:
               </p>
 
               <div className="relative">
-                <pre className="text-[11px] bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap font-mono leading-relaxed">{`# .kabbo.yaml — drop this in any paper repo root
+                <pre className="text-[11px] bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap break-all font-mono leading-relaxed">{`# .kabbo.yaml — drop this in any paper repo root
 title: "Effect of Climate Policy on Trade Flows"
 stage: draft
 authors:
@@ -534,7 +550,7 @@ links:
                 <p className="font-medium">Setup in Claude Code:</p>
                 <p>Add to your <code className="bg-muted px-1 rounded">~/.claude/settings.json</code> or project <code className="bg-muted px-1 rounded">.mcp.json</code>:</p>
                 <div className="relative">
-                  <pre className="text-[11px] bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre font-mono leading-relaxed">{`{
+                  <pre className="text-[11px] bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap break-all font-mono leading-relaxed">{`{
   "mcpServers": {
     "kabbo": {
       "type": "url",
@@ -547,20 +563,60 @@ links:
                   </Button>
                 </div>
 
-                <p className="font-medium pt-2">Available tools:</p>
+                <p className="pt-2 pb-1 font-medium">Test connection:</p>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Paste your API key to test"
+                    className="h-7 text-[11px] font-mono"
+                    id="mcp-test-key"
+                  />
+                  <Button size="sm" variant="outline" className="h-7 text-xs whitespace-nowrap gap-1" onClick={async () => {
+                    const key = (document.getElementById('mcp-test-key') as HTMLInputElement)?.value;
+                    if (!key) { toast.error('Paste an API key first'); return; }
+                    try {
+                      const res = await fetch(`${mcpUrl}?api_key=${encodeURIComponent(key)}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ jsonrpc: '2.0', method: 'initialize', params: { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 'kabbo-test', version: '1.0.0' } }, id: 1 }),
+                      });
+                      if (res.ok) { toast.success('MCP server connected successfully'); }
+                      else { toast.error(`Connection failed (${res.status})`); }
+                    } catch { toast.error('Connection failed — check your network'); }
+                  }}>
+                    <Server className="w-3 h-3" />
+                    Test
+                  </Button>
+                </div>
+
+                <p className="font-medium pt-2">Available tools (16):</p>
                 <div className="space-y-1">
-                  <p><code className="bg-muted px-1 rounded">list_publications</code> — List/search all publications with optional filters</p>
+                  <p><code className="bg-muted px-1 rounded">list_publications</code> — List all publications with optional filters</p>
                   <p><code className="bg-muted px-1 rounded">get_publication</code> — Get a single publication by ID</p>
                   <p><code className="bg-muted px-1 rounded">create_publication</code> — Create a new publication</p>
                   <p><code className="bg-muted px-1 rounded">update_publication</code> — Update any field on a publication</p>
                   <p><code className="bg-muted px-1 rounded">move_stage</code> — Move a publication to a different stage</p>
                   <p><code className="bg-muted px-1 rounded">delete_publication</code> — Soft-delete (bin) a publication</p>
+                  <p><code className="bg-muted px-1 rounded">get_pipeline_summary</code> — Pipeline overview: counts by stage, stalled and recent papers</p>
+                  <p><code className="bg-muted px-1 rounded">search_publications</code> — Search across title, authors, notes, themes, grants</p>
+                  <p><code className="bg-muted px-1 rounded">bulk_update</code> — Update multiple publications at once</p>
+                  <p><code className="bg-muted px-1 rounded">get_activity_log</code> — Recent activity from all sources with date filtering</p>
+                  <p><code className="bg-muted px-1 rounded">manage_reminders</code> — Create, list, complete, or delete reminders</p>
+                  <p><code className="bg-muted px-1 rounded">get_analytics</code> — Velocity, time per stage, breakdowns by author/theme/grant</p>
+                  <p><code className="bg-muted px-1 rounded">get_team_summary</code> — Team pipeline: papers by stage per member</p>
+                  <p><code className="bg-muted px-1 rounded">export_bibtex</code> — Generate BibTeX for your publications</p>
+                  <p><code className="bg-muted px-1 rounded">add_note</code> — Append a timestamped note to a publication</p>
+                  <p><code className="bg-muted px-1 rounded">get_stalled_papers</code> — Papers inactive for 30+ days, sorted by staleness</p>
                 </div>
 
-                <p className="font-medium pt-2">Example usage in Claude Code:</p>
-                <p><em>"List all my publications in the draft stage"</em></p>
-                <p><em>"Move my climate paper to submitted"</em></p>
-                <p><em>"Create a new idea called 'AI in Economics'"</em></p>
+                <p className="font-medium pt-2">Example prompts in Claude Code:</p>
+                <p><em>"How's my pipeline looking?"</em></p>
+                <p><em>"Which papers have been stuck longest?"</em></p>
+                <p><em>"How many papers did I publish this year vs last year?"</em></p>
+                <p><em>"Find all papers about colonial wages"</em></p>
+                <p><em>"Add a note to the climate paper: reviewer 2 wants robustness checks"</em></p>
+                <p><em>"How are my students' papers progressing?"</em></p>
+                <p><em>"Remind me to resubmit by June 15"</em></p>
+                <p><em>"Give me BibTeX for all published papers since 2024"</em></p>
               </div>
             </div>
           </AccordionContent>
@@ -760,7 +816,7 @@ export function ProfileSettingsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
         </DialogHeader>
@@ -881,7 +937,7 @@ export function ProfileSettingsModal({
           </TabsContent>
 
           <TabsContent value="developer" className="mt-4">
-            <div className="space-y-3">
+            <div className="space-y-3 overflow-x-hidden">
               <ActivityLog userId={profile.id} />
               <div className="border-t border-border pt-3">
                 <h3 className="text-sm font-medium flex items-center gap-1.5">

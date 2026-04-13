@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserProfile } from '@/types/publication';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Camera, Loader2, ExternalLink, Key, Copy, Trash2, Plus, Code, Terminal, BookOpen, FolderSync, Github, Server, Database, FileCode } from 'lucide-react';
+import { Camera, Loader2, ExternalLink, Key, Copy, Trash2, Plus, Code, Terminal, BookOpen, FolderSync, Github, Server, Database, FileCode, Download, Bot, Sparkles } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { ActivityLog } from './ActivityLog';
 
@@ -299,15 +299,117 @@ The script should:
 - Skip repos that are forks or archived
 - Have an --init flag that creates a .kabbo.yaml template in repos that don't have one`;
 
+  const skillFileUrl = `${window.location.origin}/skill.md`;
+  const curlInstall = `mkdir -p ~/.claude/skills/kabbo && curl -o ~/.claude/skills/kabbo/skill.md ${skillFileUrl}`;
+
   return (
-    <div className="space-y-3 pt-2 border-t border-border">
+    <div className="space-y-4 pt-2 border-t border-border">
+      {/* AI Integration intro */}
+      <div>
+        <h3 className="text-sm font-medium flex items-center gap-1.5">
+          <Sparkles className="w-4 h-4" />
+          AI Integration
+        </h3>
+        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+          Kabbo works with AI coding assistants so you can manage your publication
+          pipeline from the command line or chat. Ask questions like "How's my
+          pipeline looking?" or "Which papers have been stuck longest?" and get
+          structured answers from your own data.
+        </p>
+      </div>
+
+      {/* Platform cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Claude Code card */}
+        <div className="rounded-lg border border-border bg-card p-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-md bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+              <Terminal className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Claude Code</p>
+              <p className="text-[10px] text-muted-foreground">by Anthropic</p>
+            </div>
+          </div>
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            A CLI assistant that runs in your terminal. Install the Kabbo skill
+            file to give it access to all 16 pipeline tools via the{' '}
+            <code className="bg-muted px-1 rounded text-[10px]">/kabbo</code> command.
+          </p>
+          <div className="flex gap-2 pt-1">
+            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => {
+              const a = document.createElement('a');
+              a.href = skillFileUrl;
+              a.download = 'skill.md';
+              a.click();
+            }}>
+              <Download className="w-3 h-3" />
+              Download skill.md
+            </Button>
+            <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => copyToClipboard(curlInstall)}>
+              <Copy className="w-3 h-3" />
+              Copy install command
+            </Button>
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            Place in <code className="bg-muted px-0.5 rounded text-[9px]">~/.claude/skills/kabbo/skill.md</code>
+          </p>
+        </div>
+
+        {/* Codex card */}
+        <div className="rounded-lg border border-border bg-card p-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-md bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+              <Bot className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Codex</p>
+              <p className="text-[10px] text-muted-foreground">by OpenAI</p>
+            </div>
+          </div>
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            An AI coding agent that reads an{' '}
+            <code className="bg-muted px-1 rounded text-[10px]">AGENTS.md</code> file
+            in your project. Clone the Kabbo repo and Codex will automatically
+            discover the pipeline tools.
+          </p>
+          <div className="flex gap-2 pt-1">
+            <a
+              href="https://github.com/johanfourieza/econtools/blob/main/kabbo/AGENTS.md"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
+                <ExternalLink className="w-3 h-3" />
+                View AGENTS.md
+              </Button>
+            </a>
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            Place in your project root. Codex reads it automatically.
+          </p>
+        </div>
+      </div>
+
+      {/* What you need section */}
+      <div className="rounded-lg border border-border bg-muted/30 p-3">
+        <p className="text-xs font-medium mb-2">What you need to get started:</p>
+        <ol className="text-[11px] text-muted-foreground list-decimal ml-4 space-y-1">
+          <li>Create an <strong>API key</strong> in the section above</li>
+          <li>Download the <strong>skill file</strong> (Claude Code) or <strong>AGENTS.md</strong> (Codex) using the buttons above</li>
+          <li>Copy your <strong>MCP config</strong> (shown when you create a key) into your Claude Code settings</li>
+          <li>Ask Claude Code: <em>"How's my pipeline looking?"</em></li>
+        </ol>
+      </div>
+
+      {/* Detailed integration guides */}
       <div>
         <h3 className="text-sm font-medium flex items-center gap-1.5">
           <BookOpen className="w-4 h-4" />
-          How to use with Claude Code / Codex
+          Integration guides
         </h3>
         <p className="text-xs text-muted-foreground mt-1">
-          Copy these prompts into Claude Code or Codex to set up automated syncing.
+          Detailed setup for specific platforms and sync workflows.
         </p>
       </div>
 

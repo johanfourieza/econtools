@@ -62,6 +62,37 @@ invisible to bibliometric systems.
 
 ---
 
+## Pre-wave: Infrastructure (before Wave 1 ships to users)
+
+### Resend — production email
+
+Kabbo currently has email confirmation disabled because there's no production
+email provider. Supabase's built-in mailer is rate-limited and uses a generic
+sender address. Setting up Resend fixes this.
+
+Steps:
+1. Create a Resend account at resend.com (free tier: 3,000 emails/month)
+2. Add and verify kabbo.app domain in Resend (add DNS records in Porkbun):
+   - MX record for receiving bounces
+   - TXT record for SPF
+   - CNAME records for DKIM (Resend provides these)
+3. Generate a Resend API key
+4. Configure Supabase SMTP (dashboard > Auth > SMTP Settings):
+   - Host: smtp.resend.com
+   - Port: 465
+   - Username: resend
+   - Password: re_YOUR_RESEND_API_KEY
+   - Sender name: Kabbo
+   - Sender email: noreply@kabbo.app
+5. Re-enable email confirmation in Supabase Auth settings:
+   - Auth > Providers > Email > Enable email confirmations
+6. Test: sign up with a fresh email, confirm the confirmation email arrives
+   from noreply@kabbo.app with valid DKIM signature
+
+Status: NOT DONE. User has a Resend account pending setup.
+
+---
+
 ## The Plan: Six Waves
 
 The plan is structured as six waves, each building on the last. Waves 1-2 can

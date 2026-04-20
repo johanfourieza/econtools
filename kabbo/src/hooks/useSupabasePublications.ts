@@ -57,7 +57,14 @@ function dbToLocal(dbPub: any): Publication {
     overleafLink: dbPub.overleaf_link || '',
     reminders: [],
     collaborators: [],
-    publishedYear: dbPub.stage === 'published' ? (dbPub.target_year || new Date().getFullYear()) : '',
+    // If a row is in the "published" stage but its target_year is missing,
+    // leave publishedYear empty rather than silently fabricating the current
+    // year. Fabricating a year is what caused orphan rows to pile up in the
+    // 2026 column. Rows with no year now stay out of the year grid until the
+    // user assigns one.
+    publishedYear: dbPub.stage === 'published' && dbPub.target_year != null
+      ? dbPub.target_year
+      : '',
     createdAt: dbPub.created_at,
     updatedAt: dbPub.updated_at,
     history: (dbPub.stage_history || []).map((h: any) => ({

@@ -300,12 +300,31 @@ const Index = () => {
   };
 
   const handleBibtexImport = async (entries: ParsedEntry[]) => {
+    let imported = 0;
+    let skipped = 0;
+
     for (const entry of entries) {
+      // Never create a publication with no title — that's how you get "Untitled"
+      // ghost rows stacking up in the Published column.
+      if (!entry.title || !entry.title.trim()) {
+        skipped++;
+        continue;
+      }
+
       const year = entry.year ? parseInt(entry.year, 10) : new Date().getFullYear();
       const stageId = entry.suggestedStage === 'draft' ? 'draft' : 'published';
       const pub = await addPublication(stageId);
-      if (pub) {
+      if (!pub) {
+        skipped++;
+        continue;
+      }
+
+      try {
         await updatePublication(pub.id, {
+          // `stageId` must be included so the publishedYear → target_year
+          // mapping fires in updatePublication; otherwise a published row
+          // ends up with target_year=null and silently falls into "no year".
+          stageId,
           title: entry.title,
           authors: entry.authors,
           completionYear: entry.year,
@@ -314,8 +333,24 @@ const Index = () => {
           typeA: entry.journal || entry.publisher || '',
           typeB: entry.booktitle || '',
         });
+        imported++;
+      } catch (err) {
+        // Update failed — bin the empty stub row we just created so it doesn't
+        // linger as an "Untitled" orphan.
+        console.error('BibTeX import: update failed, rolling back stub row', err);
+        try { await moveToBin(pub.id); } catch { /* best effort */ }
+        skipped++;
       }
     }
+
+    toast({
+      title: skipped === 0
+        ? `Imported ${imported} publication${imported === 1 ? '' : 's'}`
+        : `Imported ${imported}, skipped ${skipped}`,
+      description: skipped > 0
+        ? 'Skipped entries were missing a title or failed to save.'
+        : undefined,
+    });
   };
 
   const handleExportBibtex = () => {

@@ -126,7 +126,7 @@ export function useSupabasePublications() {
   // Board config (stored locally for now)
   const [board] = useState({
     title: 'Kabbo',
-    subtitle: 'Your publication pipeline, simplified.',
+    subtitle: 'Because research is a journey.',
     paletteId: 'burnt-fieldnotes',
     stages: [...DEFAULT_STAGES],
     createdAt: new Date().toISOString(),

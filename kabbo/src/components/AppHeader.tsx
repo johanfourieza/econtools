@@ -61,7 +61,7 @@ export function AppHeader({ title, subtitle, profile, onSignOut, onProfileUpdate
 
             {/* Byline */}
             <p className="text-muted-foreground text-xs md:text-sm leading-none hidden sm:block truncate">
-              Your publication pipeline, simplified.
+              Because research is a journey.
             </p>
           </div>
 

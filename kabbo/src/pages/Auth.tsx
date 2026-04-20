@@ -160,7 +160,7 @@ export default function Auth() {
             </h1>
           </div>
           <p className="text-muted-foreground">
-            Your publication pipeline, simplified.
+            Because research is a journey.
           </p>
         </div>
 

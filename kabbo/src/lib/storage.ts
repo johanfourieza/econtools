@@ -135,7 +135,7 @@ export function createEmptyState(): PubFlowState {
   return {
     board: {
       title: 'Kabbo',
-      subtitle: 'Your publication pipeline, simplified.',
+      subtitle: 'Because research is a journey.',
       paletteId: 'burnt-fieldnotes',
       stages: [...DEFAULT_STAGES],
       createdAt: now,

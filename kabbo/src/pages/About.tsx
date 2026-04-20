@@ -24,7 +24,7 @@ export default function About() {
               <KabboWordmark height={44} />
             </h1>
             <p className="text-muted-foreground text-sm mt-2">
-              Your publication pipeline, simplified.
+              Because research is a journey.
             </p>
           </div>
         </div>

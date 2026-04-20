@@ -208,7 +208,7 @@ ${WORDMARK_PATHS}
   <!-- Contour wordmark painted through the mask -->
   <rect x="560" y="210" width="560" height="178" fill="${FG}" mask="url(#og-kabbo)"/>
   <!-- Byline + URL -->
-  <text x="565" y="445" font-family="'DM Sans', Arial, Helvetica, sans-serif" font-size="32" fill="#475569">Your publication pipeline, simplified.</text>
+  <text x="565" y="445" font-family="'DM Sans', Arial, Helvetica, sans-serif" font-size="32" fill="#475569">Because research is a journey.</text>
   <text x="565" y="498" font-family="'DM Sans', Arial, Helvetica, sans-serif" font-size="26" fill="#9ca3af">kabbo.app</text>
 </svg>`;
 

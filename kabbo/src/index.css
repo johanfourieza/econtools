@@ -16,6 +16,9 @@
     --warm-coral: 12 65% 58%;
     --soft-amber: 38 60% 55%;
     --cream: 40 25% 96%;
+
+    /* Brand ochre — haematite pigment, San rock art */
+    --brand-ochre: 14 55% 40%;
     
     /* Semantic tokens */
     --background: 40 20% 98%;
@@ -88,6 +91,9 @@
   .dark {
     --background: 220 18% 8%;
     --foreground: 40 15% 95%;
+
+    /* Brand ochre — slightly brighter in dark mode for contrast */
+    --brand-ochre: 14 65% 58%;
 
     --card: 220 16% 11%;
     --card-foreground: 40 15% 95%;

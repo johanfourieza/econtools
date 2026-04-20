@@ -33,3 +33,14 @@ kabbo-favicon16-preview.png
 *.njsproj
 *.sln
 *.sw?
+supabase-commands.txt
+
+# Brand kit — kept local, not shipped with the web app
+brand/
+kabbo-wordmark-preview.html
+
+# Demo-license fonts (personal-use only, do not redistribute)
+genius-fraud-font/
+genius-fraud-font.zip
+marianne-font/
+marianne-font.zip

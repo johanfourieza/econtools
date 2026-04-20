@@ -61,6 +61,10 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Brand
+        brand: {
+          ochre: "hsl(var(--brand-ochre))",
+        },
         // Scandinavian palette
         "slate-deep": "hsl(var(--slate-deep))",
         "slate-mid": "hsl(var(--slate-mid))",

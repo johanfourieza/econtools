@@ -30,7 +30,7 @@ const cy = 24;
 const petalCount = 32;
 const STROKE = 0.9;
 const DISC_R = 4.5;
-const FG = '#1f2937'; // slate-800
+const FG = '#9E482E'; // brand ochre — hsl(14 55% 40%)
 
 const longPetals = Array.from({ length: petalCount }, (_, i) => {
   const a = (i * 2 * Math.PI) / petalCount;
@@ -169,18 +169,47 @@ await renderToPng(
 );
 
 // ─── Open-Graph social card (1200×630) ───────────────────────────────────────
+// Uses the same contour wordmark as the in-app header (see src/components/
+// KabboWordmark.tsx and brand/generate.mjs). Mask-based rendering keeps the
+// SVG self-contained.
+const WORDMARK_PATHS = `    <path d="M 15 12 L 15 118"/>
+    <path d="M 15 65 L 60 12"/>
+    <path d="M 15 65 L 62 118"/>
+    <path d="M 110 12 L 70 118"/>
+    <path d="M 110 12 L 150 118"/>
+    <path d="M 85 75 L 135 75"/>
+    <path d="M 180 12 L 180 118"/>
+    <path d="M 180 12 H 204 A 24 26.5 0 0 1 204 65 H 180"/>
+    <path d="M 180 65 H 204 A 24 26.5 0 0 1 204 118 H 180"/>
+    <path d="M 250 12 L 250 118"/>
+    <path d="M 250 12 H 274 A 24 26.5 0 0 1 274 65 H 250"/>
+    <path d="M 250 65 H 274 A 24 26.5 0 0 1 274 118 H 250"/>
+    <circle cx="345" cy="65" r="45"/>`;
+
 const ogSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-  <rect width="1200" height="630" fill="#ffffff"/>
-  <!-- Flower icon, left side -->
+  <defs>
+    <mask id="og-kabbo" maskUnits="userSpaceOnUse">
+      <rect x="560" y="210" width="560" height="178" fill="black"/>
+      <g transform="translate(560, 210) scale(1.366)">
+        <g stroke="white" stroke-width="20" stroke-linecap="butt" stroke-linejoin="miter" fill="none">
+${WORDMARK_PATHS}
+        </g>
+        <g stroke="black" stroke-width="14" stroke-linecap="butt" stroke-linejoin="miter" fill="none">
+${WORDMARK_PATHS}
+        </g>
+      </g>
+    </mask>
+  </defs>
+  <rect width="1200" height="630" fill="#FBF8F1"/>
+  <!-- Flower logomark, left side -->
   <g transform="translate(150, 155) scale(7.92)">
     ${flowerBody()}
   </g>
-  <!-- Wordmark + tagline, right side -->
-  <text x="560" y="290" font-family="Georgia, 'Times New Roman', serif" font-size="140" font-weight="700" fill="#0f172a">Kabbo</text>
-  <text x="563" y="350" font-family="Arial, Helvetica, sans-serif" font-size="34" fill="#475569">Academic publication pipeline</text>
-  <text x="563" y="410" font-family="Arial, Helvetica, sans-serif" font-size="28" fill="#94a3b8">kabbo.app</text>
-  <!-- Thin accent rule beneath the wordmark -->
-  <line x1="563" y1="445" x2="780" y2="445" stroke="#1f2937" stroke-width="2" stroke-linecap="round"/>
+  <!-- Contour wordmark painted through the mask -->
+  <rect x="560" y="210" width="560" height="178" fill="${FG}" mask="url(#og-kabbo)"/>
+  <!-- Byline + URL -->
+  <text x="565" y="445" font-family="'DM Sans', Arial, Helvetica, sans-serif" font-size="32" fill="#475569">Your publication pipeline, simplified.</text>
+  <text x="565" y="498" font-family="'DM Sans', Arial, Helvetica, sans-serif" font-size="26" fill="#9ca3af">kabbo.app</text>
 </svg>`;
 
 await renderToPng(ogSvg, resolve('public/og-image.png'), 1200, 630);

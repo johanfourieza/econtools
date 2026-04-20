@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { LogOut, Settings, Moon, Sun, Info, Users } from 'lucide-react';
 import { UserProfile } from '@/types/publication';
 import { KabboLogo } from './KabboLogo';
+import { KabboWordmark } from './KabboWordmark';
 import { ProfileSettingsModal } from './ProfileSettingsModal';
 import { PaletteSelector } from './PaletteSelector';
 import { useTheme } from 'next-themes';
@@ -46,9 +47,10 @@ export function AppHeader({ title, subtitle, profile, onSignOut, onProfileUpdate
             {/* Logo */}
             <KabboLogo size={28} className="md:w-8 md:h-8 flex-shrink-0" />
 
-            {/* Wordmark — sized to match logo height */}
-            <h1 className="font-display font-semibold text-[28px] md:text-[32px] leading-none tracking-tight">
-              Kabbo
+            {/* Wordmark — contour ochre (Proposal E). Render as h1 via aria. */}
+            <h1 className="leading-none" aria-label="Kabbo">
+              <KabboWordmark height={28} className="md:hidden" />
+              <KabboWordmark height={32} className="hidden md:block" />
             </h1>
 
             {/* Divider — matches logo height, spaced a logo-height away on each side */}

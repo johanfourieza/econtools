@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { KabboLogo } from '@/components/KabboLogo';
+import { KabboWordmark } from '@/components/KabboWordmark';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 
@@ -19,12 +20,12 @@ export default function About() {
         <div className="flex items-center gap-4 mb-8">
           <KabboLogo size={56} />
           <div>
-            <h1 className="font-display text-4xl font-bold tracking-tight text-foreground">
-              Kabbo
+            <h1 className="leading-none" aria-label="Kabbo">
+              <KabboWordmark height={44} />
             </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Your publication pipeline, simplified.
-          </p>
+            <p className="text-muted-foreground text-sm mt-2">
+              Your publication pipeline, simplified.
+            </p>
           </div>
         </div>
 

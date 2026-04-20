@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { KabboLogo } from '@/components/KabboLogo';
+import { KabboWordmark } from '@/components/KabboWordmark';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -66,8 +67,8 @@ export default function ResetPassword() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <KabboLogo size={40} />
-            <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">
-              Kabbo
+            <h1 className="leading-none" aria-label="Kabbo">
+              <KabboWordmark height={34} />
             </h1>
           </div>
           <p className="text-muted-foreground">

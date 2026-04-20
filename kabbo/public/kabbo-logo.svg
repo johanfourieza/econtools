@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="512" height="512">
-<g stroke="#1f2937" stroke-width="0.9" stroke-linecap="round" fill="none">
+<g stroke="#9E482E" stroke-width="0.9" stroke-linecap="round" fill="none">
   <line x1="32.000" y1="24.000" x2="47.000" y2="24.000"/>
   <line x1="31.846" y1="25.561" x2="46.558" y2="28.487"/>
   <line x1="31.391" y1="27.061" x2="45.249" y2="32.802"/>
@@ -65,5 +65,5 @@
   <line x1="31.177" y1="21.823" x2="40.746" y2="18.920"/>
   <line x1="31.464" y1="23.265" x2="41.416" y2="22.285"/>
 </g>
-<circle cx="24" cy="24" r="4.5" fill="#1f2937"/>
+<circle cx="24" cy="24" r="4.5" fill="#9E482E"/>
 </svg>

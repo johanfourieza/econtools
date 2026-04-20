@@ -431,8 +431,8 @@ const Index = () => {
 
         {/* Published Section - collapsible */}
         {showPublished && (
-          <div data-pdf-published className="flex-shrink-0 pb-16">
-            <div className="flex items-baseline justify-between gap-4 mb-3 flex-wrap">
+          <div data-pdf-published className="flex-1 flex flex-col min-h-0">
+            <div className="flex items-baseline justify-between gap-4 mb-3 flex-wrap flex-shrink-0">
               <h3 className="font-display font-semibold text-base">Published</h3>
               <p className="text-muted-foreground text-xs">
                 Drag a publication below the line to file it by year
@@ -440,7 +440,7 @@ const Index = () => {
             </div>
 
             {pipelineView === 'horizontal' ? (
-              <div className="flex flex-col gap-2">
+              <div className="flex-1 flex flex-col gap-2 overflow-y-auto min-h-0 pb-16">
                 {filteredPublishedByYear.map(({ year, cards }) => (
                   <HorizontalYearStage
                     key={year}
@@ -452,7 +452,7 @@ const Index = () => {
                 ))}
               </div>
             ) : (
-              <div className="flex gap-2 overflow-x-auto pb-2">
+              <div className="flex-1 flex gap-2 overflow-x-auto overflow-y-hidden min-h-0 pb-2">
                 {filteredPublishedByYear.map(({ year, cards }) => (
                   <YearStage
                     key={year}

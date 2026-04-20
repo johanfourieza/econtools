@@ -33,14 +33,14 @@ export function YearStage({ year, cards, onCardClick, onCardDrop }: YearStagePro
   };
 
   return (
-    <section className="bg-card border border-border rounded-xl shadow-card flex flex-col min-w-[150px] flex-1 min-h-[30vh]">
-      <header className="p-3 flex items-center justify-between gap-2">
+    <section className="bg-card border border-border rounded-xl shadow-card flex flex-col min-w-[150px] flex-1 h-full overflow-hidden">
+      <header className="p-3 flex items-center justify-between gap-2 flex-shrink-0">
         <h2 className="font-display font-semibold text-sm">{year}</h2>
         <span className="text-muted-foreground text-xs">{cards.length}</span>
       </header>
 
       <div
-        className="dropzone flex-1"
+        className="dropzone flex-1 overflow-y-auto"
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}

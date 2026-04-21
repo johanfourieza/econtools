@@ -10,6 +10,8 @@ import { useOnboarding } from '@/hooks/useOnboarding';
 import { usePublicationPresence } from '@/hooks/usePublicationPresence';
 import { AppHeader } from '@/components/AppHeader';
 import { FilterBar } from '@/components/FilterBar';
+import { InsightsPanel } from '@/components/InsightsPanel';
+import { useInsights } from '@/hooks/useInsights';
 import { PipelineStage } from '@/components/PipelineStage';
 import { HorizontalPipelineStage } from '@/components/HorizontalPipelineStage';
 import { HorizontalYearStage } from '@/components/HorizontalYearStage';
@@ -111,6 +113,15 @@ const Index = () => {
     openQuickStart,
     closeQuickStart,
   } = useOnboarding();
+
+  // Smart Insights panel — rule-based cards surfaced between the FilterBar
+  // and the pipeline grid. Reads `state.cards` only; no writes.
+  const {
+    insights,
+    dismiss: dismissInsight,
+    isExpanded: insightsExpanded,
+    toggleExpanded: toggleInsightsExpanded,
+  } = useInsights(state.cards);
 
   // Filter published years by limit. The 'unknown' bucket is always retained
   // regardless of limit, so orphan rows with missing years are never hidden.
@@ -420,6 +431,14 @@ const Index = () => {
             onPublishedYearsLimitChange={(limit) => { setPublishedYearsLimit(limit); localStorage.setItem('kabbo-published-years-limit', String(limit)); }}
           />
         </div>
+
+        {/* Smart Insights panel (Wave 1E) */}
+        <InsightsPanel
+          insights={insights}
+          onDismiss={dismissInsight}
+          isExpanded={insightsExpanded}
+          onToggleExpanded={toggleInsightsExpanded}
+        />
 
         {/* Pipeline Board - Vertical (column) view */}
         {pipelineView === 'vertical' && (

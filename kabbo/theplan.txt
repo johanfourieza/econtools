@@ -7,14 +7,18 @@
 
 ## Progress log
 
-### Wave 1: Claude Code — killer feature — COMPLETE except 1E
+### Wave 1: Claude Code — killer feature — COMPLETE
 - [x] 1A · MCP server expanded from 6 to 16 tools (commit 6dcaa9b)
 - [x] 1B · One-click MCP setup UX in ProfileSettingsModal (commit 5c95d1c)
 - [x] 1C · Kabbo skill file for Claude Code (commit 3bc60f3)
 - [x] 1D · Codex integration via AGENTS.md (commit 3bc60f3)
 - [x] AI Integration panel with downloadable skill file (commit 247ca80)
-- [ ] 1E · Smart Insights panel — NOT STARTED. Still the highest-impact
-      remaining Wave 1 item. See "What to build next" below.
+- [x] 1E · Smart Insights panel (commit 1e99466, 2026-04-21).
+      Six rule-based categories (celebration, quick_wins, stalled,
+      missing_year, missing_authors, momentum) in a horizontal scroll row
+      between the FilterBar and the pipeline. Per-card dismiss with
+      7-day TTL. Display-only v1; action buttons deferred to 1.5. 17
+      Vitest cases covering every rule.
 
 ### Stabilisation sprint — COMPLETE (2026-04-20 → 2026-04-21)
 Unplanned but necessary after two data-loss incidents (21 orphan
@@ -541,10 +545,39 @@ Wave 6:
 
 ## What to build next
 
-Wave 1A-D shipped. The immediate next item is **Wave 1E: Smart Insights
-panel**, followed by starting Wave 2 (Individual polish).
+Wave 1 is complete. The immediate next item is **Wave 2A: Reminders**,
+followed by 2D (CSV import) and 2E (ORCID import) in that order.
 
-### Immediate next — Wave 1E (1-2 days)
+### Deferred from 1E — Wave 1.5 action buttons (optional, small)
+
+The insights panel currently shows messages only. A small follow-up can
+wire up 2-3 action buttons where the navigation destination is obvious:
+  - "Review" on missing_year → scrolls the Published section into view
+    and highlights the Unknown-year column.
+  - "View" on quick_wins → scrolls to the Accepted pipeline column.
+  - "Open" on an individual stalled card → opens the publication drawer.
+
+Do this after a week of real usage — Johan will know by then which
+buttons actually help vs. which are noise.
+
+### Immediate next — Wave 2A: Reminders (1-2 days)
+
+The reminders table already exists in Supabase (`reminders`, created
+with the Phase-1 migrations). No UI consumes it. Build:
+
+Files:
+- `src/hooks/useReminders.ts` — CRUD wrapping the existing table.
+- `src/components/RemindersSection.tsx` — added to PublicationDrawer.
+- `src/components/UpcomingDeadlines.tsx` — small widget on the
+  dashboard above or beside InsightsPanel.
+- Optional: browser Notification API opt-in in ProfileSettingsModal.
+
+Visible indicator on PublicationCard when a reminder is due today or
+overdue (small dot or clock icon).
+
+### After 2A — pick from Wave 2 in order of impact
+
+Wave 1E (Smart Insights) — DONE (2026-04-21).
 
 Build a collapsible InsightsPanel on the dashboard with rule-based suggestions.
 Non-Claude-Code users get a taste of what the MCP integration offers, which
@@ -624,5 +657,5 @@ Activity log: activity_log table (sources: web, api, mcp, webhook)
 ---
 
 Plan authored: 12 April 2026
-Last updated: 21 April 2026 (progress log added, stabilisation sprint
-recorded, "what to build next" rewritten to point at Wave 1E)
+Last updated: 21 April 2026 — Wave 1 complete (1E shipped), next target
+is Wave 2A (Reminders).

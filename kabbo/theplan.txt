@@ -1,6 +1,61 @@
 # Kabbo — The Killer App for Research Teams
 # From pipeline tracker to the operating system for academic research
 # Strategic Plan — April 2026
+# Last updated: 2026-04-21
+
+---
+
+## Progress log
+
+### Wave 1: Claude Code — killer feature — COMPLETE except 1E
+- [x] 1A · MCP server expanded from 6 to 16 tools (commit 6dcaa9b)
+- [x] 1B · One-click MCP setup UX in ProfileSettingsModal (commit 5c95d1c)
+- [x] 1C · Kabbo skill file for Claude Code (commit 3bc60f3)
+- [x] 1D · Codex integration via AGENTS.md (commit 3bc60f3)
+- [x] AI Integration panel with downloadable skill file (commit 247ca80)
+- [ ] 1E · Smart Insights panel — NOT STARTED. Still the highest-impact
+      remaining Wave 1 item. See "What to build next" below.
+
+### Stabilisation sprint — COMPLETE (2026-04-20 → 2026-04-21)
+Unplanned but necessary after two data-loss incidents (21 orphan
+"Untitled" rows in 2026, then BibTeX imports disappearing on reload).
+Both turned out to be symptoms of the same bug — a stale-state race in
+useSupabasePublications.updatePublication that silently no-op'd the
+update step of BibTeX's two-step insert-then-update pattern.
+- [x] Root cause identified and killed (commit eb22832): atomic
+      addPublicationWithData helper, publicationsRef for stale-state-safe
+      lookups, visibility sentinel for null-year rows, effective-stage
+      check in year update path.
+- [x] Every other stale-state .find() call across useSupabasePublications
+      hardened to read from refs (commit bfb2b39).
+- [x] Persistence transforms extracted to publicationTransforms.ts so
+      they can be unit-tested without pulling in the Supabase client
+      (commit 97335df).
+- [x] Vitest suite with 11 tests including a visibility invariant that
+      catches the whole class of "row vanishes from every bucket" bugs
+      in 1.3 seconds (commit 97335df).
+- [x] TESTING.md manual checklist with 20 flows + 60-second pre-deploy
+      smoke test (commit bfb2b39).
+- [x] scripts/integration-test.mjs scaffolded for real-Supabase round-
+      trip testing; requires a disposable test user in .env.test to
+      enable (commit bfb2b39).
+
+### Brand identity — COMPLETE (2026-04-20)
+- [x] Switched to single-hue ochre (#9E482E, haematite pigment) across
+      the app and favicons (commit 509b508).
+- [x] Custom contour KABBO wordmark replaces the old "Kabbo" in Inter
+      everywhere (commit 509b508).
+- [x] Tagline changed to "Because research is a journey." in every
+      touchpoint including OG card (commit bba5012).
+- [x] Local-only brand kit at kabbo/brand/ (SVG + PNG + lockups + specimen
+      HTML; gitignored).
+- [x] Scroll fix for the Published section (commit 70be75b).
+- [x] README refreshed with etymology, tagline, AI integration story,
+      corrected MCP tool count (commit 9ce0660).
+
+### Pre-wave infrastructure
+- [ ] Resend email setup. Steps added to this plan (commit 1503b91)
+      but DNS + Supabase SMTP config not yet executed.
 
 ---
 
@@ -484,16 +539,72 @@ Wave 6:
 
 ---
 
-## What to build first (next session)
+## What to build next
 
-Wave 1A: Expand MCP server from 6 -> 16 tools. This is the highest-leverage
-work: it costs nothing, differentiates Kabbo from every competitor, and the
-data layer it builds (analytics queries, stalled-paper detection, team
-summaries) is reused by Waves 2-5.
+Wave 1A-D shipped. The immediate next item is **Wave 1E: Smart Insights
+panel**, followed by starting Wave 2 (Individual polish).
 
-Start with get_pipeline_summary and get_stalled_papers — these are the two
-tools that make the "How's my pipeline looking?" prompt work, and they are the
-demo moment that sells Kabbo to other researchers.
+### Immediate next — Wave 1E (1-2 days)
+
+Build a collapsible InsightsPanel on the dashboard with rule-based suggestions.
+Non-Claude-Code users get a taste of what the MCP integration offers, which
+creates pull toward the full integration and gives paying team leaders a
+surface to spot problems at a glance.
+
+Files to create:
+- `src/hooks/useInsights.ts`
+- `src/components/InsightsPanel.tsx`
+
+Initial ruleset (all derivable from existing data; zero new schema):
+
+  Category      | Rule                                                        | Suggestion shown
+  --------------|-------------------------------------------------------------|----------------------------------------
+  Stalled       | A card whose stageId has not changed in > 30 days           | "{title} has been in {stage} for N days"
+  Missing data  | A published card with publishedYear = 'unknown'             | "N papers have no target year — assign"
+  Missing data  | Any card with no authors                                    | "N papers have no author listed"
+  Momentum      | Compare published-this-year vs same-date-last-year          | "You've published 5 so far, up from 3 at this point last year"
+  Quick wins    | Cards in 'accepted' stage                                   | "N accepted papers — ready to mark Published?"
+  Celebration   | Any new published card in the last 7 days                   | "You published {title} this week!"
+
+Each insight:
+- A one-line message
+- An optional action button (e.g. "View stalled papers" filters the pipeline)
+- Dismissible (stored in localStorage with a 7-day TTL)
+
+Positioned between the filter bar and the pipeline, collapsible, default
+collapsed on mobile. Uses the same kabbo quote palette for the celebration
+rows — makes the panel feel alive rather than corporate.
+
+This is low-risk work that exercises the new reliability layer we just
+shipped: it reads from `publications`, groups / counts / dates, and
+writes nothing. A good first feature after the persistence stabilisation.
+
+### After 1E — pick from Wave 2 in order of impact
+
+Wave 2A (Reminders) — highest user-value individual feature that reduces
+churn the most. Unlocks the "Kabbo tells me what to do today" behaviour.
+
+Wave 2D (CSV import) — single biggest onboarding friction reducer.
+Academics track papers in Excel; getting them off Excel into Kabbo in one
+drag is the killer import flow.
+
+Wave 2E (ORCID import) — instant gratification for new users. Log in,
+paste your ORCID, see your 40 published papers populate in 10 seconds.
+
+Defer Wave 2B (data sources) and 2C (related papers) unless a user
+specifically asks — the schema exists but the UX value is smaller.
+
+### Pre-wave still outstanding
+
+- Resend SMTP setup (see "Pre-wave: Infrastructure" section). Without
+  this, email confirmation stays disabled and sign-ups accept any email.
+  Do this before the first paid-tier launch in Wave 3.
+
+### Do NOT start Wave 3 yet
+
+Stripe + billing is a one-way door. Hold it until Wave 1E and at least
+Wave 2A/2D/2E are shipped — paying users need to feel the product is
+finished before a paywall is defensible.
 
 ---
 
@@ -513,3 +624,5 @@ Activity log: activity_log table (sources: web, api, mcp, webhook)
 ---
 
 Plan authored: 12 April 2026
+Last updated: 21 April 2026 (progress log added, stabilisation sprint
+recorded, "what to build next" rewritten to point at Wave 1E)

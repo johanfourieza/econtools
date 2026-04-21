@@ -49,6 +49,7 @@ const Index = () => {
     getCardsForStage,
     publishedByYear,
     addPublication,
+    addPublicationWithData,
     updatePublication,
     moveToStage,
     undo,
@@ -111,11 +112,12 @@ const Index = () => {
     closeQuickStart,
   } = useOnboarding();
 
-  // Filter published years by limit
+  // Filter published years by limit. The 'unknown' bucket is always retained
+  // regardless of limit, so orphan rows with missing years are never hidden.
   const filteredPublishedByYear = useMemo(() => {
     const currentYear = new Date().getFullYear();
     const minYear = currentYear - publishedYearsLimit + 1;
-    return publishedByYear.filter(({ year }) => year >= minYear);
+    return publishedByYear.filter(({ year }) => year === 'unknown' || year >= minYear);
   }, [publishedByYear, publishedYearsLimit]);
 
   // Get all published cards for statistics
@@ -241,8 +243,11 @@ const Index = () => {
     }
   };
 
-  const handlePublishedDrop = (cardId: string, year: number) => {
-    moveToStage(cardId, 'published', year);
+  const handlePublishedDrop = (cardId: string, year: number | 'unknown') => {
+    // Dropping onto the "Year unknown" bucket is a no-op for the year — it
+    // means the user is moving a card into published without assigning one.
+    const resolvedYear = year === 'unknown' ? undefined : year;
+    moveToStage(cardId, 'published', resolvedYear);
     toast({
       title: 'Congratulations!',
       description: `"${pickKabboQuote().text}" — ||kabbo`,
@@ -302,10 +307,11 @@ const Index = () => {
   const handleBibtexImport = async (entries: ParsedEntry[]) => {
     let imported = 0;
     let skipped = 0;
+    let failed = 0;
 
     for (const entry of entries) {
-      // Never create a publication with no title — that's how you get "Untitled"
-      // ghost rows stacking up in the Published column.
+      // Never create a publication with no title — that's how orphan rows
+      // used to accumulate in the Published column.
       if (!entry.title || !entry.title.trim()) {
         skipped++;
         continue;
@@ -313,43 +319,45 @@ const Index = () => {
 
       const year = entry.year ? parseInt(entry.year, 10) : new Date().getFullYear();
       const stageId = entry.suggestedStage === 'draft' ? 'draft' : 'published';
-      const pub = await addPublication(stageId);
-      if (!pub) {
-        skipped++;
+      const outputType = entry.type === 'book'
+        ? 'book' as const
+        : entry.type === 'incollection' || entry.type === 'inbook'
+          ? 'chapter' as const
+          : 'journal' as const;
+
+      // Atomic single-insert. The old flow (addPublication followed by
+      // updatePublication) had a documented race where the update step
+      // silently no-opped because it read a stale `publications` closure —
+      // resulting in rows on disk with title='Untitled' and no year. This
+      // path either succeeds in one DB call or returns an error; no
+      // half-imported rows are ever left behind.
+      const { pub, error } = await addPublicationWithData(stageId, {
+        title: entry.title,
+        authors: entry.authors,
+        completionYear: entry.year,
+        publishedYear: stageId === 'published' ? year : '',
+        outputType,
+        typeA: entry.journal || entry.publisher || '',
+        typeB: entry.booktitle || '',
+      });
+
+      if (error || !pub) {
+        console.error('BibTeX import: insert failed for entry', entry.title, error);
+        failed++;
         continue;
       }
-
-      try {
-        await updatePublication(pub.id, {
-          // `stageId` must be included so the publishedYear → target_year
-          // mapping fires in updatePublication; otherwise a published row
-          // ends up with target_year=null and silently falls into "no year".
-          stageId,
-          title: entry.title,
-          authors: entry.authors,
-          completionYear: entry.year,
-          publishedYear: stageId === 'published' ? year : '',
-          outputType: entry.type === 'book' ? 'book' : entry.type === 'incollection' || entry.type === 'inbook' ? 'chapter' : 'journal',
-          typeA: entry.journal || entry.publisher || '',
-          typeB: entry.booktitle || '',
-        });
-        imported++;
-      } catch (err) {
-        // Update failed — bin the empty stub row we just created so it doesn't
-        // linger as an "Untitled" orphan.
-        console.error('BibTeX import: update failed, rolling back stub row', err);
-        try { await moveToBin(pub.id); } catch { /* best effort */ }
-        skipped++;
-      }
+      imported++;
     }
 
+    const totalSkipped = skipped + failed;
     toast({
-      title: skipped === 0
+      title: totalSkipped === 0
         ? `Imported ${imported} publication${imported === 1 ? '' : 's'}`
-        : `Imported ${imported}, skipped ${skipped}`,
-      description: skipped > 0
-        ? 'Skipped entries were missing a title or failed to save.'
+        : `Imported ${imported}, ${totalSkipped} not saved`,
+      description: totalSkipped > 0
+        ? `${skipped > 0 ? `${skipped} had no title.` : ''} ${failed > 0 ? `${failed} failed to save — check your network and retry.` : ''}`.trim()
         : undefined,
+      variant: failed > 0 ? 'destructive' : undefined,
     });
   };
 

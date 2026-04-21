@@ -84,7 +84,11 @@ export interface Publication {
   reminders: Reminder[];
   // Collaborators on this publication
   collaborators: Collaborator[];
-  publishedYear: number | '';
+  // `'unknown'` is a sentinel used when a row is in the published stage but
+  // has no target_year — it keeps the row visible in a dedicated "Year
+  // unknown" bucket rather than silently filtered out. `''` means the row is
+  // not in the published stage and therefore has no applicable year.
+  publishedYear: number | '' | 'unknown';
   createdAt: string;
   updatedAt: string;
   history: HistoryEntry[];

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PubFlowState, Publication, BinItem, DEFAULT_STAGES, HistoryEntry } from '@/types/publication';
 import { useAuth } from '@/hooks/useAuth';
@@ -58,12 +58,12 @@ function dbToLocal(dbPub: any): Publication {
     reminders: [],
     collaborators: [],
     // If a row is in the "published" stage but its target_year is missing,
-    // leave publishedYear empty rather than silently fabricating the current
-    // year. Fabricating a year is what caused orphan rows to pile up in the
-    // 2026 column. Rows with no year now stay out of the year grid until the
-    // user assigns one.
-    publishedYear: dbPub.stage === 'published' && dbPub.target_year != null
-      ? dbPub.target_year
+    // tag it with the sentinel 'unknown' so publishedByYear can surface it in
+    // a dedicated "Year unknown" column. Never hide published rows silently —
+    // invisible data is worse than data in the wrong column because the user
+    // can't see what needs fixing.
+    publishedYear: dbPub.stage === 'published'
+      ? (dbPub.target_year != null ? dbPub.target_year : 'unknown')
       : '',
     createdAt: dbPub.created_at,
     updatedAt: dbPub.updated_at,
@@ -129,6 +129,16 @@ export function useSupabasePublications() {
     search: '',
   });
   const [undoStack, setUndoStack] = useState<UndoEntry[]>([]);
+
+  // Ref mirror of `publications` so callbacks read fresh state inside the same
+  // tick, not a stale closure snapshot. This closes the race where a call like
+  // `await addPublication(); await updatePublication(newId, {...})` would
+  // silently no-op the update because React had not yet re-rendered and the
+  // useCallback closure still held the pre-insert `publications` array.
+  const publicationsRef = useRef<Publication[]>([]);
+  useEffect(() => {
+    publicationsRef.current = publications;
+  }, [publications]);
 
   // Board config (stored locally for now)
   const [board] = useState({
@@ -348,17 +358,30 @@ export function useSupabasePublications() {
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }, [publications, matchesFilters]);
 
-  // Get published cards grouped by year
+  // Get published cards grouped by year. Numeric years are listed newest
+  // first; an additional 'unknown' bucket at the end surfaces rows that are
+  // in the published stage but have no target_year in the database, so they
+  // can always be seen and fixed rather than silently disappearing.
   const publishedByYear = useMemo(() => {
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 7 }, (_, i) => currentYear - i);
-    
-    return years.map(year => ({
+
+    const byYear: { year: number | 'unknown'; cards: Publication[] }[] = years.map(year => ({
       year,
       cards: publications
         .filter(c => c.stageId === 'published' && c.publishedYear === year && matchesFilters(c))
         .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
     }));
+
+    const unknownCards = publications
+      .filter(c => c.stageId === 'published' && c.publishedYear === 'unknown' && matchesFilters(c))
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+
+    if (unknownCards.length > 0) {
+      byYear.push({ year: 'unknown', cards: unknownCards });
+    }
+
+    return byYear;
   }, [publications, matchesFilters]);
 
   // Add new publication
@@ -413,25 +436,116 @@ export function useSupabasePublications() {
     return newPub;
   }, [user?.id, executeOrQueue]);
 
+  // Atomic insert with full data. Unlike `addPublication` + `updatePublication`
+  // (which has a known race where the update step silently no-ops if called in
+  // the same tick as the insert), this helper builds the complete Publication
+  // object up-front and makes a single insert call. Used by BibTeX import so
+  // an import can never leave a half-populated "Untitled" row behind.
+  //
+  // Returns `{ pub, error }`. The caller can check `error` to know whether the
+  // insert actually reached Supabase — no silent successes.
+  const addPublicationWithData = useCallback(async (
+    stageId: string,
+    data: {
+      title: string;
+      authors?: string;
+      themes?: string;
+      grants?: string;
+      completionYear?: string;
+      publishedYear?: number | '';
+      outputType?: 'journal' | 'book' | 'chapter';
+      typeA?: string;
+      typeB?: string;
+      typeC?: string;
+      notes?: string;
+    }
+  ): Promise<{ pub: Publication | null; error: Error | null }> => {
+    if (!user?.id) return { pub: null, error: new Error('Not authenticated') };
+
+    const newId = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    const newPub: Publication = {
+      id: newId,
+      ownerId: user.id,
+      title: data.title,
+      authors: data.authors || '',
+      themes: data.themes || '',
+      grants: data.grants || '',
+      completionYear: data.completionYear || '',
+      stageId,
+      outputType: data.outputType || 'journal',
+      typeA: data.typeA || '',
+      typeB: data.typeB || '',
+      typeC: data.typeC || '',
+      workingPaper: { on: false, series: '', number: '', url: '' },
+      notes: data.notes || '',
+      links: [],
+      collaborationLinks: [],
+      githubRepo: '',
+      overleafLink: '',
+      reminders: [],
+      collaborators: [],
+      publishedYear: typeof data.publishedYear === 'number' ? data.publishedYear : '',
+      createdAt: now,
+      updatedAt: now,
+      history: [],
+    };
+
+    // Build the DB row with the publishedYear correctly mapped to target_year
+    // regardless of the stageId-in-payload gotcha in updatePublication.
+    const dbData = localToDb(newPub, user.id);
+    if (stageId === 'published' && typeof data.publishedYear === 'number') {
+      dbData.target_year = data.publishedYear;
+    }
+
+    try {
+      // Single atomic insert. No optimistic local update until the DB
+      // confirms — this way, if the insert fails, we never show a row that
+      // won't survive a reload.
+      const { error } = await supabase
+        .from('publications')
+        .insert(dbData);
+      if (error) throw error;
+
+      // DB confirmed — now add to local state.
+      setPublications(prev => [newPub, ...prev]);
+      return { pub: newPub, error: null };
+    } catch (err) {
+      return { pub: null, error: err as Error };
+    }
+  }, [user?.id]);
+
   // Update publication
   const updatePublication = useCallback(async (id: string, updates: Partial<Publication>) => {
     if (!user?.id) return;
 
+    // Read the current row from the ref rather than the closure-captured
+    // `publications` array. This is safe against the race where the caller
+    // just inserted `id` in the same tick — the ref is synced via useEffect
+    // but we also fall back to optimistic-update state for this tick.
+    const pub = publicationsRef.current.find(p => p.id === id);
+    if (!pub) {
+      // Row not found even in the ref. Do NOT silently return — surface via
+      // console so the failure is observable; still apply the optimistic
+      // state change in case the row is about to arrive via realtime.
+      console.warn('updatePublication: no matching row for id', id);
+    }
+
     const now = new Date().toISOString();
-    
+
     // Optimistically update local state
-    setPublications(prev => prev.map(c => 
-      c.id === id 
+    setPublications(prev => prev.map(c =>
+      c.id === id
         ? { ...c, ...updates, updatedAt: now }
         : c
     ));
 
-    // Get the full updated publication
-    const pub = publications.find(p => p.id === id);
-    if (!pub) return;
+    // Effective stage after this update — used for the publishedYear → target_year
+    // mapping so that year updates do not silently drop when `stageId` is absent
+    // from the payload.
+    const effectiveStage = 'stageId' in updates ? updates.stageId : pub?.stageId;
 
-    const updated = { ...pub, ...updates, updatedAt: now };
-    
     // Build update object for Supabase
     const dbUpdate: any = {
       updated_at: now,
@@ -450,7 +564,9 @@ export function useSupabasePublications() {
     if ('links' in updates) dbUpdate.links = (updates.links || []).map((l: any) => JSON.stringify(l));
     if ('workingPaper' in updates) dbUpdate.working_paper = updates.workingPaper;
     if ('history' in updates) dbUpdate.stage_history = (updates.history || []).map(h => ({ from: h.from, to: h.to, at: h.at }));
-    if ('publishedYear' in updates && updates.stageId === 'published') {
+    // Year mapping for Published stage — fires when the *effective* stage is
+    // 'published', not only when stageId happens to be in the same payload.
+    if ('publishedYear' in updates && effectiveStage === 'published') {
       dbUpdate.target_year = updates.publishedYear || new Date().getFullYear();
     }
 
@@ -464,7 +580,7 @@ export function useSupabasePublications() {
         if (error) throw error;
       }
     );
-  }, [user?.id, publications, executeOrQueue]);
+  }, [user?.id, executeOrQueue]);
 
   // Move publication to stage
   const moveToStage = useCallback(async (cardId: string, newStageId: string, publishedYear?: number) => {
@@ -844,6 +960,7 @@ export function useSupabasePublications() {
     getCardsForStage,
     publishedByYear,
     addPublication,
+    addPublicationWithData,
     updatePublication,
     moveToStage,
     undo,

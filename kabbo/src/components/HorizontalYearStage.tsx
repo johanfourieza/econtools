@@ -2,10 +2,10 @@ import { Publication } from '@/types/publication';
 import { PublicationCard } from './PublicationCard';
 
 interface HorizontalYearStageProps {
-  year: number;
+  year: number | 'unknown';
   cards: Publication[];
   onCardClick: (id: string) => void;
-  onCardDrop: (cardId: string, year: number) => void;
+  onCardDrop: (cardId: string, year: number | 'unknown') => void;
 }
 
 export function HorizontalYearStage({ year, cards, onCardClick, onCardDrop }: HorizontalYearStageProps) {
@@ -65,7 +65,7 @@ export function HorizontalYearStage({ year, cards, onCardClick, onCardDrop }: Ho
               boxShadow: '0 0 0 3px hsl(var(--published) / 0.2)',
             }}
           />
-          <h2 className="font-display font-semibold text-sm">{year}</h2>
+          <h2 className="font-display font-semibold text-sm">{year === 'unknown' ? 'Year unknown' : year}</h2>
         </div>
         <span className="text-muted-foreground text-xs flex-shrink-0">{cards.length}</span>
       </header>

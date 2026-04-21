@@ -2,10 +2,10 @@ import { Publication } from '@/types/publication';
 import { PublicationCard } from './PublicationCard';
 
 interface YearStageProps {
-  year: number;
+  year: number | 'unknown';
   cards: Publication[];
   onCardClick: (id: string) => void;
-  onCardDrop: (cardId: string, year: number) => void;
+  onCardDrop: (cardId: string, year: number | 'unknown') => void;
 }
 
 export function YearStage({ year, cards, onCardClick, onCardDrop }: YearStageProps) {
@@ -35,7 +35,7 @@ export function YearStage({ year, cards, onCardClick, onCardDrop }: YearStagePro
   return (
     <section className="bg-card border border-border rounded-xl shadow-card flex flex-col min-w-[150px] flex-1 h-full overflow-hidden">
       <header className="p-3 flex items-center justify-between gap-2 flex-shrink-0">
-        <h2 className="font-display font-semibold text-sm">{year}</h2>
+        <h2 className="font-display font-semibold text-sm">{year === 'unknown' ? 'Year unknown' : year}</h2>
         <span className="text-muted-foreground text-xs">{cards.length}</span>
       </header>
 

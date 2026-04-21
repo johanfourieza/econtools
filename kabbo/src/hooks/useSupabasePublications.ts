@@ -39,15 +39,19 @@ export function useSupabasePublications() {
   });
   const [undoStack, setUndoStack] = useState<UndoEntry[]>([]);
 
-  // Ref mirror of `publications` so callbacks read fresh state inside the same
-  // tick, not a stale closure snapshot. This closes the race where a call like
+  // Ref mirrors of state so callbacks read fresh values in the same tick,
+  // not a stale closure snapshot. This closes the race where a call like
   // `await addPublication(); await updatePublication(newId, {...})` would
-  // silently no-op the update because React had not yet re-rendered and the
-  // useCallback closure still held the pre-insert `publications` array.
+  // silently no-op because React hadn't re-rendered and the useCallback
+  // closure still held the pre-insert array.
   const publicationsRef = useRef<Publication[]>([]);
+  const binRef = useRef<BinItem[]>([]);
   useEffect(() => {
     publicationsRef.current = publications;
   }, [publications]);
+  useEffect(() => {
+    binRef.current = bin;
+  }, [bin]);
 
   // Board config (stored locally for now)
   const [board] = useState({
@@ -495,7 +499,7 @@ export function useSupabasePublications() {
   const moveToStage = useCallback(async (cardId: string, newStageId: string, publishedYear?: number) => {
     if (!user?.id) return;
 
-    const card = publications.find(c => c.id === cardId);
+    const card = publicationsRef.current.find(c => c.id === cardId);
     if (!card || card.stageId === newStageId) return;
     
     // Only owner or editors can move publications
@@ -550,7 +554,7 @@ export function useSupabasePublications() {
         if (error) throw error;
       }
     );
-  }, [user?.id, publications, executeOrQueue]);
+  }, [user?.id, executeOrQueue]);
 
   // Undo last move
   const undo = useCallback(async () => {
@@ -587,7 +591,7 @@ export function useSupabasePublications() {
   const moveToBin = useCallback(async (cardId: string, reason = '') => {
     if (!user?.id) return;
 
-    const card = publications.find(c => c.id === cardId);
+    const card = publicationsRef.current.find(c => c.id === cardId);
     if (!card) return;
 
     const now = new Date().toISOString();
@@ -634,13 +638,13 @@ export function useSupabasePublications() {
         if (error) throw error;
       }
     );
-  }, [user?.id, publications, executeOrQueue]);
+  }, [user?.id, executeOrQueue]);
 
   // Restore from bin
   const restoreFromBin = useCallback(async (binId: string) => {
     if (!user?.id) return;
 
-    const binItem = bin.find(b => b.id === binId);
+    const binItem = binRef.current.find(b => b.id === binId);
     if (!binItem?.card) return;
 
     const restoredCard = { ...binItem.card, stageId: binItem.fromStageId };
@@ -668,8 +672,12 @@ export function useSupabasePublications() {
 
     if (delError) {
       console.error('Error removing from bin:', delError);
+      // Re-sync from server so the UI doesn't diverge from the DB. If the
+      // insert succeeded but the bin-delete failed, loadPublications will
+      // show the row in both places and the user can decide what to do.
+      await loadPublications();
     }
-  }, [user?.id, bin, loadPublications]);
+  }, [user?.id, loadPublications]);
 
   // Delete from bin
   const deleteFromBin = useCallback(async (binId: string) => {
@@ -816,7 +824,7 @@ export function useSupabasePublications() {
   const duplicatePublication = useCallback(async (cardId: string) => {
     if (!user?.id) return null;
 
-    const card = publications.find(c => c.id === cardId);
+    const card = publicationsRef.current.find(c => c.id === cardId);
     if (!card) return null;
 
     const now = new Date().toISOString();
@@ -846,12 +854,13 @@ export function useSupabasePublications() {
     }
 
     return newPub;
-  }, [user?.id, publications]);
+  }, [user?.id]);
 
-  // Get card by ID
+  // Get card by ID — reads the ref so the value is always current, and the
+  // callback identity is stable across renders.
   const getCard = useCallback((id: string) => {
-    return publications.find(c => c.id === id);
-  }, [publications]);
+    return publicationsRef.current.find(c => c.id === id);
+  }, []);
 
   // Update board (no-op for now since board is local)
   const updateBoard = useCallback((updates: Partial<typeof board>) => {

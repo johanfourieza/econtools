@@ -1,0 +1,87 @@
+% =============================================================
+%  EHR preamble snippet (from /ehrstyle)
+%
+%  Drop this block into the preamble of an EHR submission .tex file.
+%  Requires:
+%    - echr.bbx + echr.cbx in the same folder (or TeX path).
+%    - references.bib in the same folder.
+% =============================================================
+
+\documentclass[12pt]{article}
+
+% ---------- Layout (rule 1.1) ----------
+\usepackage[margin=1.25in]{geometry}
+\usepackage{setspace}
+\doublespacing
+
+% ---------- Fonts, graphics, hyperlinks ----------
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{pdflscape}
+\usepackage{rotating}
+\usepackage{csquotes}
+
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=black,
+  urlcolor=black
+}
+
+% ---------- Bibliography: bespoke EHR style (rule 1.5, §3) ----------
+% echr.bbx and echr.cbx implement the Notes for Contributors (§3.1-3.2).
+\usepackage[backend=biber,
+            bibstyle=echr,
+            citestyle=echr,
+            maxcitenames=3,
+            mincitenames=1,
+            uniquename=init,
+            uniquelist=false,
+            isbn=false,
+            doi=false,
+            url=false,
+            eprint=false]{biblatex}
+\addbibresource{references.bib}
+
+% Allow slight slack for long bibliography entries (prevents overfull hbox
+% warnings on 1-2pt overshoots in entries with long titles).
+\setlength{\emergencystretch}{3em}
+
+% ---------- Title (anonymised at first submission, rule 1.2) ----------
+\title{\Large TITLE HERE: \\Subtitle if any}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+% ---------- Abstract (max 200 words, rule §A) ----------
+\begin{abstract}
+\noindent TEXT OF ABSTRACT HERE.
+Max 200 words. Keep impersonal register where possible.
+
+\vspace{.25cm}
+\noindent \textbf{Keywords}: keyword1; keyword2; keyword3; keyword4; keyword5.
+
+\vspace{.25cm}
+\noindent \textbf{JEL Classification}: NXX; NYY; NZZ.
+\end{abstract}
+
+\newpage
+
+% ---------- Main text (section titles in CAPS per rule 1.4) ----------
+\section{INTRODUCTION}
+
+% ... content ...
+
+% ---------- Bibliography ----------
+\clearpage
+\printbibliography[title={FOOTNOTE REFERENCES}]
+
+\end{document}

@@ -1,0 +1,314 @@
+\ProvidesFile{echr.bbx}
+  [2026/04/22 v1.1 Economic History Review bibliography style]
+
+% ============================================================
+%  echr.bbx — Economic History Review bibliography style
+%
+%  Conforms to EHR Notes for Contributors (Feb 2026 v1), §3.1:
+%    - Alphabetical by author, surname first then initials
+%    - Sentence case for book/article titles (handled at bib source)
+%    - Book: "Surname, F., Title (Place, Year)." Place omitted if London
+%    - Article: "Surname, F., 'Title', Journal, Vol (Year), pp. X–Y."
+%    - Incollection: "Surname, F., 'Chapter', in Ed. Name, ed.,
+%                     Book title (Place, Year), pp. X–Y."
+%    - Thesis: "Surname, F., 'Title' (unpub. Ph.D. thesis, Univ. of X, Year)."
+%    - Economic History Review special-casing:
+%         pre-1992: add ", 2nd ser." after journal name
+%         pre-2007: roman numerals for volume
+%    - "and" (not "&") between authors
+%    - "pp." prefix on page ranges
+%    - Working papers (@techreport, @unpublished, @misc) excluded from
+%      the printed bibliography via options={skipbib=true} in the bib
+%      entry (per rule 3.1.1).
+% ============================================================
+
+\RequireBibliographyStyle{authortitle}
+
+% ---------- Global options ----------
+\ExecuteBibliographyOptions{%
+  giveninits=true,
+  terseinits=false,
+  useprefix=true,
+  maxbibnames=99,
+  sorting=nyt,
+  dashed=false
+}
+
+% ---------- Name format: surname-first, initials after ----------
+\DeclareNameAlias{sortname}{family-given}
+\DeclareNameAlias{default}{family-given}
+
+% ---------- Delimiters ----------
+\renewcommand*{\finalnamedelim}{\addspace and\space}
+\renewcommand*{\multinamedelim}{\addcomma\space}
+\renewcommand*{\revsdnamedelim}{\empty}
+\renewcommand*{\newunitpunct}{\addcomma\space}
+\renewcommand*{\subtitlepunct}{\addcolon\space}
+
+% ---------- Source map: delete location field when it is "London" ----------
+% EHR rule 3.1.9: place of publication to be given in all cases EXCEPT London.
+\DeclareSourcemap{%
+  \maps[datatype=bibtex]{%
+    \map{%
+      \step[fieldsource=address, fieldtarget=location]%
+    }%
+    \map{%
+      \step[fieldsource=location, match=\regexp{\A[Ll]ondon\Z}, final]%
+      \step[fieldset=location, null]%
+    }%
+  }%
+}
+
+% ---------- Title formats ----------
+% EHR rule 2.5: single quotes outer, double inside. Using
+% \textquoteleft/\textquoteright directly bypasses csquotes' language-
+% dependent default (which would produce double quotes in English).
+\DeclareFieldFormat
+  [article,incollection,inbook,inproceedings,
+   thesis,phdthesis,mastersthesis,unpublished,report,techreport]%
+  {title}{\textquoteleft#1\textquoteright}
+
+% Book, proceedings, edited-collection titles: italic
+\DeclareFieldFormat
+  [book,collection,proceedings,manual,misc,booklet]%
+  {title}{\mkbibemph{#1}}
+
+% Containers: italic
+\DeclareFieldFormat{journaltitle}{\mkbibemph{#1}}
+\DeclareFieldFormat{booktitle}{\mkbibemph{#1}}
+\DeclareFieldFormat{maintitle}{\mkbibemph{#1}}
+
+% ---------- Pages: "pp. X–Y" ----------
+\DeclareFieldFormat{pages}{pp.\addnbspace#1}
+\DeclareFieldFormat{pagetotal}{#1\addnbspace pp\adddot}
+
+% ---------- Volume: bare number ----------
+\DeclareFieldFormat{volume}{#1}
+
+% ---------- Year: plain integer; parens are added by drivers ----------
+% For @article we wrap year in parens within the driver (after volume).
+% For @book/@incollection the year sits inside (Place, Year) parens
+% already — no extra parens needed.
+
+% ---------- Edition: "2nd edn." ----------
+\DeclareFieldFormat{edition}{%
+  \ifinteger{#1}%
+    {\mkbibordedition{#1}\addspace edn\adddot}%
+    {#1\addspace edn\adddot}}
+
+% ---------- Suppress "In:" for articles; keep lowercase "in" for collections ----------
+\renewbibmacro*{in:}{%
+  \ifentrytype{article}{}{%
+    \ifentrytype{inbook}{\printtext{in}\addspace}{%
+    \ifentrytype{incollection}{\printtext{in}\addspace}{%
+    \ifentrytype{inproceedings}{\printtext{in}\addspace}{}}}%
+  }%
+}
+
+% ---------- Roman numeral conversion for pre-2007 EHR volumes ----------
+\newcommand*{\mkehrroman}[1]{%
+  \ifnum#1<1\space#1\else
+    \ifnum#1>3999\space#1\else
+      \uppercase\expandafter{\romannumeral#1}%
+    \fi%
+  \fi%
+}
+
+% ---------- EHR journal special casing ----------
+\newbibmacro*{ehr:journal}{%
+  \printfield{journaltitle}%
+  \iffieldequalstr{journaltitle}{Economic History Review}{%
+    \iffieldundef{year}{}{%
+      \ifnumless{\thefield{year}}{1992}%
+        {\addcomma\space 2nd ser\adddot}%
+        {}%
+    }%
+  }{}%
+}
+
+\newbibmacro*{ehr:volume}{%
+  \iffieldundef{volume}{}{%
+    \iffieldequalstr{journaltitle}{Economic History Review}{%
+      \iffieldundef{year}%
+        {\printfield{volume}}%
+        {\ifnumless{\thefield{year}}{2007}%
+          {\printtext{\mkehrroman{\thefield{volume}}}}%
+          {\printfield{volume}}%
+        }%
+    }{%
+      \printfield{volume}%
+    }%
+  }%
+}
+
+% ---------- Editor macro: "F. Surname, ed." / "... eds." ----------
+\newbibmacro*{ehr:editor+ed}{%
+  \ifnameundef{editor}{}{%
+    \printnames{editor}%
+    \addcomma\space%
+    \ifthenelse{\value{editor}>1}%
+      {eds\adddot}%
+      {ed\adddot}%
+  }%
+}
+
+% ---------- Place+year parenthetical ----------
+% location is already stripped of "London" by the source map above.
+\newbibmacro*{ehr:placeyear}{%
+  \printtext{(%
+    \iflistundef{location}{}{%
+      \printlist{location}\addcomma\space%
+    }%
+    \iffieldundef{edition}{}{\printfield{edition}\addspace}%
+    \printfield{year}%
+  )}%
+}
+
+% ============================================================
+%  Bibliography drivers
+% ============================================================
+
+% ---------- @article ----------
+\DeclareBibliographyDriver{article}{%
+  \usebibmacro{bibindex}%
+  \usebibmacro{begentry}%
+  \usebibmacro{author}%
+  \setunit{\newunitpunct}\newblock
+  \printfield{title}%
+  \setunit{\newunitpunct}\newblock
+  \usebibmacro{ehr:journal}%
+  \iffieldundef{volume}{%
+    \iffieldundef{year}{}{\setunit{\addspace}\printtext{\mkbibparens{\thefield{year}}}}%
+  }{%
+    \setunit{\newunitpunct}\newblock
+    \usebibmacro{ehr:volume}%
+    \iffieldundef{year}{}{\setunit{\addspace}\printtext{\mkbibparens{\thefield{year}}}}%
+  }%
+  \iffieldundef{pages}{}{%
+    \setunit{\newunitpunct}%
+    \printfield{pages}%
+  }%
+  \newunit\newblock
+  \usebibmacro{addendum+pubstate}%
+  \usebibmacro{finentry}%
+}
+
+% ---------- @book ----------
+\DeclareBibliographyDriver{book}{%
+  \usebibmacro{bibindex}%
+  \usebibmacro{begentry}%
+  \ifnameundef{author}{%
+    \ifnameundef{editor}{}{%
+      \printnames{editor}%
+      \addcomma\space%
+      \ifthenelse{\value{editor}>1}{eds\adddot}{ed\adddot}%
+      \setunit{\newunitpunct}\newblock
+    }%
+  }{%
+    \usebibmacro{author}%
+    \setunit{\newunitpunct}\newblock
+  }%
+  \printfield{title}%
+  \iffieldundef{subtitle}{}{\printunit{\subtitlepunct}\printfield{subtitle}}%
+  \iffieldundef{volume}{}{%
+    \setunit{\newunitpunct}%
+    \printfield{volume}\addspace vols\adddot%
+  }%
+  \setunit{\addspace}%
+  \usebibmacro{ehr:placeyear}%
+  \newunit\newblock
+  \usebibmacro{addendum+pubstate}%
+  \usebibmacro{finentry}%
+}
+
+% ---------- @incollection / @inbook / @inproceedings ----------
+\DeclareBibliographyDriver{incollection}{%
+  \usebibmacro{bibindex}%
+  \usebibmacro{begentry}%
+  \usebibmacro{author}%
+  \setunit{\newunitpunct}\newblock
+  \printfield{title}%
+  \setunit{\newunitpunct}\newblock
+  \ifnameundef{editor}{%
+    \printfield{booktitle}%
+  }{%
+    \printtext{in\addspace}%
+    \usebibmacro{ehr:editor+ed}%
+    \addcomma\addspace%
+    \printfield{booktitle}%
+  }%
+  \setunit{\addspace}%
+  \usebibmacro{ehr:placeyear}%
+  \iffieldundef{pages}{}{%
+    \setunit{\newunitpunct}%
+    \printfield{pages}%
+  }%
+  \newunit\newblock
+  \usebibmacro{addendum+pubstate}%
+  \usebibmacro{finentry}%
+}
+
+\DeclareBibliographyAlias{inbook}{incollection}
+\DeclareBibliographyAlias{inproceedings}{incollection}
+
+% ---------- @thesis / @phdthesis / @mastersthesis ----------
+\DeclareBibliographyDriver{thesis}{%
+  \usebibmacro{bibindex}%
+  \usebibmacro{begentry}%
+  \usebibmacro{author}%
+  \setunit{\newunitpunct}\newblock
+  \printfield{title}%
+  \setunit{\addspace}%
+  \printtext{(%
+    unpub\adddot\addspace%
+    \iffieldundef{type}{%
+      \ifentrytype{phdthesis}{Ph.D.\addspace thesis}{%
+      \ifentrytype{mastersthesis}{MA\addspace thesis}{%
+        thesis%
+      }}%
+    }{%
+      \printfield{type}%
+    }%
+    \addcomma\space%
+    \iflistundef{institution}{%
+      \iflistundef{publisher}{}{\printlist{publisher}}%
+    }{%
+      \printlist{institution}%
+    }%
+    \addcomma\space%
+    \printfield{year}%
+  )}%
+  \newunit\newblock
+  \usebibmacro{addendum+pubstate}%
+  \usebibmacro{finentry}%
+}
+
+\DeclareBibliographyAlias{phdthesis}{thesis}
+\DeclareBibliographyAlias{mastersthesis}{thesis}
+
+% ---------- @techreport / @unpublished / @misc fallback ----------
+% These are usually excluded from the bibliography via skipbib=true.
+% If not excluded, provide a sensible working-paper format.
+\DeclareBibliographyDriver{techreport}{%
+  \usebibmacro{bibindex}%
+  \usebibmacro{begentry}%
+  \usebibmacro{author}%
+  \setunit{\newunitpunct}\newblock
+  \printfield{title}%
+  \setunit{\addspace}%
+  \printtext{(%
+    \iffieldundef{type}{working paper}{\printfield{type}}%
+    \iffieldundef{number}{}{\addspace\printfield{number}}%
+    \addcomma\space%
+    \iflistundef{institution}{}{\printlist{institution}\addcomma\space}%
+    \printfield{year}%
+  )}%
+  \newunit\newblock
+  \usebibmacro{addendum+pubstate}%
+  \usebibmacro{finentry}%
+}
+
+\DeclareBibliographyAlias{report}{techreport}
+\DeclareBibliographyAlias{unpublished}{techreport}
+
+\endinput

@@ -2,7 +2,7 @@
 
 Custom skills for [Claude Code](https://claude.com/claude-code) designed for economics research workflows.
 
-This folder is the development home for four skills (`diebolt`, `janluiten`, `tanniedi`, `tyler`) that have subfolders below. Other skills listed at the end live only in the global skills directory (`~/.claude/skills/`).
+This folder is the development home for five skills (`diebolt`, `ehrstyle`, `janluiten`, `tanniedi`, `tyler`) that have subfolders below. Other skills listed at the end live only in the global skills directory (`~/.claude/skills/`).
 
 ## Skills in this folder
 
@@ -22,6 +22,31 @@ The `diebolt/` folder is both source and runtime state:
 - `review_log.json` — history of reviews performed
 
 **Usage:** `/diebolt`
+
+### EHRstyle — `ehrstyle/`
+
+A Claude Code skill that applies the *Economic History Review* house style (Notes for Contributors, Feb 2026 v1) to a LaTeX manuscript prepared for submission to the *Review*. Encodes the full style guide — anonymity, double-spacing, ≤10,000 word budget, UK -ize spelling, Oxford commas, EHR-specific capitalisation (e.g. lower-case *global financial crisis*), number and date conventions — and ships a bespoke biblatex style (`echr.bbx` + `echr.cbx`) that produces EHR footnote references with short-title form, *ibid.*/*idem* handling, surname-first bibliography, *"2nd ser."* and roman-volume treatment for pre-1992 *Economic History Review* citations, and automatic exclusion of working papers from the consolidated bibliography.
+
+The `ehrstyle/` folder contains:
+
+- `SKILL.md` — the skill definition, with sub-command dispatch (`paper`, `bib`, `titlepage`, `coverletter`, `check`)
+- `assets/echr.bbx` + `assets/echr.cbx` — bespoke biblatex style files
+- `assets/preamble-snippet.tex` — drop-in LaTeX preamble
+- `assets/title-page-template.tex` — anonymous-submission title page
+- `assets/cover-letter-template.tex` — cover letter for Research Exchange
+- `references/style-rules.md` — verbatim §2 of the EHR Notes (spelling, punctuation, capitalisation)
+- `references/bibliography-rules.md` — verbatim §3 (consolidated list + footnote form)
+- `references/submission-checklist.md` — §1 and §A (anonymity, length, layout, file uploads)
+
+**Usage:**
+
+```
+/ehrstyle paper [file]
+/ehrstyle bib [file]
+/ehrstyle titlepage
+/ehrstyle coverletter
+/ehrstyle check [file]
+```
 
 ### Janluiten — `janluiten/`
 

@@ -1,0 +1,61 @@
+\ProvidesFile{echr.cbx}
+  [2026/04/22 v1.0 Economic History Review citation style]
+
+% ============================================================
+%  echr.cbx — Economic History Review footnote citation style
+%
+%  Conforms to EHR Notes for Contributors (Feb 2026 v1), §3.2:
+%    - Short-title footnote form: "Surname, 'Short title', pp. X–Y"
+%    - 'ibid.' for consecutive citations of the same work
+%    - 'idem' for same author cited again in a multi-source footnote
+%    - No 'op. cit.' / 'loc. cit.'
+%    - "and" (not "&") between multiple authors in a citation
+%    - Single quotes around article/chapter titles in citations
+%    - Italic book/journal titles
+%
+%  Inherits ibid./idem behaviour from authortitle-ibid.cbx.
+% ============================================================
+
+\RequireCitationStyle{authortitle-ibid}
+
+% ---------- Delimiters ----------
+\renewcommand*{\finalnamedelim}{\addspace and\space}
+\renewcommand*{\multinamedelim}{\addcomma\space}
+\renewcommand*{\multicitedelim}{\addsemicolon\space}
+\renewcommand*{\compcitedelim}{\addsemicolon\space}
+\renewcommand*{\postnotedelim}{\addcomma\space}
+
+% ---------- Page prefix in postnote ----------
+% When user writes \cite[p.~193]{key} the postnote "p.~193" is printed
+% verbatim. When user writes \cite[pp.~100--10]{key}, same. No auto
+% "p." prefix: authors control it via the optional argument.
+
+% ---------- Ibid. / idem format ----------
+\DeclareFieldFormat{ibid}{ibid\adddot}
+\DeclareFieldFormat{idem}{idem}
+
+% ---------- Title formats in citations ----------
+% Use \textquoteleft/\textquoteright directly so we are language-
+% agnostic: csquotes' \enquote produces double quotes in English.
+% Article/chapter/thesis titles in single quotes
+\DeclareFieldFormat
+  [article,incollection,inbook,inproceedings,
+   thesis,phdthesis,mastersthesis,unpublished]%
+  {citetitle}{\textquoteleft#1\textquoteright}
+
+% Book/proceedings titles italic
+\DeclareFieldFormat
+  [book,collection,proceedings,manual,report,techreport,misc]%
+  {citetitle}{\mkbibemph{#1}}
+
+% shorttitle follows the same per-type treatment
+\DeclareFieldFormat
+  [article,incollection,inbook,inproceedings,
+   thesis,phdthesis,mastersthesis,unpublished]%
+  {shorttitle}{\textquoteleft#1\textquoteright}
+
+\DeclareFieldFormat
+  [book,collection,proceedings,manual,report,techreport,misc]%
+  {shorttitle}{\mkbibemph{#1}}
+
+\endinput

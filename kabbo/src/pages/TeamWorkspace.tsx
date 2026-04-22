@@ -518,7 +518,7 @@ export default function TeamWorkspace() {
                             <div className="px-2 pb-2">
                               {pubs.length === 0 ? (
                                 <div className="text-muted-foreground/40 text-xs text-center py-6">
-                                  —
+                                  –
                                 </div>
                               ) : (
                                 pubs.map(pub => (

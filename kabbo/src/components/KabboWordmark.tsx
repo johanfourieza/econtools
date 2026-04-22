@@ -7,7 +7,7 @@ interface KabboWordmarkProps {
 }
 
 /**
- * Kabbo wordmark — "KABBO" in twin parallel contours (Proposal E).
+ * Kabbo wordmark – "KABBO" in twin parallel contours (Proposal E).
  *
  * Geometric all-caps armature (rational bowls on B, true-circle O) drawn
  * with a layered-stroke trick: an outer ochre stroke defines the letter
@@ -60,7 +60,7 @@ export function KabboWordmark({ className, height = 30 }: KabboWordmarkProps) {
       aria-label="Kabbo"
       className={cn('text-brand-ochre', className)}
     >
-      {/* Outer silhouette — currentColor (ochre by default) */}
+      {/* Outer silhouette – currentColor (ochre by default) */}
       <g
         stroke="currentColor"
         strokeWidth={20}
@@ -70,7 +70,7 @@ export function KabboWordmark({ className, height = 30 }: KabboWordmarkProps) {
       >
         {paths}
       </g>
-      {/* Inner carve — background colour, carves out the interior */}
+      {/* Inner carve – background colour, carves out the interior */}
       <g
         stroke="hsl(var(--background))"
         strokeWidth={14}

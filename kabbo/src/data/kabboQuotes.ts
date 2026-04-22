@@ -9,7 +9,7 @@ export interface KabboQuote {
 // Neil Rusch papers (2016) that discuss and quote these passages; see
 // /about > Sources.
 export const KABBO_QUOTES: KabboQuote[] = [
-  // The long walk home — from "||kabbo's Intended Return Home"
+  // The long walk home – from "||kabbo's Intended Return Home"
   { text: 'I should reach my place, when the trees are dry.' },
   { text: 'It is a great road; it is long.' },
   { text: 'I shall walk, letting the flowers become dry while I still follow the path.' },
@@ -28,16 +28,16 @@ export const KABBO_QUOTES: KabboQuote[] = [
   { text: 'I do merely listen, watching for a story.' },
   { text: 'I am listening with all my ears.' },
   { text: 'These are those to which I am listening with all my ears.' },
-  { text: 'I want to hear — I must wait listening.' },
+  { text: 'I want to hear – I must wait listening.' },
   { text: 'The tale which is told nicely, I did get it, as it lay in my thinking strings.' },
   { text: 'I must sit a little, cooling my arms; that the fatigue may go out of them.' },
 
-  // Thoughts and thinking — from the "give me thread" chiasmus
+  // Thoughts and thinking – from the "give me thread" chiasmus
   { text: 'My thoughts spoke to me. Therefore my mouth speaks to thee.' },
   { text: 'He thought, for his thoughts spoke.' },
   { text: 'I thinking lay. I lay upon the bed.' },
 
-  // Running and the hare — from the persistence-hunting digression
+  // Running and the hare – from the persistence-hunting digression
   { text: 'I was fresh for running; I felt that I could, running, catch things.' },
   { text: 'When I walk on the path I shall also run.' },
   { text: 'I might chasing, cause them to die with the sun.' },

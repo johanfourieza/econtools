@@ -375,7 +375,7 @@ function AnalyticsContent({ stats, showAllJournals, setShowAllJournals, showAllC
                     <td className="py-2 px-2 text-center text-muted-foreground">{member.stages['published'] || 0}</td>
                     <td className="py-2 px-2 text-center text-muted-foreground">{member.coAuthors}</td>
                     <td className="py-2 pl-2 text-xs text-muted-foreground truncate max-w-[200px]">
-                      {member.journals.length > 0 ? member.journals.join(', ') : '—'}
+                      {member.journals.length > 0 ? member.journals.join(', ') : '–'}
                     </td>
                   </tr>
                 ))}

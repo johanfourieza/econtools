@@ -6,7 +6,7 @@ interface KabboLogoProps {
 }
 
 /**
- * Kabbo logo — a stylised kanna flower (Sceletium tortuosum).
+ * Kabbo logo – a stylised kanna flower (Sceletium tortuosum).
  *
  * Two interleaved rings of thin filament petals radiate from a small central
  * disc. The visual metaphor: many ideas funnelling inward to form a single
@@ -19,7 +19,7 @@ export function KabboLogo({ className, size = 40 }: KabboLogoProps) {
   const cy = 24;
   const petalCount = 32;
 
-  // Outer ring — long petals, with a clear gap from the central disc
+  // Outer ring – long petals, with a clear gap from the central disc
   const longPetals = Array.from({ length: petalCount }, (_, i) => {
     const angle = (i * 2 * Math.PI) / petalCount;
     return {
@@ -31,7 +31,7 @@ export function KabboLogo({ className, size = 40 }: KabboLogoProps) {
     };
   });
 
-  // Inner ring — shorter petals, offset by half a step to fill the gaps
+  // Inner ring – shorter petals, offset by half a step to fill the gaps
   const shortPetals = Array.from({ length: petalCount }, (_, i) => {
     const angle = ((i + 0.5) * 2 * Math.PI) / petalCount;
     return {
@@ -52,7 +52,7 @@ export function KabboLogo({ className, size = 40 }: KabboLogoProps) {
       xmlns="http://www.w3.org/2000/svg"
       className={cn('text-brand-ochre', className)}
     >
-      {/* Long filament petals — outer ring */}
+      {/* Long filament petals – outer ring */}
       {longPetals.map((p) => (
         <line
           key={p.key}
@@ -66,7 +66,7 @@ export function KabboLogo({ className, size = 40 }: KabboLogoProps) {
         />
       ))}
 
-      {/* Shorter filament petals — interleaved inner ring */}
+      {/* Shorter filament petals – interleaved inner ring */}
       {shortPetals.map((p) => (
         <line
           key={p.key}
@@ -80,7 +80,7 @@ export function KabboLogo({ className, size = 40 }: KabboLogoProps) {
         />
       ))}
 
-      {/* Central disc — where the ideas converge */}
+      {/* Central disc – where the ideas converge */}
       <circle cx={cx} cy={cy} r={4.5} fill="currentColor" />
     </svg>
   );

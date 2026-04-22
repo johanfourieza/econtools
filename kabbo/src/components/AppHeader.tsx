@@ -47,13 +47,13 @@ export function AppHeader({ title, subtitle, profile, onSignOut, onProfileUpdate
             {/* Logo */}
             <KabboLogo size={28} className="md:w-8 md:h-8 flex-shrink-0" />
 
-            {/* Wordmark — contour ochre (Proposal E). Render as h1 via aria. */}
+            {/* Wordmark – contour ochre (Proposal E). Render as h1 via aria. */}
             <h1 className="leading-none" aria-label="Kabbo">
               <KabboWordmark height={28} className="md:hidden" />
               <KabboWordmark height={32} className="hidden md:block" />
             </h1>
 
-            {/* Divider — matches logo height, spaced a logo-height away on each side */}
+            {/* Divider – matches logo height, spaced a logo-height away on each side */}
             <div
               aria-hidden="true"
               className="hidden sm:block w-px h-7 md:h-8 bg-border ml-7 mr-7 md:ml-8 md:mr-8 flex-shrink-0"

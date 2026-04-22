@@ -224,7 +224,7 @@ function createMcpServer(apiKey: string) {
 
   server.tool({
     name: "search_publications",
-    description: "Search publications across title, authors, notes, and themes. More powerful than list_publications — supports multi-field filtering.",
+    description: "Search publications across title, authors, notes, and themes. More powerful than list_publications – supports multi-field filtering.",
     inputSchema: {
       type: "object" as const,
       properties: {

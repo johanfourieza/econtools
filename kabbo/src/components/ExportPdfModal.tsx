@@ -121,7 +121,7 @@ export function ExportPdfModal({ open, onOpenChange, userName, publications = []
           )}
 
           <div className="space-y-3">
-            <Label>PDF — What to include:</Label>
+            <Label>PDF – What to include:</Label>
             <RadioGroup
               value={exportOption}
               onValueChange={(value) => setExportOption(value as 'funnel' | 'all')}

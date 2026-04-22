@@ -93,7 +93,7 @@ describe('dbToLocal', () => {
     expect(back.completionYear).toBe('2024');
   });
 
-  it('marks a published row with null target_year as "unknown" — never hides it', () => {
+  it('marks a published row with null target_year as "unknown" – never hides it', () => {
     // This is the critical regression test. Before the fix, published rows
     // with null target_year became publishedYear='' and got silently filtered
     // out of every year bucket. That's how imports "disappeared" on reload.
@@ -207,7 +207,7 @@ describe('publishedByYear grouping (logic mirrored from useSupabasePublications)
     // test fails, the UI is hiding data again.
     //
     // Rows older than 7 years (e.g. published in 2018 when currentYear=2026)
-    // are intentionally excluded at the hook level — the FilterBar has a
+    // are intentionally excluded at the hook level – the FilterBar has a
     // separate year-limit control for those.
     const pubs = [
       basePub({ id: 'a', stageId: 'published', publishedYear: 2024 }),

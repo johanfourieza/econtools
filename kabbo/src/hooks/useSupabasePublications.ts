@@ -136,6 +136,18 @@ export function useSupabasePublications() {
       
       setPublications(allPubs);
 
+      // Orphan telemetry — belt & braces for the "Untitled / Year unknown" bug.
+      // Should always be 0 once the cleanup migration + CHECK constraint land.
+      const orphans = allPubs.filter(
+        p => p.stageId === 'published' && p.publishedYear === 'unknown'
+      );
+      if (orphans.length > 0) {
+        console.warn(
+          `[kabbo] ${orphans.length} published publications lack target_year`,
+          orphans.map(p => ({ id: p.id, title: p.title || '(untitled)' }))
+        );
+      }
+
       const localBin: BinItem[] = (binResult.data || []).map((b: any) => ({
         id: b.id,
         title: (b.publication_data as any)?.title || 'Untitled',
@@ -300,6 +312,14 @@ export function useSupabasePublications() {
   // Add new publication
   const addPublication = useCallback(async (stageId = 'idea') => {
     if (!user?.id) return null;
+
+    // Guard: a blank row in 'published' would land as title='Untitled' +
+    // target_year=NULL and violate the DB CHECK constraint. Callers that
+    // genuinely need a published row must use addPublicationWithData.
+    if (stageId === 'published') {
+      console.error('addPublication: refusing to create blank row in published stage');
+      return null;
+    }
 
     const newId = crypto.randomUUID();
     const now = new Date().toISOString();
@@ -477,10 +497,20 @@ export function useSupabasePublications() {
     if ('links' in updates) dbUpdate.links = (updates.links || []).map((l: any) => JSON.stringify(l));
     if ('workingPaper' in updates) dbUpdate.working_paper = updates.workingPaper;
     if ('history' in updates) dbUpdate.stage_history = (updates.history || []).map(h => ({ from: h.from, to: h.to, at: h.at }));
-    // Year mapping for Published stage — fires when the *effective* stage is
-    // 'published', not only when stageId happens to be in the same payload.
-    if ('publishedYear' in updates && effectiveStage === 'published') {
-      dbUpdate.target_year = updates.publishedYear || new Date().getFullYear();
+    // Year mapping for Published stage — fires whenever the *effective* stage
+    // is 'published', regardless of whether the caller included publishedYear
+    // in this payload. Prefer explicit publishedYear → card's publishedYear →
+    // completionYear → current year. This must leave target_year non-null,
+    // otherwise the DB CHECK publications_published_requires_year will reject.
+    if (effectiveStage === 'published') {
+      const explicit =
+        'publishedYear' in updates && typeof updates.publishedYear === 'number'
+          ? updates.publishedYear
+          : null;
+      const fromCard = typeof pub?.publishedYear === 'number' ? pub.publishedYear : null;
+      const fromCompletion = pub?.completionYear ? parseInt(pub.completionYear, 10) : NaN;
+      const yr = explicit ?? fromCard ?? (Number.isFinite(fromCompletion) ? fromCompletion : NaN);
+      dbUpdate.target_year = Number.isFinite(yr) ? yr : new Date().getFullYear();
     }
 
     await executeOrQueue(

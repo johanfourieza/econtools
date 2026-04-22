@@ -1,7 +1,7 @@
 /**
  * Tests for the rule engine in useInsights.
  *
- * Only `computeInsights` is tested here — it's a pure function. The hook-level
+ * Only `computeInsights` is tested here – it's a pure function. The hook-level
  * dismissal + expand state is trivial wrapping around localStorage and is
  * verified manually per TESTING.md.
  */
@@ -74,7 +74,7 @@ describe('computeInsights · celebration', () => {
 
   it('does not fire for a published card with no history of the transition', () => {
     // e.g. a BibTeX import that landed directly in published without going
-    // through the stage history — we have no timestamp to anchor on.
+    // through the stage history – we have no timestamp to anchor on.
     const pub = basePub({
       stageId: 'published',
       publishedYear: 2024,
@@ -135,15 +135,74 @@ describe('computeInsights · missing_year', () => {
   });
 });
 
-describe('computeInsights · missing_authors', () => {
-  it('fires for cards with empty authors', () => {
-    const pub = basePub({ authors: '' });
-    expect(computeInsights([pub], NOW).find(i => i.category === 'missing_authors')).toBeDefined();
+describe('computeInsights · missing_journal', () => {
+  it('fires for a submitted journal paper with no target set', () => {
+    const pub = basePub({ stageId: 'submitted', outputType: 'journal', typeA: '' });
+    expect(computeInsights([pub], NOW).find(i => i.category === 'missing_journal')).toBeDefined();
   });
 
-  it('fires for whitespace-only authors', () => {
-    const pub = basePub({ authors: '   ' });
-    expect(computeInsights([pub], NOW).find(i => i.category === 'missing_authors')).toBeDefined();
+  it('does not fire for a book chapter without a target', () => {
+    const pub = basePub({ stageId: 'submitted', outputType: 'chapter', typeA: '' });
+    expect(computeInsights([pub], NOW).find(i => i.category === 'missing_journal')).toBeUndefined();
+  });
+
+  it('does not fire once a target journal is set', () => {
+    const pub = basePub({ stageId: 'submitted', outputType: 'journal', typeA: 'QJE' });
+    expect(computeInsights([pub], NOW).find(i => i.category === 'missing_journal')).toBeUndefined();
+  });
+});
+
+describe('computeInsights · journals', () => {
+  it('fires when 2+ distinct journals were submitted-to in last 12 months', () => {
+    const recent = new Date(NOW - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const pubs = [
+      basePub({
+        id: 'a', outputType: 'journal', typeA: 'Econometrica',
+        history: [{ from: 'draft', to: 'submitted', at: recent }],
+      }),
+      basePub({
+        id: 'b', outputType: 'journal', typeA: 'AER',
+        history: [{ from: 'draft', to: 'submitted', at: recent }],
+      }),
+    ];
+    const insight = computeInsights(pubs, NOW).find(i => i.category === 'journals');
+    expect(insight?.message).toContain('2 different journals');
+  });
+
+  it('does not fire with only 1 journal', () => {
+    const recent = new Date(NOW - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const pubs = [
+      basePub({
+        id: 'a', outputType: 'journal', typeA: 'QJE',
+        history: [{ from: 'draft', to: 'submitted', at: recent }],
+      }),
+    ];
+    expect(computeInsights(pubs, NOW).find(i => i.category === 'journals')).toBeUndefined();
+  });
+});
+
+describe('computeInsights · pipeline_gap', () => {
+  it('fires with 3+ drafts and no recent submissions', () => {
+    const pubs = [
+      basePub({ id: 'a', stageId: 'draft' }),
+      basePub({ id: 'b', stageId: 'draft' }),
+      basePub({ id: 'c', stageId: 'draft' }),
+    ];
+    expect(computeInsights(pubs, NOW).find(i => i.category === 'pipeline_gap')).toBeDefined();
+  });
+
+  it('does not fire when there has been a recent submission', () => {
+    const recent = new Date(NOW - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const pubs = [
+      basePub({ id: 'a', stageId: 'draft' }),
+      basePub({ id: 'b', stageId: 'draft' }),
+      basePub({ id: 'c', stageId: 'draft' }),
+      basePub({
+        id: 'd', stageId: 'submitted',
+        history: [{ from: 'draft', to: 'submitted', at: recent }],
+      }),
+    ];
+    expect(computeInsights(pubs, NOW).find(i => i.category === 'pipeline_gap')).toBeUndefined();
   });
 });
 

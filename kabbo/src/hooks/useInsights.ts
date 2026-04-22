@@ -1,16 +1,18 @@
 /**
- * useInsights — rule-based dashboard insights for Kabbo.
+ * useInsights – rule-based dashboard insights for Kabbo.
  *
  * Pure rule engine (`computeInsights`) over the `publications` array returned
  * by `useSupabasePublications`, plus a React hook that manages per-card
  * dismissal state (7-day TTL) and the expand/collapse state of the panel.
  *
- * All rules run client-side from data already loaded — no new Supabase fetch.
- * Writes nothing. Safe to call on every render.
+ * All rules run client-side from data already loaded – no new Supabase fetch.
+ * The async co-authors-on-Kabbo insight is layered on in `InsightsPanel` via
+ * the separate `useCoauthorMatchInsight` hook.
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Publication } from '@/types/publication';
+import { parseList } from '@/lib/storage';
 import { pickKabboQuote } from '@/data/kabboQuotes';
 
 export type InsightCategory =
@@ -18,7 +20,11 @@ export type InsightCategory =
   | 'quick_wins'
   | 'stalled'
   | 'missing_year'
-  | 'missing_authors'
+  | 'missing_journal'
+  | 'journals'
+  | 'pipeline_gap'
+  | 'theme_focus'
+  | 'network'
   | 'momentum';
 
 export interface Insight {
@@ -36,6 +42,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const DISMISSAL_TTL_MS = 7 * DAY_MS;
 const STALLED_DAYS = 30;
 const CELEBRATION_DAYS = 7;
+const RECENT_SUBMIT_DAYS = 365;
 
 // ── helpers ──────────────────────────────────────────────────────────────
 const STAGE_LABELS: Record<string, string> = {
@@ -81,12 +88,20 @@ function lastActivityAt(pub: Publication): number | null {
   return isNaN(updatedTs) ? null : updatedTs;
 }
 
+function submittedRecently(pub: Publication, cutoffMs: number): boolean {
+  return pub.history.some(h => {
+    if (h.to !== 'submitted') return false;
+    const ts = new Date(h.at).getTime();
+    return !isNaN(ts) && ts >= cutoffMs;
+  });
+}
+
 // ── pure rule engine ─────────────────────────────────────────────────────
 
 /**
  * Compute all active insights from the current publications array.
  *
- * Pure — no localStorage, no React, no side effects. `now` is injectable
+ * Pure – no localStorage, no React, no side effects. `now` is injectable
  * for deterministic testing.
  */
 export function computeInsights(
@@ -98,6 +113,7 @@ export function computeInsights(
   const thisYear = nowDate.getFullYear();
   const lastYear = thisYear - 1;
   const thisDayOfYear = dayOfYear(nowDate);
+  const recentSubmitCutoff = now - RECENT_SUBMIT_DAYS * DAY_MS;
 
   // ── celebration (highest priority) ────────────────────────────────────
   for (const pub of publications) {
@@ -110,26 +126,41 @@ export function computeInsights(
         id: `celebration:${pub.id}`,
         category: 'celebration',
         message: `You published "${pub.title || 'Untitled'}" this week!`,
-        detail: `${pickKabboQuote().text} — ǀkabbo`,
+        detail: `${pickKabboQuote().text} – ǀkabbo`,
         priority: 1000,
       });
     }
   }
 
-  // ── quick_wins — accepted but not yet marked published ────────────────
+  // ── quick_wins – accepted but not yet marked published ────────────────
   const acceptedCount = publications.filter(p => p.stageId === 'accepted').length;
   if (acceptedCount > 0) {
     results.push({
       id: 'quick_wins',
       category: 'quick_wins',
       message: acceptedCount === 1
-        ? '1 accepted paper — ready to mark Published?'
-        : `${acceptedCount} accepted papers — ready to mark Published?`,
+        ? '1 accepted paper – ready to mark Published?'
+        : `${acceptedCount} accepted papers – ready to mark Published?`,
       priority: 500,
     });
   }
 
-  // ── stalled — cards not moved in 30+ days ─────────────────────────────
+  // ── pipeline_gap – drafts piling up with nothing submitted recently ──
+  const draftCount = publications.filter(p => p.stageId === 'draft').length;
+  const submittedRecentlyCount = publications.filter(p =>
+    submittedRecently(p, recentSubmitCutoff),
+  ).length;
+  if (draftCount >= 3 && submittedRecentlyCount === 0) {
+    results.push({
+      id: 'pipeline_gap',
+      category: 'pipeline_gap',
+      message: `${draftCount} papers in draft but none submitted in the last 12 months`,
+      detail: 'Time to ship one?',
+      priority: 450,
+    });
+  }
+
+  // ── stalled – cards not moved in 30+ days ─────────────────────────────
   for (const pub of publications) {
     if (pub.stageId === 'published' || pub.stageId === 'accepted') continue;
     const ts = lastActivityAt(pub);
@@ -145,7 +176,24 @@ export function computeInsights(
     }
   }
 
-  // ── missing_year — published rows with no target_year ─────────────────
+  // ── journals – distinct target journals submitted to in last 12 mo ───
+  const journalSet = new Set<string>();
+  for (const pub of publications) {
+    if (pub.outputType !== 'journal') continue;
+    if (!submittedRecently(pub, recentSubmitCutoff)) continue;
+    const journal = (pub.typeA || '').trim();
+    if (journal) journalSet.add(journal.toLowerCase());
+  }
+  if (journalSet.size >= 2) {
+    results.push({
+      id: `journals:${thisYear}`,
+      category: 'journals',
+      message: `You've submitted to ${journalSet.size} different journals in the last 12 months`,
+      priority: 350,
+    });
+  }
+
+  // ── missing_year – published rows with no target_year ─────────────────
   const missingYearCount = publications.filter(
     p => p.stageId === 'published' && p.publishedYear === 'unknown',
   ).length;
@@ -160,20 +208,47 @@ export function computeInsights(
     });
   }
 
-  // ── missing_authors ───────────────────────────────────────────────────
-  const missingAuthorsCount = publications.filter(p => !p.authors.trim()).length;
-  if (missingAuthorsCount > 0) {
+  // ── theme_focus – dominant theme among this year's publications ──────
+  const thisYearPublished = publications.filter(p => {
+    if (p.stageId !== 'published') return false;
+    return typeof p.publishedYear === 'number' && p.publishedYear === thisYear;
+  });
+  if (thisYearPublished.length >= 2) {
+    const themeCounts = new Map<string, number>();
+    for (const pub of thisYearPublished) {
+      for (const t of parseList(pub.themes)) {
+        themeCounts.set(t, (themeCounts.get(t) ?? 0) + 1);
+      }
+    }
+    const top = [...themeCounts.entries()].sort((a, b) => b[1] - a[1])[0];
+    if (top && top[1] >= 2) {
+      results.push({
+        id: `theme_focus:${thisYear}`,
+        category: 'theme_focus',
+        message: `${top[1]} of this year's papers are in "${top[0]}"`,
+        priority: 250,
+      });
+    }
+  }
+
+  // ── missing_journal – submitted-ish papers with no target journal ────
+  const missingJournalCount = publications.filter(p =>
+    p.outputType === 'journal' &&
+    (p.stageId === 'submitted' || p.stageId === 'revise_resubmit' || p.stageId === 'resubmitted') &&
+    !(p.typeA ?? '').trim(),
+  ).length;
+  if (missingJournalCount > 0) {
     results.push({
-      id: 'missing_authors',
-      category: 'missing_authors',
-      message: missingAuthorsCount === 1
-        ? '1 paper has no author listed'
-        : `${missingAuthorsCount} papers have no author listed`,
+      id: 'missing_journal',
+      category: 'missing_journal',
+      message: missingJournalCount === 1
+        ? '1 submitted paper has no target journal set'
+        : `${missingJournalCount} submitted papers have no target journal set`,
       priority: 200,
     });
   }
 
-  // ── momentum — YTD published count vs same date last year ─────────────
+  // ── momentum – YTD published count vs same date last year ─────────────
   let publishedThisYear = 0;
   let publishedLastYearByNow = 0;
   for (const pub of publications) {
@@ -191,11 +266,11 @@ export function computeInsights(
     const delta = publishedThisYear - publishedLastYearByNow;
     let message: string;
     if (delta > 0) {
-      message = `You've published ${publishedThisYear} so far this year — up from ${publishedLastYearByNow} at this point last year`;
+      message = `You've published ${publishedThisYear} so far this year – up from ${publishedLastYearByNow} at this point last year`;
     } else if (delta < 0) {
-      message = `You've published ${publishedThisYear} so far this year — down from ${publishedLastYearByNow} at this point last year`;
+      message = `You've published ${publishedThisYear} so far this year – down from ${publishedLastYearByNow} at this point last year`;
     } else {
-      message = `You've published ${publishedThisYear} so far this year — same as this point last year`;
+      message = `You've published ${publishedThisYear} so far this year – same as this point last year`;
     }
     results.push({
       id: `momentum:${thisYear}`,
@@ -233,7 +308,7 @@ function writeDismissals(map: Record<string, number>): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(DISMISSED_KEY, JSON.stringify(map));
-  } catch { /* quota — accept loss of persistence */ }
+  } catch { /* quota – accept loss of persistence */ }
 }
 
 function readInitialExpanded(): boolean {

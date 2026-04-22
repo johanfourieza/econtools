@@ -1,6 +1,7 @@
 import { Publication, STAGE_COLORS } from '@/types/publication';
 import { parseList } from '@/lib/storage';
 import { PresenceIndicator } from './PresenceIndicator';
+import { useAuth } from '@/hooks/useAuth';
 import { Users } from 'lucide-react';
 
 interface PresenceUser {
@@ -20,7 +21,14 @@ interface PublicationCardProps {
 }
 
 export function PublicationCard({ publication, stageIndex = 0, onClick, onDragStart, viewers = [] }: PublicationCardProps) {
-  const authors = parseList(publication.authors);
+  const { profile } = useAuth();
+  // Dashboard chips show CO-authors only. The full ordered list (including
+  // the signed-in user) lives on the publication; filter by display_name
+  // case-insensitively so chips are other people.
+  const myName = (profile?.displayName ?? '').trim().toLowerCase();
+  const coauthors = parseList(publication.authors).filter(
+    a => a.trim().toLowerCase() !== myName
+  );
   const themes = parseList(publication.themes);
   const isWorkingPaper = publication.workingPaper?.on;
   const isCollaboration = publication.isCollaboration;
@@ -62,13 +70,13 @@ export function PublicationCard({ publication, stageIndex = 0, onClick, onDragSt
       </h3>
       
       <div className="flex flex-wrap gap-1.5 items-center">
-        {authors.slice(0, 2).map((author, i) => (
+        {coauthors.slice(0, 2).map((author, i) => (
           <span key={i} className="chip text-[10px]">
             {author}
           </span>
         ))}
-        {authors.length > 2 && (
-          <span className="chip text-[10px]">+{authors.length - 2}</span>
+        {coauthors.length > 2 && (
+          <span className="chip text-[10px]">+{coauthors.length - 2}</span>
         )}
         
         {themes.slice(0, 1).map((theme, i) => (

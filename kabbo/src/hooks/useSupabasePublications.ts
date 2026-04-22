@@ -25,7 +25,7 @@ export { dbToLocal, localToDb } from './publicationTransforms';
 import { dbToLocal, localToDb } from './publicationTransforms';
 
 export function useSupabasePublications() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, profile } = useAuth();
   const { isOnline, isSyncing, pendingCount, executeOrQueue } = useOfflineQueue();
   const [publications, setPublications] = useState<Publication[]>([]);
   const [bin, setBin] = useState<BinItem[]>([]);
@@ -76,7 +76,7 @@ export function useSupabasePublications() {
         // 1. Owned publications
         supabase
           .from('publications')
-          .select('id, owner_id, title, authors, themes, grants, target_year, stage, output_type, notes, links, github_repo, overleaf_link, data_sources, related_papers, working_paper, stage_history, created_at, updated_at')
+          .select('id, owner_id, title, authors, themes, grants, target_year, target_journal, stage, output_type, notes, links, github_repo, overleaf_link, data_sources, related_papers, working_paper, stage_history, created_at, updated_at')
           .eq('owner_id', user.id)
           .order('updated_at', { ascending: false }),
         // 2. Get collaborated publication IDs first
@@ -108,7 +108,7 @@ export function useSupabasePublications() {
         
         const { data: collabPubsData, error: collabPubsError } = await supabase
           .from('publications')
-          .select('id, owner_id, title, authors, themes, grants, target_year, stage, output_type, notes, links, github_repo, overleaf_link, data_sources, related_papers, working_paper, stage_history, created_at, updated_at')
+          .select('id, owner_id, title, authors, themes, grants, target_year, target_journal, stage, output_type, notes, links, github_repo, overleaf_link, data_sources, related_papers, working_paper, stage_history, created_at, updated_at')
           .in('id', collabIds)
           .order('updated_at', { ascending: false });
         
@@ -136,7 +136,7 @@ export function useSupabasePublications() {
       
       setPublications(allPubs);
 
-      // Orphan telemetry — belt & braces for the "Untitled / Year unknown" bug.
+      // Orphan telemetry – belt & braces for the "Untitled / Year unknown" bug.
       // Should always be 0 once the cleanup migration + CHECK constraint land.
       const orphans = allPubs.filter(
         p => p.stageId === 'published' && p.publishedYear === 'unknown'
@@ -323,12 +323,21 @@ export function useSupabasePublications() {
 
     const newId = crypto.randomUUID();
     const now = new Date().toISOString();
-    
+
+    // Pre-fill the authors field with the user's display_name when the
+    // auto-include setting is on (default true). The data model treats
+    // `authors` as the full ordered list including the user; the dashboard
+    // card filters the user's name out before rendering chips.
+    const preFilledAuthors =
+      profile?.autoIncludeMeInAuthors !== false && profile?.displayName
+        ? profile.displayName
+        : '';
+
     const newPub: Publication = {
       id: newId,
       ownerId: user.id,
       title: '',
-      authors: '',
+      authors: preFilledAuthors,
       themes: '',
       grants: '',
       completionYear: '',
@@ -367,7 +376,7 @@ export function useSupabasePublications() {
     );
 
     return newPub;
-  }, [user?.id, executeOrQueue]);
+  }, [user?.id, profile?.autoIncludeMeInAuthors, profile?.displayName, executeOrQueue]);
 
   // Atomic insert with full data. Unlike `addPublication` + `updatePublication`
   // (which has a known race where the update step silently no-ops if called in
@@ -376,7 +385,7 @@ export function useSupabasePublications() {
   // an import can never leave a half-populated "Untitled" row behind.
   //
   // Returns `{ pub, error }`. The caller can check `error` to know whether the
-  // insert actually reached Supabase — no silent successes.
+  // insert actually reached Supabase – no silent successes.
   const addPublicationWithData = useCallback(async (
     stageId: string,
     data: {
@@ -434,14 +443,14 @@ export function useSupabasePublications() {
 
     try {
       // Single atomic insert. No optimistic local update until the DB
-      // confirms — this way, if the insert fails, we never show a row that
+      // confirms – this way, if the insert fails, we never show a row that
       // won't survive a reload.
       const { error } = await supabase
         .from('publications')
         .insert(dbData);
       if (error) throw error;
 
-      // DB confirmed — now add to local state.
+      // DB confirmed – now add to local state.
       setPublications(prev => [newPub, ...prev]);
       return { pub: newPub, error: null };
     } catch (err) {
@@ -455,11 +464,11 @@ export function useSupabasePublications() {
 
     // Read the current row from the ref rather than the closure-captured
     // `publications` array. This is safe against the race where the caller
-    // just inserted `id` in the same tick — the ref is synced via useEffect
+    // just inserted `id` in the same tick – the ref is synced via useEffect
     // but we also fall back to optimistic-update state for this tick.
     const pub = publicationsRef.current.find(p => p.id === id);
     if (!pub) {
-      // Row not found even in the ref. Do NOT silently return — surface via
+      // Row not found even in the ref. Do NOT silently return – surface via
       // console so the failure is observable; still apply the optimistic
       // state change in case the row is about to arrive via realtime.
       console.warn('updatePublication: no matching row for id', id);
@@ -474,7 +483,7 @@ export function useSupabasePublications() {
         : c
     ));
 
-    // Effective stage after this update — used for the publishedYear → target_year
+    // Effective stage after this update – used for the publishedYear → target_year
     // mapping so that year updates do not silently drop when `stageId` is absent
     // from the payload.
     const effectiveStage = 'stageId' in updates ? updates.stageId : pub?.stageId;
@@ -492,12 +501,13 @@ export function useSupabasePublications() {
     if ('stageId' in updates) dbUpdate.stage = updates.stageId;
     if ('notes' in updates) dbUpdate.notes = updates.notes;
     if ('outputType' in updates) dbUpdate.output_type = updates.outputType;
+    if ('typeA' in updates) dbUpdate.target_journal = (updates.typeA ?? '').trim() || null;
     if ('githubRepo' in updates) dbUpdate.github_repo = updates.githubRepo || null;
     if ('overleafLink' in updates) dbUpdate.overleaf_link = updates.overleafLink || null;
     if ('links' in updates) dbUpdate.links = (updates.links || []).map((l: any) => JSON.stringify(l));
     if ('workingPaper' in updates) dbUpdate.working_paper = updates.workingPaper;
     if ('history' in updates) dbUpdate.stage_history = (updates.history || []).map(h => ({ from: h.from, to: h.to, at: h.at }));
-    // Year mapping for Published stage — fires whenever the *effective* stage
+    // Year mapping for Published stage – fires whenever the *effective* stage
     // is 'published', regardless of whether the caller included publishedYear
     // in this payload. Prefer explicit publishedYear → card's publishedYear →
     // completionYear → current year. This must leave target_year non-null,
@@ -886,7 +896,7 @@ export function useSupabasePublications() {
     return newPub;
   }, [user?.id]);
 
-  // Get card by ID — reads the ref so the value is always current, and the
+  // Get card by ID – reads the ref so the value is always current, and the
   // callback identity is stable across renders.
   const getCard = useCallback((id: string) => {
     return publicationsRef.current.find(c => c.id === id);

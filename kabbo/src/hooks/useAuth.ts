@@ -57,6 +57,7 @@ export function useAuth() {
         googleScholarUrl: data.google_scholar_url || undefined,
         personalWebsiteUrl: data.personal_website_url || undefined,
         orcidId: data.orcid_id || undefined,
+        autoIncludeMeInAuthors: data.auto_include_me_in_authors ?? true,
       });
     }
   };

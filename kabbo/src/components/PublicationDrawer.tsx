@@ -431,13 +431,13 @@ export function PublicationDrawer({
             />
           </div>
 
-          {/* Co-authors */}
+          {/* Authors */}
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Co-authors (comma-separated)</Label>
+            <Label className="text-xs text-muted-foreground">Authors (in order, comma-separated)</Label>
             <Input
               value={localPub.authors}
               onChange={(e) => canEdit && updateLocal({ authors: e.target.value })}
-              placeholder="Robinson, Ozdaglar, Lensman"
+              placeholder="Fourie, Robinson, Ozdaglar"
               className="bg-secondary/30"
               disabled={!canEdit}
             />

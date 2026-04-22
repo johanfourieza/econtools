@@ -85,7 +85,7 @@ export interface Publication {
   // Collaborators on this publication
   collaborators: Collaborator[];
   // `'unknown'` is a sentinel used when a row is in the published stage but
-  // has no target_year — it keeps the row visible in a dedicated "Year
+  // has no target_year – it keeps the row visible in a dedicated "Year
   // unknown" bucket rather than silently filtered out. `''` means the row is
   // not in the published stage and therefore has no applicable year.
   publishedYear: number | '' | 'unknown';
@@ -134,6 +134,9 @@ export interface UserProfile {
   googleScholarUrl?: string;
   personalWebsiteUrl?: string;
   orcidId?: string;
+  // When true, new publications pre-fill the authors field with the user's
+  // display name. Default true; opt-out via Profile settings.
+  autoIncludeMeInAuthors?: boolean;
 }
 
 export const DEFAULT_STAGES: Stage[] = [

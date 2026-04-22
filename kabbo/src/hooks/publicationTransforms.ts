@@ -5,7 +5,7 @@
  * client (which needs `localStorage` at module load).
  *
  * Keep these free of React, Supabase, and any browser API. They are called
- * on every load, every insert, every update — cheap and deterministic.
+ * on every load, every insert, every update – cheap and deterministic.
  */
 
 import { Publication } from '@/types/publication';
@@ -32,7 +32,10 @@ export function dbToLocal(dbPub: any): Publication {
     completionYear: dbPub.target_year?.toString() || '',
     stageId: dbPub.stage || 'idea',
     outputType: dbPub.output_type || 'journal',
-    typeA: '',
+    // typeA is the UI-facing venue field. Label is polymorphic per outputType
+    // ("Intended journal" / "Publisher" / "Book title") but it's one column
+    // backed by target_journal in the DB.
+    typeA: dbPub.target_journal || '',
     typeB: '',
     typeC: '',
     workingPaper: dbPub.working_paper || { on: false, series: '', number: '', url: '' },
@@ -50,7 +53,7 @@ export function dbToLocal(dbPub: any): Publication {
     reminders: [],
     collaborators: [],
     // Invariant: a row in the "published" stage MUST return a bucketable
-    // publishedYear — either a number or the sentinel 'unknown'. Never ''.
+    // publishedYear – either a number or the sentinel 'unknown'. Never ''.
     // Returning '' here was the bug that caused imports with null target_year
     // to silently vanish on reload.
     publishedYear: dbPub.stage === 'published'
@@ -75,6 +78,7 @@ export function localToDb(pub: Publication, userId: string): {
   themes: string[];
   grants: string[];
   target_year: number | null;
+  target_journal: string | null;
   stage: string;
   output_type: string;
   notes: string;
@@ -98,6 +102,7 @@ export function localToDb(pub: Publication, userId: string): {
     themes: parseList(pub.themes),
     grants: parseList(pub.grants),
     target_year: targetYear,
+    target_journal: pub.typeA?.trim() || null,
     stage: pub.stageId,
     output_type: pub.outputType,
     notes: pub.notes,

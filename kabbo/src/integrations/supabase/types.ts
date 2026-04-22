@@ -82,6 +82,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          auto_include_me_in_authors: boolean
           avatar_url: string | null
           created_at: string
           display_name: string | null
@@ -93,6 +94,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auto_include_me_in_authors?: boolean
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
@@ -104,6 +106,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auto_include_me_in_authors?: boolean
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
@@ -227,6 +230,7 @@ export type Database = {
           related_papers: string[] | null
           stage: string
           stage_history: Json[] | null
+          target_journal: string | null
           target_year: number | null
           themes: string[] | null
           title: string
@@ -249,6 +253,7 @@ export type Database = {
           related_papers?: string[] | null
           stage?: string
           stage_history?: Json[] | null
+          target_journal?: string | null
           target_year?: number | null
           themes?: string[] | null
           title?: string
@@ -271,6 +276,7 @@ export type Database = {
           related_papers?: string[] | null
           stage?: string
           stage_history?: Json[] | null
+          target_journal?: string | null
           target_year?: number | null
           themes?: string[] | null
           title?: string
@@ -529,6 +535,10 @@ export type Database = {
       is_team_admin: { Args: { _team_id: string }; Returns: boolean }
       is_team_creator: { Args: { _team_id: string }; Returns: boolean }
       is_team_member: { Args: { _team_id: string }; Returns: boolean }
+      match_coauthors_on_kabbo: {
+        Args: { _authors: string[] }
+        Returns: { matched_count: number; total_count: number }[]
+      }
       user_is_collaborator: { Args: { pub_id: string }; Returns: boolean }
       validate_api_key: { Args: { _key_hash: string }; Returns: string }
     }

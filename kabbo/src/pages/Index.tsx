@@ -12,6 +12,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { FilterBar } from '@/components/FilterBar';
 import { InsightsPanel } from '@/components/InsightsPanel';
 import { useInsights } from '@/hooks/useInsights';
+import { useCoauthorMatchInsight } from '@/hooks/useCoauthorMatchInsight';
 import { PipelineStage } from '@/components/PipelineStage';
 import { HorizontalPipelineStage } from '@/components/HorizontalPipelineStage';
 import { HorizontalYearStage } from '@/components/HorizontalYearStage';
@@ -114,14 +115,25 @@ const Index = () => {
     closeQuickStart,
   } = useOnboarding();
 
-  // Smart Insights panel — rule-based cards surfaced between the FilterBar
+  // Smart Insights panel – rule-based cards surfaced between the FilterBar
   // and the pipeline grid. Reads `state.cards` only; no writes.
   const {
-    insights,
+    insights: syncInsights,
     dismiss: dismissInsight,
     isExpanded: insightsExpanded,
     toggleExpanded: toggleInsightsExpanded,
   } = useInsights(state.cards);
+  // Async sibling: co-authors on Kabbo count from a SECURITY DEFINER RPC.
+  // Merged onto the sync list, then re-sorted by priority so it lands in the
+  // expected visual slot.
+  const asyncInsight = useCoauthorMatchInsight(state.cards);
+  const insights = useMemo(
+    () => {
+      const combined = asyncInsight ? [...syncInsights, asyncInsight] : syncInsights;
+      return combined.slice().sort((a, b) => b.priority - a.priority);
+    },
+    [syncInsights, asyncInsight],
+  );
 
   // Filter published years by limit. The 'unknown' bucket is always retained
   // regardless of limit, so orphan rows with missing years are never hidden.
@@ -243,7 +255,7 @@ const Index = () => {
     if (isForward) {
       toast({
         title: 'Congratulations!',
-        description: `"${pickKabboQuote().text}" — ||kabbo`,
+        description: `"${pickKabboQuote().text}" – ||kabbo`,
       });
     } else {
       const stageName = pipelineStages.find(s => s.id === stageId)?.name || stageId;
@@ -255,13 +267,13 @@ const Index = () => {
   };
 
   const handlePublishedDrop = (cardId: string, year: number | 'unknown') => {
-    // Dropping onto the "Year unknown" bucket is a no-op for the year — it
+    // Dropping onto the "Year unknown" bucket is a no-op for the year – it
     // means the user is moving a card into published without assigning one.
     const resolvedYear = year === 'unknown' ? undefined : year;
     moveToStage(cardId, 'published', resolvedYear);
     toast({
       title: 'Congratulations!',
-      description: `"${pickKabboQuote().text}" — ||kabbo`,
+      description: `"${pickKabboQuote().text}" – ||kabbo`,
     });
   };
 
@@ -275,7 +287,7 @@ const Index = () => {
     if (!isAlreadyPublished) {
       toast({
         title: 'Congratulations!',
-        description: `"${pickKabboQuote().text}" — ||kabbo`,
+        description: `"${pickKabboQuote().text}" – ||kabbo`,
       });
     }
 
@@ -321,7 +333,7 @@ const Index = () => {
     let failed = 0;
 
     for (const entry of entries) {
-      // Never create a publication with no title — that's how orphan rows
+      // Never create a publication with no title – that's how orphan rows
       // used to accumulate in the Published column.
       if (!entry.title || !entry.title.trim()) {
         skipped++;
@@ -338,7 +350,7 @@ const Index = () => {
 
       // Atomic single-insert. The old flow (addPublication followed by
       // updatePublication) had a documented race where the update step
-      // silently no-opped because it read a stale `publications` closure —
+      // silently no-opped because it read a stale `publications` closure –
       // resulting in rows on disk with title='Untitled' and no year. This
       // path either succeeds in one DB call or returns an error; no
       // half-imported rows are ever left behind.
@@ -366,7 +378,7 @@ const Index = () => {
         ? `Imported ${imported} publication${imported === 1 ? '' : 's'}`
         : `Imported ${imported}, ${totalSkipped} not saved`,
       description: totalSkipped > 0
-        ? `${skipped > 0 ? `${skipped} had no title.` : ''} ${failed > 0 ? `${failed} failed to save — check your network and retry.` : ''}`.trim()
+        ? `${skipped > 0 ? `${skipped} had no title.` : ''} ${failed > 0 ? `${failed} failed to save – check your network and retry.` : ''}`.trim()
         : undefined,
       variant: failed > 0 ? 'destructive' : undefined,
     });

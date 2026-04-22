@@ -1,13 +1,14 @@
 /**
- * InsightsPanel — rule-based dashboard insights (Wave 1E).
+ * InsightsPanel – rule-based dashboard insights (Wave 1E).
  *
  * Shows between the FilterBar and the pipeline grid. Horizontal scroll row of
  * insight cards (stalled papers, missing data, momentum, accepted ready to
- * publish, this-week celebrations). Each card is dismissible with a 7-day
+ * publish, this-week celebrations, journals submitted to, co-authors on
+ * Kabbo, theme focus, pipeline gap). Each card is dismissible with a 7-day
  * localStorage TTL. Panel collapses to a slim header row; default expanded
  * on desktop, collapsed on mobile.
  *
- * Display-only in v1 — no action buttons. Reads only; no mutations.
+ * Display-only in v1 – no action buttons. Reads only; no mutations.
  */
 
 import { Insight, InsightCategory } from '@/hooks/useInsights';
@@ -28,7 +29,11 @@ const CATEGORY_COLOUR: Record<InsightCategory, string> = {
   quick_wins: 'border-l-sage',
   stalled: 'border-l-warm',
   missing_year: 'border-l-muted-foreground/60',
-  missing_authors: 'border-l-muted-foreground/60',
+  missing_journal: 'border-l-muted-foreground/60',
+  journals: 'border-l-accent',
+  pipeline_gap: 'border-l-warm',
+  theme_focus: 'border-l-sage',
+  network: 'border-l-brand-ochre',
   momentum: 'border-l-accent',
 };
 
@@ -37,7 +42,11 @@ const CATEGORY_ICON_COLOUR: Record<InsightCategory, string> = {
   quick_wins: 'text-sage',
   stalled: 'text-warm',
   missing_year: 'text-muted-foreground',
-  missing_authors: 'text-muted-foreground',
+  missing_journal: 'text-muted-foreground',
+  journals: 'text-accent',
+  pipeline_gap: 'text-warm',
+  theme_focus: 'text-sage',
+  network: 'text-brand-ochre',
   momentum: 'text-accent',
 };
 
@@ -50,7 +59,7 @@ export function InsightsPanel({
   const count = insights.length;
 
   // Hide the panel entirely when there's nothing to show. Keeps the dashboard
-  // clean on a quiet day — users aren't nagged when nothing needs attention.
+  // clean on a quiet day – users aren't nagged when nothing needs attention.
   if (count === 0) return null;
 
   return (
@@ -131,7 +140,7 @@ function InsightCard({ insight, onDismiss }: InsightCardProps) {
         size="icon"
         onClick={onDismiss}
         aria-label={`Dismiss insight: ${insight.message}`}
-        // 'icon' is 40x40 by default — too big for our compact card. Override:
+        // 'icon' is 40x40 by default – too big for our compact card. Override:
         className="h-6 w-6 -mt-0.5 -mr-1 text-muted-foreground opacity-60 hover:opacity-100 hover:bg-secondary flex-shrink-0"
       >
         <X className="w-3.5 h-3.5" />
@@ -145,6 +154,10 @@ const CATEGORY_LABELS: Record<InsightCategory, string> = {
   quick_wins: 'Quick win',
   stalled: 'Stalled',
   missing_year: 'Missing year',
-  missing_authors: 'Missing author',
+  missing_journal: 'Missing journal',
+  journals: 'Journals',
+  pipeline_gap: 'Pipeline gap',
+  theme_focus: 'Theme focus',
+  network: 'Co-authors',
   momentum: 'Momentum',
 };

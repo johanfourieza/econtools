@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserProfile } from '@/types/publication';
@@ -82,7 +83,7 @@ function ApiKeysSection({ userId }: { userId: string }) {
       setRevealedKey(rawKey);
       setNewKeyName('');
       fetchKeys();
-      toast.success('API key created — copy it now, it won\'t be shown again');
+      toast.success('API key created – copy it now, it won\'t be shown again');
     } catch (err: any) {
       toast.error(err.message || 'Failed to create key');
     } finally {
@@ -122,7 +123,7 @@ function ApiKeysSection({ userId }: { userId: string }) {
 
       {revealedKey && (
         <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
-          <p className="text-xs font-medium text-primary">New API Key — copy now!</p>
+          <p className="text-xs font-medium text-primary">New API Key – copy now!</p>
           <div className="flex items-center gap-2">
             <code className="text-xs bg-muted px-2 py-1 rounded flex-1 truncate font-mono">{revealedKey}</code>
             <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => copyToClipboard(revealedKey, 'API key')}>
@@ -285,7 +286,7 @@ If .kabbo.yaml exists, use its metadata instead of inferring from the repo name.
 
 Write a script that:
 1. Uses the GitHub API (with a personal access token) to list all my repos
-2. For each repo, checks for .kabbo.yaml first — if found, use its metadata
+2. For each repo, checks for .kabbo.yaml first – if found, use its metadata
 3. If no .kabbo.yaml, extracts the paper title from the repo name and checks recent commits for [stage:xxx] tags
 4. POSTs each paper to the ingest API with the detected metadata and the GitHub repo URL
 5. Optionally sets up the Kabbo webhook on each repo that doesn't have it yet (using the webhook URL above)
@@ -554,11 +555,11 @@ The script should:
           <AccordionContent>
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground">
-                Add a <code className="bg-muted px-1 rounded">.kabbo.yaml</code> file to the root of any paper repo to declare its metadata. The webhook and sync scripts auto-discover it — no manual configuration needed.
+                Add a <code className="bg-muted px-1 rounded">.kabbo.yaml</code> file to the root of any paper repo to declare its metadata. The webhook and sync scripts auto-discover it – no manual configuration needed.
               </p>
 
               <div className="relative">
-                <pre className="text-[11px] bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap break-all font-mono leading-relaxed">{`# .kabbo.yaml — drop this in any paper repo root
+                <pre className="text-[11px] bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap break-all font-mono leading-relaxed">{`# .kabbo.yaml – drop this in any paper repo root
 title: "Effect of Climate Policy on Trade Flows"
 stage: draft
 authors:
@@ -575,7 +576,7 @@ overleaf_url: https://www.overleaf.com/project/abc123
 notes: "Working on methods section"
 links:
   - https://data.worldbank.org/dataset/xyz`}</pre>
-                <Button size="sm" variant="ghost" className="absolute top-1 right-1 h-6 w-6 p-0" onClick={() => copyToClipboard(`# .kabbo.yaml — drop this in any paper repo root
+                <Button size="sm" variant="ghost" className="absolute top-1 right-1 h-6 w-6 p-0" onClick={() => copyToClipboard(`# .kabbo.yaml – drop this in any paper repo root
 title: "Effect of Climate Policy on Trade Flows"
 stage: draft
 authors:
@@ -606,16 +607,16 @@ links:
 
                 <p className="font-medium pt-2">All supported fields:</p>
                 <div className="space-y-0.5">
-                  <p><code className="bg-muted px-1 rounded">title</code> — Paper title (otherwise inferred from repo name)</p>
-                  <p><code className="bg-muted px-1 rounded">stage</code> — Pipeline stage (idea, draft, submitted, revise_resubmit, resubmitted, accepted, published)</p>
-                  <p><code className="bg-muted px-1 rounded">authors</code> — List of author names</p>
-                  <p><code className="bg-muted px-1 rounded">output_type</code> — journal-article, book, chapter</p>
-                  <p><code className="bg-muted px-1 rounded">target_year</code> — Target completion year</p>
-                  <p><code className="bg-muted px-1 rounded">themes</code> — Research themes/tags</p>
-                  <p><code className="bg-muted px-1 rounded">grants</code> — Associated grant IDs</p>
-                  <p><code className="bg-muted px-1 rounded">overleaf_url</code> — Link to Overleaf project</p>
-                  <p><code className="bg-muted px-1 rounded">notes</code> — Free-text notes</p>
-                  <p><code className="bg-muted px-1 rounded">links</code> — List of related URLs</p>
+                  <p><code className="bg-muted px-1 rounded">title</code> – Paper title (otherwise inferred from repo name)</p>
+                  <p><code className="bg-muted px-1 rounded">stage</code> – Pipeline stage (idea, draft, submitted, revise_resubmit, resubmitted, accepted, published)</p>
+                  <p><code className="bg-muted px-1 rounded">authors</code> – List of author names</p>
+                  <p><code className="bg-muted px-1 rounded">output_type</code> – journal-article, book, chapter</p>
+                  <p><code className="bg-muted px-1 rounded">target_year</code> – Target completion year</p>
+                  <p><code className="bg-muted px-1 rounded">themes</code> – Research themes/tags</p>
+                  <p><code className="bg-muted px-1 rounded">grants</code> – Associated grant IDs</p>
+                  <p><code className="bg-muted px-1 rounded">overleaf_url</code> – Link to Overleaf project</p>
+                  <p><code className="bg-muted px-1 rounded">notes</code> – Free-text notes</p>
+                  <p><code className="bg-muted px-1 rounded">links</code> – List of related URLs</p>
                 </div>
 
                 <p className="font-medium pt-2">Quick init with Claude Code:</p>
@@ -635,7 +636,7 @@ links:
           <AccordionContent>
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground">
-                Connect Claude Code directly to Kabbo using the <strong>Model Context Protocol</strong>. Claude Code can then list, create, update, move, and delete publications natively — no scripts needed.
+                Connect Claude Code directly to Kabbo using the <strong>Model Context Protocol</strong>. Claude Code can then list, create, update, move, and delete publications natively – no scripts needed.
               </p>
 
               <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
@@ -683,7 +684,7 @@ links:
                       });
                       if (res.ok) { toast.success('MCP server connected successfully'); }
                       else { toast.error(`Connection failed (${res.status})`); }
-                    } catch { toast.error('Connection failed — check your network'); }
+                    } catch { toast.error('Connection failed – check your network'); }
                   }}>
                     <Server className="w-3 h-3" />
                     Test
@@ -692,22 +693,22 @@ links:
 
                 <p className="font-medium pt-2">Available tools (16):</p>
                 <div className="space-y-1">
-                  <p><code className="bg-muted px-1 rounded">list_publications</code> — List all publications with optional filters</p>
-                  <p><code className="bg-muted px-1 rounded">get_publication</code> — Get a single publication by ID</p>
-                  <p><code className="bg-muted px-1 rounded">create_publication</code> — Create a new publication</p>
-                  <p><code className="bg-muted px-1 rounded">update_publication</code> — Update any field on a publication</p>
-                  <p><code className="bg-muted px-1 rounded">move_stage</code> — Move a publication to a different stage</p>
-                  <p><code className="bg-muted px-1 rounded">delete_publication</code> — Soft-delete (bin) a publication</p>
-                  <p><code className="bg-muted px-1 rounded">get_pipeline_summary</code> — Pipeline overview: counts by stage, stalled and recent papers</p>
-                  <p><code className="bg-muted px-1 rounded">search_publications</code> — Search across title, authors, notes, themes, grants</p>
-                  <p><code className="bg-muted px-1 rounded">bulk_update</code> — Update multiple publications at once</p>
-                  <p><code className="bg-muted px-1 rounded">get_activity_log</code> — Recent activity from all sources with date filtering</p>
-                  <p><code className="bg-muted px-1 rounded">manage_reminders</code> — Create, list, complete, or delete reminders</p>
-                  <p><code className="bg-muted px-1 rounded">get_analytics</code> — Velocity, time per stage, breakdowns by author/theme/grant</p>
-                  <p><code className="bg-muted px-1 rounded">get_team_summary</code> — Team pipeline: papers by stage per member</p>
-                  <p><code className="bg-muted px-1 rounded">export_bibtex</code> — Generate BibTeX for your publications</p>
-                  <p><code className="bg-muted px-1 rounded">add_note</code> — Append a timestamped note to a publication</p>
-                  <p><code className="bg-muted px-1 rounded">get_stalled_papers</code> — Papers inactive for 30+ days, sorted by staleness</p>
+                  <p><code className="bg-muted px-1 rounded">list_publications</code> – List all publications with optional filters</p>
+                  <p><code className="bg-muted px-1 rounded">get_publication</code> – Get a single publication by ID</p>
+                  <p><code className="bg-muted px-1 rounded">create_publication</code> – Create a new publication</p>
+                  <p><code className="bg-muted px-1 rounded">update_publication</code> – Update any field on a publication</p>
+                  <p><code className="bg-muted px-1 rounded">move_stage</code> – Move a publication to a different stage</p>
+                  <p><code className="bg-muted px-1 rounded">delete_publication</code> – Soft-delete (bin) a publication</p>
+                  <p><code className="bg-muted px-1 rounded">get_pipeline_summary</code> – Pipeline overview: counts by stage, stalled and recent papers</p>
+                  <p><code className="bg-muted px-1 rounded">search_publications</code> – Search across title, authors, notes, themes, grants</p>
+                  <p><code className="bg-muted px-1 rounded">bulk_update</code> – Update multiple publications at once</p>
+                  <p><code className="bg-muted px-1 rounded">get_activity_log</code> – Recent activity from all sources with date filtering</p>
+                  <p><code className="bg-muted px-1 rounded">manage_reminders</code> – Create, list, complete, or delete reminders</p>
+                  <p><code className="bg-muted px-1 rounded">get_analytics</code> – Velocity, time per stage, breakdowns by author/theme/grant</p>
+                  <p><code className="bg-muted px-1 rounded">get_team_summary</code> – Team pipeline: papers by stage per member</p>
+                  <p><code className="bg-muted px-1 rounded">export_bibtex</code> – Generate BibTeX for your publications</p>
+                  <p><code className="bg-muted px-1 rounded">add_note</code> – Append a timestamped note to a publication</p>
+                  <p><code className="bg-muted px-1 rounded">get_stalled_papers</code> – Papers inactive for 30+ days, sorted by staleness</p>
                 </div>
 
                 <p className="font-medium pt-2">Example prompts in Claude Code:</p>
@@ -748,13 +749,13 @@ links:
               </div>
 
               <div className="text-[11px] text-muted-foreground space-y-2">
-                <p className="font-medium">GET — List publications</p>
+                <p className="font-medium">GET – List publications</p>
                 <p><code className="bg-muted px-1 rounded">?q=search</code> <code className="bg-muted px-1 rounded">?stage=draft</code> <code className="bg-muted px-1 rounded">?id=UUID</code> <code className="bg-muted px-1 rounded">?limit=50&offset=0</code></p>
 
-                <p className="font-medium pt-1">PATCH — Update a publication</p>
+                <p className="font-medium pt-1">PATCH – Update a publication</p>
                 <p>Body: <code className="bg-muted px-1 rounded">{`{ "id": "...", "stage": "submitted", "notes": "..." }`}</code></p>
 
-                <p className="font-medium pt-1">DELETE — Bin a publication</p>
+                <p className="font-medium pt-1">DELETE – Bin a publication</p>
                 <p><code className="bg-muted px-1 rounded">?id=UUID</code></p>
               </div>
             </div>
@@ -781,6 +782,7 @@ export function ProfileSettingsModal({
     googleScholarUrl: profile.googleScholarUrl || '',
     personalWebsiteUrl: profile.personalWebsiteUrl || '',
     orcidId: profile.orcidId || '',
+    autoIncludeMeInAuthors: profile.autoIncludeMeInAuthors ?? true,
   });
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -894,6 +896,7 @@ export function ProfileSettingsModal({
           google_scholar_url: googleScholarUrl ? normalizeUrl(googleScholarUrl) : null,
           personal_website_url: personalWebsiteUrl ? normalizeUrl(personalWebsiteUrl) : null,
           orcid_id: orcidId || null,
+          auto_include_me_in_authors: formData.autoIncludeMeInAuthors,
         })
         .eq('id', profile.id);
 
@@ -1021,6 +1024,28 @@ export function ProfileSettingsModal({
                     value={formData.orcidId}
                     onChange={(e) => setFormData(prev => ({ ...prev, orcidId: e.target.value }))}
                     placeholder="0000-0000-0000-0000"
+                  />
+                </div>
+              </div>
+
+              {/* Author preferences */}
+              <div className="border-t border-border pt-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <Label htmlFor="auto-include-me" className="font-medium">
+                      Include my name in new publications
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      When on, new publications pre-fill the authors field with your display name.
+                      Dashboard cards still show only your co-authors.
+                    </p>
+                  </div>
+                  <Switch
+                    id="auto-include-me"
+                    checked={formData.autoIncludeMeInAuthors}
+                    onCheckedChange={(v) =>
+                      setFormData(prev => ({ ...prev, autoIncludeMeInAuthors: v }))
+                    }
                   />
                 </div>
               </div>

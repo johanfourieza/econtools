@@ -45,3 +45,6 @@ genius-fraud-font/
 genius-fraud-font.zip
 marianne-font/
 marianne-font.zip
+
+# Claude Code personal / machine-local settings — by convention NOT shared
+.claude/settings.local.json

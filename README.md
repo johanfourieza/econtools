@@ -90,18 +90,6 @@ The `tyler/` folder contains:
 
 **Usage:** `/tyler`
 
-## Other custom skills (global only)
-
-These live in `~/.claude/skills/` and have no subfolder here. Short summaries:
-
-- **`/leapstyle`** — Apply the LEAP Economics house style to LaTeX working papers, beamer slides, R graphs, and academic writing. Covers preambles, colour palette, ggplot2 theme, and writing guidelines.
-- **`/leapletter`** — Create a reference letter or formal letter on LEAP letterhead, using the LaTeX letterhead template with logo, accent strip, watermark, and signature block.
-- **`/olwstyle`** — Apply the Our Long Walk house style to R graphs, beamer slides, and blog writing for [ourlongwalk.com](https://www.ourlongwalk.com). Colour palette, graph theme, beamer template, writing voice, content guidelines.
-- **`/olwsocial`** — Build a social media package from an Our Long Walk blog post. Produces platform-specific text posts (LinkedIn, X, Substack Notes, Instagram), quote cards, and adapted graphs.
-- **`/deploy-jf`** — Deploy [johanfourie.com](https://www.johanfourie.com): renders changed Quarto pages, commits, and pushes to GitHub Pages.
-- **`/deslop`** — Remove AI writing patterns from prose. Invoke when drafting, editing, or reviewing any text to strip out predictable AI tells.
-- **`/avoid-ai-writing`** — Audit and rewrite existing content to remove "AI-isms" — the formulaic patterns that give AI-generated prose away.
-
 ## License
 
 MIT

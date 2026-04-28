@@ -1,0 +1,17 @@
+{
+  "reviews": [
+    {
+      "review_id": "meta_history_ej_20260327",
+      "paper_title": "Meta History: The Roots of Social Connectedness",
+      "paper_file": "meta_history_paper.tex",
+      "target_journal": "Economic Journal",
+      "project_directory": "C:\\Users\\johanf\\Dropbox\\0Claude0\\1Research\\Fourie_Meta\\WorkingPaper",
+      "date_started": "2026-03-27",
+      "date_completed": null,
+      "rounds_completed": 1,
+      "final_verdict": null,
+      "gurus_used": ["siobhan_oconnell", "priya_ramachandran", "yuki_tanabe", "carlos_da_silva", "fatima_el_khoury"],
+      "external_referees": []
+    }
+  ]
+}

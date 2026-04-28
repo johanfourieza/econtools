@@ -1,0 +1,53 @@
+<task>
+You (Codex / GPT-5.4) earlier verdicted reference {{REF_ID}} ({{BIB_KEY}}) as {{CODEX_VERDICT}} with confidence {{CODEX_CONFIDENCE}}. The Claude side, using a different methodology (CrossRef/OpenAlex/Semantic Scholar/arXiv API cascade with title-Jaccard and author-overlap metrics), verdicted it as {{CLAUDE_VERDICT}} with confidence {{CLAUDE_CONFIDENCE}}.
+
+Your job in this challenge round:
+1. Re-fetch the URLs Claude cited in their evidence below. Do Claude's cited responses actually contain what Claude says they contain?
+2. Decide whether to CONCEDE, REFUTE, or remain STILL_UNCERTAIN.
+   - CONCEDE: Claude's evidence is stronger and you should adopt their verdict.
+   - REFUTE: stick with your verdict, but only if you can point to a concrete weakness in Claude's evidence — a misread API response, a bad title-Jaccard interpretation, a missed DOI conflict, a wrong threshold call. Refutation requires concrete URLs/quotes, never bluffing.
+   - STILL_UNCERTAIN: signals are genuinely contradictory; let the human adjudicate.
+3. Append a single JSONL line to {{KRIS_DIR}}/challenge/codex_challenges.jsonl matching the schema below. Write nothing else to disk.
+</task>
+
+<reference_under_dispute>
+{{REF_DISPLAY}}
+</reference_under_dispute>
+
+<your_earlier_evidence>
+{{CODEX_EVIDENCE_BLOCK}}
+</your_earlier_evidence>
+
+<claude_evidence_against_you>
+{{CLAUDE_EVIDENCE_BLOCK}}
+</claude_evidence_against_you>
+
+<grounding_rules>
+- Re-fetch every URL Claude cited that was load-bearing for their conclusion. Quote what you actually see, not what you expect to see.
+- A refutation MUST cite at least one URL where you found a discrepancy with Claude's claim. "I disagree" without evidence is not a refutation.
+- Conceding when Claude is right is a feature of this skill, not a failure. Score is computed on accuracy at the end, not stubbornness.
+- Never invent a URL or fabricate an excerpt. If a fetch fails, mark it as failed and pivot to an alternative signal.
+</grounding_rules>
+
+<structured_output_contract>
+Append exactly one JSON object to {{KRIS_DIR}}/challenge/codex_challenges.jsonl, schema:
+
+{
+  "ref_id": "{{REF_ID}}",
+  "bib_key": "{{BIB_KEY}}",
+  "side": "codex",
+  "challenge_response": "CONCEDE" | "REFUTE" | "STILL_UNCERTAIN",
+  "final_verdict": "REAL" | "CHIMERIC" | "FAKE" | "UNCERTAIN",
+  "final_confidence": 0.0-1.0,
+  "rebuttal_summary": "1-3 sentences on what re-checking Claude's URLs revealed",
+  "evidence": [
+    {"step": "refetch_claude_url", "url": "...", "result": "...", "quote": "..."}
+  ]
+}
+
+No other output. No markdown, no preamble.
+</structured_output_contract>
+
+<action_safety>
+READ-ONLY everywhere except {{KRIS_DIR}}/challenge/codex_challenges.jsonl (append-only) and {{KRIS_DIR}}/codex/work/.
+</action_safety>

@@ -77,7 +77,7 @@ The two method sets are designed to be non-overlapping, so a fake that defeats o
 - [PHY041/claude-skill-citation-checker](https://github.com/PHY041/claude-skill-citation-checker) — the inspiration for Method Set A. The API-cascade approach (CrossRef + OpenAlex + Semantic Scholar), the title-Jaccard threshold, the author-overlap heuristic, and several of the red-flag checks all trace back to this project.
 - [Imbad0202/academic-research-skills](https://github.com/Imbad0202/academic-research-skills) — the inspiration for Method Set B. The contextual cross-model verification, mandatory integrity gates, and the broader idea of running a second model with a different methodology to catch what the first missed all draw on this project.
 
-The orchestration on top — running both methods in parallel, randomly reassigning references between sides, and staging an adversarial challenge round on disagreements — is original to this skill. Named after my late father, Kris.
+The orchestration on top — running both methods in parallel, randomly reassigning references between sides, and staging an adversarial challenge round on disagreements — is original to this skill. Named in honour of [Kris Inwood](https://krisinwood.ca/), the Guelph economic historian whose long collaboration with South African scholarship — and whose donation in 2020 of his personal library to LEAP — made many of the citations this skill is designed to verify reachable in the first place.
 
 The `kris/` folder contains:
 

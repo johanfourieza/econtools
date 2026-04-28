@@ -2,7 +2,7 @@
 
 Custom skills for [Claude Code](https://claude.com/claude-code) designed for economics research workflows.
 
-This folder is the development home for five skills (`diebolt`, `ehrstyle`, `janluiten`, `tanniedi`, `tyler`) that have subfolders below. Other skills listed at the end live only in the global skills directory (`~/.claude/skills/`).
+This folder is the development home for six skills (`diebolt`, `ehrstyle`, `janluiten`, `kris`, `tanniedi`, `tyler`) that have subfolders below.
 
 ## Skills in this folder
 
@@ -62,6 +62,31 @@ The `janluiten/` folder contains:
 Use whenever you have a research idea — at any career stage, from a first paper to a senior pivot — and want help distilling whether it is the right one for you.
 
 **Usage:** `/janluiten`
+
+### Kris — `kris/`
+
+A reference auditor that catches hallucinated and chimeric entries in `.bib` files. Kris runs Claude and Codex (GPT-5.4) agents in parallel using **two genuinely independent verification methods**, randomly assigns references to Codex so no Claude/Codex pair shares a batch, and stages an adversarial challenge round where the two sides review each other's evidence and either concede or refute with concrete counter-evidence. The output is a scorecard plus an evidence-backed list of confirmed fakes — designed so no hallucinated reference slips through silently.
+
+- **Method Set A (Claude):** cascading API queries across CrossRef, OpenAlex, Semantic Scholar, and arXiv, with title-Jaccard similarity, author-lastname overlap, and red-flag heuristics (invalid DOI format, future year, generic-title patterns, suspect-venue list, DOI conflict).
+- **Method Set B (Codex / GPT-5.4):** DOI resolution against the publisher landing page, reverse search of the exact title, Retraction Watch lookup, author-existence cross-check via ORCID, venue and citation-graph plausibility, Internet Archive corroboration, and ISBN check via OpenLibrary.
+
+The two method sets are designed to be non-overlapping, so a fake that defeats one almost certainly trips the other.
+
+**Acknowledgments.** The design of Kris builds on two earlier projects whose authors deserve direct credit:
+
+- [PHY041/claude-skill-citation-checker](https://github.com/PHY041/claude-skill-citation-checker) — the inspiration for Method Set A. The API-cascade approach (CrossRef + OpenAlex + Semantic Scholar), the title-Jaccard threshold, the author-overlap heuristic, and several of the red-flag checks all trace back to this project.
+- [Imbad0202/academic-research-skills](https://github.com/Imbad0202/academic-research-skills) — the inspiration for Method Set B. The contextual cross-model verification, mandatory integrity gates, and the broader idea of running a second model with a different methodology to catch what the first missed all draw on this project.
+
+The orchestration on top — running both methods in parallel, randomly reassigning references between sides, and staging an adversarial challenge round on disagreements — is original to this skill. Named after my late father, Kris.
+
+The `kris/` folder contains:
+
+- `skill.md` — the skill definition and orchestrator instructions
+- `scripts/` — eight Python helpers (`parse_bib.py`, `assign.py`, `api_lookup.py`, `reconcile.py`, `scorecard.py`, `render_report.py`, `extract_thebibliography.py`, `extract_codex_jsonl.py`)
+- `templates/` — Claude and Codex subagent prompts plus the Claude/Codex challenge-round prompts
+- `tests/fixtures/` — a 10-reference test fixture (`mixed.bib`) with known REAL/FAKE/CHIMERIC/borderline cases and a cheat-sheet for grading
+
+**Usage:** `/kris path/to/refs.bib` — or `/kris path/to/paper.tex` (auto-finds the `.bib`)
 
 ### TannieDi — `tanniedi/`
 

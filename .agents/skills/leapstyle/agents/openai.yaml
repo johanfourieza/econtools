@@ -1,0 +1,4 @@
+interface:
+  display_name: "LEAP Style"
+  short_description: "Apply LEAP styles to papers, slides and graphs"
+  default_prompt: "Use $leapstyle to apply the LEAP writing style to this manuscript."

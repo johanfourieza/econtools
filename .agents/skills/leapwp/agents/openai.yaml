@@ -1,0 +1,4 @@
+interface:
+  display_name: "LEAP Working Paper"
+  short_description: "Package a finished paper as a working paper and shelve it"
+  default_prompt: "Use $leapwp to turn this finished paper into a LEAP working paper."

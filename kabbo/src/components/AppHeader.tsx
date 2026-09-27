@@ -26,9 +26,11 @@ interface AppHeaderProps {
   onProfileUpdated?: () => void;
   onOpenTeams?: () => void;
   teamInvitationCount?: number;
+  /** Rendered before the Teams button: the dashboard's Today queue. */
+  todaySlot?: React.ReactNode;
 }
 
-export function AppHeader({ title, subtitle, profile, onSignOut, onProfileUpdated, onOpenTeams, teamInvitationCount = 0 }: AppHeaderProps) {
+export function AppHeader({ title, subtitle, profile, onSignOut, onProfileUpdated, onOpenTeams, teamInvitationCount = 0, todaySlot }: AppHeaderProps) {
   const { theme, setTheme } = useTheme();
   const [showSettings, setShowSettings] = useState(false);
 
@@ -66,6 +68,9 @@ export function AppHeader({ title, subtitle, profile, onSignOut, onProfileUpdate
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Today queue */}
+            {profile && todaySlot}
+
             {/* Teams Button */}
             {profile && onOpenTeams && (
               <Button

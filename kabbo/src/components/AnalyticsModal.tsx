@@ -116,11 +116,11 @@ export function AnalyticsModal({ isOpen, onClose, cards, stages, publishedCards 
     const uniqueGrants = [...new Set(allGrants)];
 
     // Links & Resources coverage
-    const withLinks = allCards.filter(c => c.links && c.links.length > 0).length;
-    const linksCoverage = allCards.length > 0 
-      ? Math.round((withLinks / allCards.length) * 100) 
+    const withLinks = allCards.filter(c => c.collaborationLinks && c.collaborationLinks.length > 0).length;
+    const linksCoverage = allCards.length > 0
+      ? Math.round((withLinks / allCards.length) * 100)
       : 0;
-    const totalLinks = allCards.reduce((sum, c) => sum + (c.links?.length || 0), 0);
+    const totalLinks = allCards.reduce((sum, c) => sum + (c.collaborationLinks?.length || 0), 0);
 
     // GitHub/Overleaf coverage
     const withGithub = allCards.filter(c => c.githubRepo && c.githubRepo.trim().length > 0).length;
@@ -154,9 +154,8 @@ export function AnalyticsModal({ isOpen, onClose, cards, stages, publishedCards 
         if (c.grants && c.grants.trim()) score += 1;
         if (c.outputType) score += 1;
         if (c.notes && c.notes.trim()) score += 1;
-        if (c.links && c.links.length > 0) score += 1;
         if ((c.collaborationLinks && c.collaborationLinks.length > 0) || c.githubRepo || c.overleafLink) score += 1;
-        return sum + (score / 8 * 100);
+        return sum + (score / 7 * 100);
       }, 0) / allCards.length
     ) : 0;
 

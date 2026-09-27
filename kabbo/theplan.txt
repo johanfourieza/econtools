@@ -1,11 +1,38 @@
 # Kabbo — The Killer App for Research Teams
 # From pipeline tracker to the operating system for academic research
 # Strategic Plan — April 2026
-# Last updated: 2026-04-21
+# Last updated: 2026-09-27
 
 ---
 
 ## Progress log
+
+### Simplify-and-trust arc (proposals 1-3 of PROPOSALS-2026-09-27.txt) — BUILT 2026-09-27, NOT YET DEPLOYED
+Full proposal list (12 items, revised with Johan) lives in PROPOSALS-2026-09-27.txt.
+- [x] 1 · Agent layer fixed: get_team_summary now requires dashboard access and
+      applies each member's visibility floor; manage_reminders matches the real
+      schema (is_completed, valid types, due_date required); target_journal
+      accepted by create/update/import; agent move_stage appends stage_history;
+      submission_prep no longer moves the card; direct-DB tools write
+      activity_log (source=mcp); analytics measure the current stage to today.
+      Shared pure helpers in supabase/functions/_shared/pipeline.ts (Vitest).
+      New scripts/mcp-smoke-test.mjs (npm run test:mcp; needs a throwaway
+      API key in .env.test). Dead code removed (usePubFlow, NavLink,
+      TeamReportExport).
+- [x] 2 · Drawer simplified: Custom Sections removed (0 live rows used it),
+      Type/venue row hidden for ideas, chapter fields (book title, editors)
+      shown when relevant, Working paper folded into "Files and links",
+      Themes/Grants/Stage history behind a "More" disclosure.
+- [x] 3 · Today queue: header button with count (TodayPanel) replaces the
+      Insights carousel. Rules in _shared/today.ts (overdue/due-soon
+      reminders, R&R waiting 14d, no decision 120d, accepted 60d, idle draft
+      90d, published without year; ideas never nag). Reminders UI in the
+      drawer (RemindersSection + useReminders), bell on cards when due.
+      MCP get_today tool + morning_checkin prompt use the same rules.
+- [ ] Deploy mcp-server, api-publications, ingest-publication; push frontend.
+- [ ] Run npm run test:mcp against production with a throwaway key.
+- [ ] Next: proposal 4 (submission attempts + dispositions), then 5
+      (refereeing layer).
 
 ### Wave 1 (Deep): Frictionless integration — IN PROGRESS (2026-05-31)
 Rebuilt the integration around "install once, then it just happens as you work."

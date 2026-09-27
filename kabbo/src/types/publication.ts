@@ -25,6 +25,7 @@ export const COLLABORATION_LINK_TYPES = [
 
 export interface Reminder {
   id?: string;
+  publicationId?: string | null;
   title: string;
   description?: string;
   dueDate: string;

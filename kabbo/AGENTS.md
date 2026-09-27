@@ -27,6 +27,7 @@ backs Claude Code (the plugin) and Gemini CLI (`~/.gemini/settings.json`, using
 - `delete_publication` — soft-delete by id
 
 ### Analytics
+- `get_today` — what needs your attention today (overdue reminders, revisions waiting, decisions to chase); same list as the dashboard's Today button
 - `get_pipeline_summary` — counts by stage, stalled papers, recently updated
 - `get_stalled_papers` — papers inactive for N days (default 30)
 - `get_analytics` — velocity, avg time per stage, breakdowns by author/theme/grant/year/output_type
@@ -44,8 +45,11 @@ backs Claude Code (the plugin) and Gemini CLI (`~/.gemini/settings.json`, using
 - `manage_data_sources` — list/add/remove data sources
 
 ### Reminders / team / export / notes
-- `manage_reminders` — action: list | create | complete | delete
-- `get_team_summary` — per-member pipeline breakdown (requires team_id)
+- `manage_reminders` — action: list | create | complete | delete. Create needs
+  `title` and an ISO `due_date`; `reminder_type` is one of deadline, conference,
+  resubmission, working_paper, general (default general)
+- `get_team_summary` — per-member pipeline breakdown (requires team_id and team
+  dashboard access; each member's papers are cut at the visibility floor they set)
 - `export_bibtex` — BibTeX filtered by stage, year, or ids
 - `add_note` — append a timestamped note without overwriting
 
@@ -72,6 +76,7 @@ metadata you set directly via `link_repo` or `update_publication`.
 
 ## Common prompts
 
+- "What needs me today?" → get_today
 - "How's my pipeline looking?" → get_pipeline_summary
 - "Which papers have been stuck longest?" → get_stalled_papers
 - "How many papers did I publish this year vs last?" → get_analytics

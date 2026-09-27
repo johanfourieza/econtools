@@ -10,9 +10,9 @@ import { useOnboarding } from '@/hooks/useOnboarding';
 import { usePublicationPresence } from '@/hooks/usePublicationPresence';
 import { AppHeader } from '@/components/AppHeader';
 import { FilterBar } from '@/components/FilterBar';
-import { InsightsPanel } from '@/components/InsightsPanel';
-import { useInsights } from '@/hooks/useInsights';
-import { useCoauthorMatchInsight } from '@/hooks/useCoauthorMatchInsight';
+import { TodayPanel } from '@/components/TodayPanel';
+import { useReminders, RemindersProvider } from '@/hooks/useReminders';
+import { useToday } from '@/hooks/useToday';
 import { PipelineStage } from '@/components/PipelineStage';
 import { HorizontalPipelineStage } from '@/components/HorizontalPipelineStage';
 import { HorizontalYearStage } from '@/components/HorizontalYearStage';
@@ -115,25 +115,16 @@ const Index = () => {
     closeQuickStart,
   } = useOnboarding();
 
-  // Smart Insights panel – rule-based cards surfaced between the FilterBar
-  // and the pipeline grid. Reads `state.cards` only; no writes.
+  // Reminders and the Today queue (a header button with a count). This
+  // replaced the Insights carousel that used to sit on the canvas.
   const {
-    insights: syncInsights,
-    dismiss: dismissInsight,
-    isExpanded: insightsExpanded,
-    toggleExpanded: toggleInsightsExpanded,
-  } = useInsights(state.cards);
-  // Async sibling: co-authors on Kabbo count from a SECURITY DEFINER RPC.
-  // Merged onto the sync list, then re-sorted by priority so it lands in the
-  // expected visual slot.
-  const asyncInsight = useCoauthorMatchInsight(state.cards);
-  const insights = useMemo(
-    () => {
-      const combined = asyncInsight ? [...syncInsights, asyncInsight] : syncInsights;
-      return combined.slice().sort((a, b) => b.priority - a.priority);
-    },
-    [syncInsights, asyncInsight],
-  );
+    reminders,
+    byPublication: remindersByPublication,
+    addReminder,
+    completeReminder,
+    deleteReminder,
+  } = useReminders(user?.id);
+  const todayItems = useToday(state.cards, reminders);
 
   // Filter published years by limit. The 'unknown' bucket is always retained
   // regardless of limit, so orphan rows with missing years are never hidden.
@@ -404,15 +395,24 @@ const Index = () => {
   };
 
   return (
+    <RemindersProvider byPublication={remindersByPublication}>
     <div className="h-screen flex flex-col bg-background grain overflow-hidden text-sm md:text-base">
-      <AppHeader 
-        title={state.board.title} 
-        subtitle={state.board.subtitle} 
+      <AppHeader
+        title={state.board.title}
+        subtitle={state.board.subtitle}
         profile={profile}
         onSignOut={signOut}
         onProfileUpdated={refetchProfile}
         onOpenTeams={() => setIsTeamsOpen(true)}
         teamInvitationCount={teamInvitations.length}
+        todaySlot={
+          <TodayPanel
+            items={todayItems}
+            onOpenPublication={handleCardClick}
+            onCompleteReminder={completeReminder}
+            onShowPublished={() => setShowPublished(true)}
+          />
+        }
       />
 
       {/* Print Header - only visible when printing */}
@@ -446,14 +446,6 @@ const Index = () => {
             onPublishedYearsLimitChange={(limit) => { setPublishedYearsLimit(limit); localStorage.setItem('kabbo-published-years-limit', String(limit)); }}
           />
         </div>
-
-        {/* Smart Insights panel (Wave 1E) */}
-        <InsightsPanel
-          insights={insights}
-          onDismiss={dismissInsight}
-          isExpanded={insightsExpanded}
-          onToggleExpanded={toggleInsightsExpanded}
-        />
 
         {/* Pipeline Board - Vertical (column) view */}
         {pipelineView === 'vertical' && (
@@ -592,6 +584,10 @@ const Index = () => {
         onDuplicate={handleDuplicate}
         onMoveToBin={handleMoveToBin}
         viewers={selectedCardId ? getViewersForPublication(selectedCardId) : []}
+        reminders={selectedCardId ? (remindersByPublication.get(selectedCardId) ?? []) : []}
+        onAddReminder={addReminder}
+        onCompleteReminder={completeReminder}
+        onDeleteReminder={deleteReminder}
       />
 
       {/* Bin Modal */}
@@ -719,6 +715,7 @@ const Index = () => {
 
       <Toaster />
     </div>
+    </RemindersProvider>
   );
 };
 

@@ -1,10 +1,17 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { normalizeStage, appendStageHistory } from "../_shared/pipeline.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-api-key",
+    "authorization, x-client-info, apikey, content-type, x-api-key, x-kabbo-source",
 };
+
+// The MCP server proxies to this function; it tags its calls so the activity
+// log attributes them to the agent rather than to a raw API client.
+function activitySource(req: Request): "api" | "mcp" {
+  return req.headers.get("x-kabbo-source") === "mcp" ? "mcp" : "api";
+}
 
 async function hashKey(key: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -12,24 +19,6 @@ async function hashKey(key: string): Promise<string> {
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-const VALID_STAGES = [
-  "idea", "draft", "submitted", "revise_resubmit",
-  "resubmitted", "accepted", "published",
-];
-
-function normalizeStage(stage: string): string | null {
-  const map: Record<string, string> = {
-    idea: "idea", ideas: "idea", draft: "draft", drafting: "draft",
-    "in-progress": "draft", wip: "draft", submitted: "submitted",
-    "under-review": "submitted", revise: "revise_resubmit",
-    "revise-resubmit": "revise_resubmit", "revise_resubmit": "revise_resubmit",
-    "r&r": "revise_resubmit", resubmitted: "resubmitted",
-    accepted: "accepted", forthcoming: "accepted", published: "published",
-  };
-  const key = stage.toLowerCase().trim();
-  return map[key] || (VALID_STAGES.includes(key) ? key : null);
 }
 
 async function authenticateRequest(req: Request) {
@@ -66,6 +55,7 @@ function jsonResponse(data: unknown, status = 200) {
 
 // GET: List/search publications
 async function handleGet(
+  req: Request,
   url: URL,
   userId: string,
   supabase: ReturnType<typeof createClient>
@@ -92,7 +82,7 @@ async function handleGet(
   // List with optional filters
   let query = supabase
     .from("publications")
-    .select("id, title, stage, authors, themes, grants, target_year, output_type, notes, github_repo, overleaf_link, created_at, updated_at", { count: "exact" })
+    .select("id, title, stage, authors, themes, grants, target_year, target_journal, output_type, notes, github_repo, overleaf_link, created_at, updated_at", { count: "exact" })
     .eq("owner_id", userId)
     .order("updated_at", { ascending: false })
     .range(offset, offset + limit - 1);
@@ -113,7 +103,7 @@ async function handleGet(
   if (!id) {
     await supabase.from("activity_log").insert({
       user_id: userId,
-      source: "api",
+      source: activitySource(req),
       action: "listed",
       details: { query: q, stage, limit, offset, total: count },
       kabbo_yaml_detected: false,
@@ -130,33 +120,40 @@ async function handlePatch(
   supabase: ReturnType<typeof createClient>
 ) {
   const body = await req.json();
-  const { id, title, authors, stage, notes, output_type, target_year, themes, grants, overleaf_url, github_repo, links } = body;
+  const { id, title, authors, stage, notes, output_type, target_year, target_journal, themes, grants, overleaf_url, github_repo, links } = body;
 
   if (!id) return jsonResponse({ error: "id is required" }, 400);
 
-  // Verify ownership (and read the current year so we can honour the
-  // published-requires-year CHECK below).
+  // Verify ownership (and read the current stage, history and year so we can
+  // record the transition and honour the published-requires-year CHECK below).
   const { data: existing } = await supabase
     .from("publications")
-    .select("id, target_year")
+    .select("id, stage, stage_history, target_year")
     .eq("id", id)
     .eq("owner_id", userId)
     .single();
 
   if (!existing) return jsonResponse({ error: "Publication not found or not owned by you" }, 404);
 
-  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  const now = new Date().toISOString();
+  const updates: Record<string, unknown> = { updated_at: now };
 
   if (title !== undefined) updates.title = title;
   if (authors !== undefined) updates.authors = Array.isArray(authors) ? authors : [authors];
   if (stage !== undefined) {
     const normalized = normalizeStage(stage);
     if (!normalized) return jsonResponse({ error: `Invalid stage: ${stage}` }, 400);
-    updates.stage = normalized;
+    if (normalized !== existing.stage) {
+      updates.stage = normalized;
+      // Same {from,to,at} shape the web client writes, so time-in-stage
+      // analytics see agent-driven moves too.
+      updates.stage_history = appendStageHistory(existing.stage_history, existing.stage, normalized, now);
+    }
   }
   if (notes !== undefined) updates.notes = notes;
   if (output_type !== undefined) updates.output_type = output_type;
   if (target_year !== undefined) updates.target_year = target_year;
+  if (target_journal !== undefined) updates.target_journal = target_journal;
   if (themes !== undefined) updates.themes = Array.isArray(themes) ? themes : [themes];
   if (grants !== undefined) updates.grants = Array.isArray(grants) ? grants : [grants];
   if (overleaf_url !== undefined) updates.overleaf_link = overleaf_url;
@@ -183,15 +180,17 @@ async function handlePatch(
   const { data: pub } = await supabase.from("publications").select("title").eq("id", id).single();
   await supabase.from("activity_log").insert({
     user_id: userId,
-    source: "api",
+    source: activitySource(req),
     action: updates.stage ? "stage_changed" : "updated",
     publication_id: id,
     publication_title: pub?.title,
-    details: updates.stage ? { stage: updates.stage } : { fields: Object.keys(updates).filter(k => k !== "updated_at") },
+    details: updates.stage
+      ? { from: existing.stage, stage: updates.stage }
+      : { fields: Object.keys(updates).filter(k => k !== "updated_at") },
     kabbo_yaml_detected: false,
   });
 
-  return jsonResponse({ success: true, publication_id: id });
+  return jsonResponse({ success: true, publication_id: id, stage: updates.stage ?? existing.stage });
 }
 
 // DELETE: Bin a publication
@@ -231,7 +230,7 @@ async function handleDelete(
   // Log activity
   await supabase.from("activity_log").insert({
     user_id: userId,
-    source: "api",
+    source: activitySource(req),
     action: "deleted",
     publication_id: id,
     publication_title: pub.title,
@@ -256,7 +255,7 @@ Deno.serve(async (req) => {
 
     switch (req.method) {
       case "GET":
-        return handleGet(url, userId, supabase);
+        return handleGet(req, url, userId, supabase);
       case "PATCH":
         return handlePatch(req, userId, supabase);
       case "DELETE":

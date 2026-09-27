@@ -1,4 +1,4 @@
-import { X, Copy, Trash2, ExternalLink, Github, FileText, Plus, Users, Mail, Loader2, MessageCircle, Link2, Upload, File } from 'lucide-react';
+import { X, Copy, Trash2, ExternalLink, Github, FileText, Plus, Users, Mail, Loader2, Link2, Upload, File, ChevronDown, ChevronRight } from 'lucide-react';
 import { Publication, Stage, DEFAULT_STAGES, Collaborator, CollaborationLink, COLLABORATION_LINK_TYPES } from '@/types/publication';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { PublicationChat } from './PublicationChat';
 import { PresenceIndicator } from './PresenceIndicator';
+import { RemindersSection } from './RemindersSection';
+import type { NewReminder, ReminderRow } from '@/hooks/useReminders';
 
 interface PresenceUser {
   id: string;
@@ -34,6 +36,10 @@ interface PublicationDrawerProps {
   onDuplicate: () => void;
   onMoveToBin: () => void;
   viewers?: PresenceUser[];
+  reminders: ReminderRow[];
+  onAddReminder: (input: NewReminder) => Promise<ReminderRow | null>;
+  onCompleteReminder: (id: string) => Promise<boolean>;
+  onDeleteReminder: (id: string) => Promise<boolean>;
 }
 
 export function PublicationDrawer({
@@ -45,10 +51,14 @@ export function PublicationDrawer({
   onDuplicate,
   onMoveToBin,
   viewers = [],
+  reminders,
+  onAddReminder,
+  onCompleteReminder,
+  onDeleteReminder,
 }: PublicationDrawerProps) {
   const [localPub, setLocalPub] = useState<Publication | null>(null);
-  const [newLinkLabel, setNewLinkLabel] = useState('');
-  const [newLinkUrl, setNewLinkUrl] = useState('');
+  // "More" holds the fields most papers never need (themes, grants, history).
+  const [showMore, setShowMore] = useState(false);
   const [newCollabEmail, setNewCollabEmail] = useState('');
   const [newCollabRole, setNewCollabRole] = useState<'viewer' | 'editor'>('editor');
   const [isInviting, setIsInviting] = useState(false);
@@ -333,20 +343,6 @@ export function PublicationDrawer({
     onClose();
   };
 
-  // Custom sections/links
-  const addLink = () => {
-    if (!newLinkLabel.trim() || !newLinkUrl.trim()) return;
-    const newLinks = [...(localPub.links || []), { label: newLinkLabel.trim(), url: newLinkUrl.trim() }];
-    updateLocal({ links: newLinks });
-    setNewLinkLabel('');
-    setNewLinkUrl('');
-  };
-
-  const removeLink = (index: number) => {
-    const newLinks = localPub.links.filter((_, i) => i !== index);
-    updateLocal({ links: newLinks });
-  };
-
   // Collaboration links
   const addCollaborationLink = () => {
     if (!newCollabLinkUrl.trim()) return;
@@ -514,37 +510,17 @@ export function PublicationDrawer({
             </div>
           </div>
 
-          {/* Theme & Grant row */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Theme (comma-separated)</Label>
-              <Input
-                value={localPub.themes}
-                onChange={(e) => canEdit && updateLocal({ themes: e.target.value })}
-                placeholder="AI, Institutions"
-                className="bg-secondary/30"
-                disabled={!canEdit}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Grant (comma-separated)</Label>
-              <Input
-                value={localPub.grants}
-                onChange={(e) => canEdit && updateLocal({ grants: e.target.value })}
-                placeholder="ERC, NRF"
-                className="bg-secondary/30"
-                disabled={!canEdit}
-              />
-            </div>
-          </div>
-
-          {/* Output Type & Working Paper Section - MOVED UP */}
-          <div className="border border-border rounded-lg p-3 space-y-3">
-            <h4 className="font-display font-medium text-sm">Output Type</h4>
+          {/* Type & venue. An idea has no venue yet, so the row only appears
+              once the paper is at least a draft. */}
+          {localPub.stageId !== 'idea' && (
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Type</Label>
-                <Select value={localPub.outputType} onValueChange={(v: 'journal' | 'book' | 'chapter') => updateLocal({ outputType: v })}>
+                <Select
+                  value={localPub.outputType}
+                  onValueChange={(v: 'journal' | 'book' | 'chapter') => canEdit && updateLocal({ outputType: v })}
+                  disabled={!canEdit}
+                >
                   <SelectTrigger className="bg-secondary/30">
                     <SelectValue />
                   </SelectTrigger>
@@ -559,97 +535,71 @@ export function PublicationDrawer({
                 <Label className="text-xs text-muted-foreground">
                   {localPub.outputType === 'journal'
                     ? (localPub.stageId === 'published' ? 'Journal' : 'Intended journal')
-                    : localPub.outputType === 'book' ? 'Publisher' : 'Book title'}
+                    : 'Publisher'}
                 </Label>
                 <Input
                   value={localPub.typeA}
-                  onChange={(e) => updateLocal({ typeA: e.target.value })}
-                  placeholder="Optional"
+                  onChange={(e) => canEdit && updateLocal({ typeA: e.target.value })}
+                  placeholder={localPub.outputType === 'journal' ? 'e.g. Economic History Review' : 'Optional'}
                   className="bg-secondary/30"
+                  disabled={!canEdit}
                 />
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Working Paper Section - MOVED UP */}
-          <div className="border border-border rounded-lg p-3 space-y-3">
-            <h4 className="font-display font-medium text-sm">Working Paper</h4>
+          {localPub.stageId !== 'idea' && localPub.outputType === 'chapter' && (
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Also a working paper?</Label>
-                <Select 
-                  value={localPub.workingPaper.on ? 'yes' : 'no'} 
-                  onValueChange={(v) => updateLocal({ 
-                    workingPaper: { ...localPub.workingPaper, on: v === 'yes' } 
-                  })}
-                >
-                  <SelectTrigger className="bg-secondary/30">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="no">No</SelectItem>
-                    <SelectItem value="yes">Yes</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label className="text-xs text-muted-foreground">Book title</Label>
+                <Input
+                  value={localPub.typeB}
+                  onChange={(e) => canEdit && updateLocal({ typeB: e.target.value })}
+                  placeholder="Optional"
+                  className="bg-secondary/30"
+                  disabled={!canEdit}
+                />
               </div>
-              {localPub.workingPaper.on && (
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Series</Label>
-                  <Input
-                    value={localPub.workingPaper.series}
-                    onChange={(e) => updateLocal({ 
-                      workingPaper: { ...localPub.workingPaper, series: e.target.value } 
-                    })}
-                    placeholder="NBER Working Paper"
-                    className="bg-secondary/30"
-                  />
-                </div>
-              )}
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Editors</Label>
+                <Input
+                  value={localPub.typeC}
+                  onChange={(e) => canEdit && updateLocal({ typeC: e.target.value })}
+                  placeholder="Optional"
+                  className="bg-secondary/30"
+                  disabled={!canEdit}
+                />
+              </div>
             </div>
-            {localPub.workingPaper.on && (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Number</Label>
-                  <Input
-                    value={localPub.workingPaper.number}
-                    onChange={(e) => updateLocal({ 
-                      workingPaper: { ...localPub.workingPaper, number: e.target.value } 
-                    })}
-                    placeholder="w33892"
-                    className="bg-secondary/30"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Link</Label>
-                  <Input
-                    value={localPub.workingPaper.url}
-                    onChange={(e) => updateLocal({ 
-                      workingPaper: { ...localPub.workingPaper, url: e.target.value } 
-                    })}
-                    placeholder="https://..."
-                    className="bg-secondary/30"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+          )}
 
-          {/* Notes - MOVED UP */}
+          {/* Notes */}
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Notes</Label>
             <Textarea
               value={localPub.notes}
-              onChange={(e) => updateLocal({ notes: e.target.value })}
+              onChange={(e) => canEdit && updateLocal({ notes: e.target.value })}
               placeholder="Short description or ideas..."
               className="bg-secondary/30 min-h-[80px]"
+              disabled={!canEdit}
             />
           </div>
+
+          {/* Reminders */}
+          <RemindersSection
+            publicationId={localPub.id}
+            reminders={reminders}
+            canEdit={canEdit}
+            onAdd={onAddReminder}
+            onComplete={onCompleteReminder}
+            onDelete={onDeleteReminder}
+          />
 
           {/* Work Space Section (formerly Collaboration) */}
           <div className="border border-border rounded-lg p-3 space-y-3">
             <h4 className="font-display font-medium text-sm flex items-center gap-2">
               <FileText className="w-4 h-4 text-muted-foreground" />
-              Work Space
+              Files and links
             </h4>
             
             {/* Paper Upload */}
@@ -781,6 +731,120 @@ export function PublicationDrawer({
               </Button>
             )}
             </div>
+
+            {/* Working paper */}
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Working paper</Label>
+              <Select
+                value={localPub.workingPaper.on ? 'yes' : 'no'}
+                onValueChange={(v) => canEdit && updateLocal({
+                  workingPaper: { ...localPub.workingPaper, on: v === 'yes' },
+                })}
+                disabled={!canEdit}
+              >
+                <SelectTrigger className="bg-secondary/30">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="no">Not circulated as a working paper</SelectItem>
+                  <SelectItem value="yes">Circulated as a working paper</SelectItem>
+                </SelectContent>
+              </Select>
+              {localPub.workingPaper.on && (
+                <>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      value={localPub.workingPaper.series}
+                      onChange={(e) => canEdit && updateLocal({
+                        workingPaper: { ...localPub.workingPaper, series: e.target.value },
+                      })}
+                      placeholder="Series, e.g. LEAP WP"
+                      className="bg-secondary/30 text-xs"
+                      disabled={!canEdit}
+                    />
+                    <Input
+                      value={localPub.workingPaper.number}
+                      onChange={(e) => canEdit && updateLocal({
+                        workingPaper: { ...localPub.workingPaper, number: e.target.value },
+                      })}
+                      placeholder="Number"
+                      className="bg-secondary/30 text-xs"
+                      disabled={!canEdit}
+                    />
+                  </div>
+                  <Input
+                    value={localPub.workingPaper.url}
+                    onChange={(e) => canEdit && updateLocal({
+                      workingPaper: { ...localPub.workingPaper, url: e.target.value },
+                    })}
+                    placeholder="https://..."
+                    className="bg-secondary/30 text-xs"
+                    disabled={!canEdit}
+                  />
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* More: the fields most papers never need */}
+          <div className="border border-border rounded-lg">
+            <button
+              type="button"
+              onClick={() => setShowMore(v => !v)}
+              aria-expanded={showMore}
+              className="w-full flex items-center justify-between px-3 py-2 text-sm font-display font-medium hover:bg-secondary/30 rounded-lg"
+            >
+              <span>More</span>
+              {showMore ? (
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              )}
+            </button>
+            {showMore && (
+              <div className="px-3 pb-3 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Themes (comma-separated)</Label>
+                    <Input
+                      value={localPub.themes}
+                      onChange={(e) => canEdit && updateLocal({ themes: e.target.value })}
+                      placeholder="AI, Institutions"
+                      className="bg-secondary/30"
+                      disabled={!canEdit}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Grants (comma-separated)</Label>
+                    <Input
+                      value={localPub.grants}
+                      onChange={(e) => canEdit && updateLocal({ grants: e.target.value })}
+                      placeholder="ERC, NRF"
+                      className="bg-secondary/30"
+                      disabled={!canEdit}
+                    />
+                  </div>
+                </div>
+
+                {localPub.history.length > 0 && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Stage history</Label>
+                    <div className="space-y-1">
+                      {localPub.history.slice().reverse().map((entry, i) => {
+                        const fromStage = allStages.find(s => s.id === entry.from)?.name || entry.from;
+                        const toStage = allStages.find(s => s.id === entry.to)?.name || entry.to;
+                        return (
+                          <div key={i} className="flex items-baseline justify-between gap-2 px-2 py-1 bg-secondary/30 rounded-md">
+                            <span className="text-xs">{fromStage} → {toStage}</span>
+                            <span className="text-[10px] text-muted-foreground whitespace-nowrap">{formatDate(entry.at)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Collaborators Section */}
@@ -869,72 +933,6 @@ export function PublicationDrawer({
           {/* Co-author Chat Section */}
           <PublicationChat publicationId={localPub.id} />
 
-          {/* Custom Sections/Links */}
-          <div className="border border-border rounded-lg p-3 space-y-3">
-            <h4 className="font-display font-medium text-sm">Custom Sections</h4>
-            <div className="grid grid-cols-2 gap-2">
-              <Input
-                value={newLinkLabel}
-                onChange={(e) => setNewLinkLabel(e.target.value)}
-                placeholder="Section name"
-                className="bg-secondary/30 text-xs"
-              />
-              <Input
-                value={newLinkUrl}
-                onChange={(e) => setNewLinkUrl(e.target.value)}
-                placeholder="https://..."
-                className="bg-secondary/30 text-xs"
-              />
-            </div>
-            <Button variant="outline" size="sm" onClick={addLink} className="w-full gap-1.5">
-              <Plus className="w-3 h-3" />
-              Add section
-            </Button>
-            {localPub.links.length > 0 && (
-              <div className="space-y-2">
-                {localPub.links.map((link, i) => (
-                  <div key={i} className="flex items-center gap-2 p-2 bg-secondary/30 rounded-md">
-                    <ExternalLink className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                    <a 
-                      href={link.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-xs text-accent hover:underline truncate flex-1"
-                    >
-                      {link.label}
-                    </a>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => removeLink(i)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Stage History */}
-          {localPub.history.length > 0 && (
-            <div className="border border-border rounded-lg p-3 space-y-3">
-              <h4 className="font-display font-medium text-sm">Stage History</h4>
-              <div className="space-y-2">
-                {localPub.history.slice().reverse().map((entry, i) => {
-                  const fromStage = allStages.find(s => s.id === entry.from)?.name || entry.from;
-                  const toStage = allStages.find(s => s.id === entry.to)?.name || entry.to;
-                  return (
-                    <div key={i} className="p-2 bg-secondary/30 rounded-md">
-                      <p className="text-xs text-muted-foreground">{formatDate(entry.at)}</p>
-                      <p className="text-xs">{fromStage} → {toStage}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
 
         <footer className="p-3 border-t border-border flex items-center justify-between gap-2 bg-secondary/20">

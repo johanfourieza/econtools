@@ -1,6 +1,15 @@
 import { Hono } from "hono";
 import { McpServer, StreamableHttpTransport } from "mcp-lite";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  VALID_STAGES,
+  REMINDER_TYPES,
+  normalizeReminderType,
+  isStageVisible,
+  parseBibtex,
+  daysPerStage,
+} from "../_shared/pipeline.ts";
+import { computeToday } from "../_shared/today.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -26,6 +35,36 @@ function textResult(data: unknown) {
   return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
 }
 
+// Tools that write to Postgres directly (rather than through api-publications)
+// record what they did here, so the Activity tab and get_activity_log show
+// agent edits alongside web and API ones. Never throws: logging must not fail
+// the tool call.
+async function logActivity(
+  supabase: SupabaseClient,
+  userId: string,
+  action: string,
+  publication: { id?: string | null; title?: string | null } | null,
+  details: Record<string, unknown> = {},
+) {
+  try {
+    await supabase.from("activity_log").insert({
+      user_id: userId,
+      source: "mcp",
+      action,
+      publication_id: publication?.id ?? null,
+      publication_title: publication?.title ?? null,
+      details,
+      kabbo_yaml_detected: false,
+    });
+  } catch (e) {
+    console.error("activity_log insert failed:", e);
+  }
+}
+
+// Requests the MCP server makes to the REST edge functions carry this header so
+// their activity_log rows are attributed to the agent, not to a raw API client.
+const PROXY_HEADERS = { "Content-Type": "application/json", "x-kabbo-source": "mcp" };
+
 async function callApi(
   method: string,
   apiKey: string,
@@ -40,7 +79,7 @@ async function callApi(
   }
   const opts: RequestInit = {
     method,
-    headers: { "x-api-key": apiKey, "Content-Type": "application/json" },
+    headers: { "x-api-key": apiKey, ...PROXY_HEADERS },
   };
   if (params && (method === "PATCH" || method === "POST")) {
     opts.body = JSON.stringify(params);
@@ -49,30 +88,8 @@ async function callApi(
   return res.json();
 }
 
-const VALID_STAGES = ["idea", "draft", "submitted", "revise_resubmit", "resubmitted", "accepted", "published"];
-
-// Minimal BibTeX parser: enough to import title / author / year / journal.
-function parseBibtex(bibtex: string): Array<Record<string, string>> {
-  const entries: Array<Record<string, string>> = [];
-  const blocks = bibtex.split(/@/).slice(1);
-  for (const block of blocks) {
-    const typeMatch = block.match(/^(\w+)\s*\{/);
-    if (!typeMatch) continue;
-    const entry: Record<string, string> = { _type: typeMatch[1].toLowerCase() };
-    const fieldRe = /(\w+)\s*=\s*(\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}|"([^"]*)"|([^,\n]+))/g;
-    let m: RegExpExecArray | null;
-    while ((m = fieldRe.exec(block)) !== null) {
-      const key = m[1].toLowerCase();
-      const val = (m[3] ?? m[4] ?? m[5] ?? "").trim().replace(/\s+/g, " ");
-      entry[key] = val;
-    }
-    entries.push(entry);
-  }
-  return entries;
-}
-
 function createMcpServer(apiKey: string) {
-  const server = new McpServer({ name: "kabbo", version: "2.1.0" });
+  const server = new McpServer({ name: "kabbo", version: "2.2.0" });
 
   // ===========================================================================
   // Tools 1-6 — Core CRUD
@@ -134,7 +151,7 @@ function createMcpServer(apiKey: string) {
       const url = `${SUPABASE_URL}/functions/v1/ingest-publication`;
       const res = await fetch(url, {
         method: "POST",
-        headers: { "x-api-key": apiKey, "Content-Type": "application/json" },
+        headers: { "x-api-key": apiKey, ...PROXY_HEADERS },
         body: JSON.stringify(params),
       });
       return textResult(await res.json());
@@ -299,11 +316,14 @@ function createMcpServer(apiKey: string) {
             type: "object",
             properties: {
               id: { type: "string", description: "Publication UUID" },
+              title: { type: "string" },
+              authors: { type: "array", items: { type: "string" } },
               stage: { type: "string" },
               notes: { type: "string" },
               themes: { type: "array", items: { type: "string" } },
               grants: { type: "array", items: { type: "string" } },
               target_year: { type: "number" },
+              target_journal: { type: "string" },
             },
             required: ["id"],
           },
@@ -324,12 +344,12 @@ function createMcpServer(apiKey: string) {
   });
 
   server.tool("get_activity_log", {
-    description: "Get recent activity across all sources (web, API, MCP, webhook, github_app). Filter by date range.",
+    description: "Get recent activity across all sources (web, api, mcp). Filter by date range.",
     inputSchema: {
       type: "object" as const,
       properties: {
         days: { type: "number", description: "Number of days to look back (default 7)" },
-        source: { type: "string", description: "Filter by source: web, api, mcp, webhook, github_app" },
+        source: { type: "string", description: "Filter by source: web, api, mcp" },
         limit: { type: "number", description: "Max entries (default 50)" },
       },
     },
@@ -356,16 +376,18 @@ function createMcpServer(apiKey: string) {
   });
 
   server.tool("manage_reminders", {
-    description: "Create, list, update, or delete reminders for publications. Use action: 'list', 'create', 'complete', or 'delete'.",
+    description: `List, create, complete, or delete reminders. Use action: 'list' (open reminders, soonest first; pass include_completed for all), 'create' (title and due_date required), 'complete', or 'delete'. Types: ${REMINDER_TYPES.join(", ")}.`,
     inputSchema: {
       type: "object" as const,
       properties: {
         action: { type: "string", description: "Action: list, create, complete, delete" },
-        publication_id: { type: "string", description: "Publication UUID (required for create)" },
+        publication_id: { type: "string", description: "Publication UUID to attach the reminder to (optional for create)" },
         reminder_id: { type: "string", description: "Reminder UUID (required for complete/delete)" },
-        title: { type: "string", description: "Reminder title (for create)" },
-        due_date: { type: "string", description: "Due date in ISO format (for create)" },
-        reminder_type: { type: "string", description: "Type: conference_deadline, resubmission, review_response, grant_report, custom" },
+        title: { type: "string", description: "Reminder title (required for create)" },
+        description: { type: "string", description: "Optional longer note (for create)" },
+        due_date: { type: "string", description: "Due date, ISO 8601 (required for create)" },
+        reminder_type: { type: "string", description: `One of: ${REMINDER_TYPES.join(", ")} (default general)` },
+        include_completed: { type: "boolean", description: "For list: include completed reminders (default false)" },
       },
       required: ["action"],
     },
@@ -374,43 +396,70 @@ function createMcpServer(apiKey: string) {
       const action = String(params.action);
 
       if (action === "list") {
-        const { data, error } = await supabase
-          .from("reminders").select("*").eq("user_id", userId)
+        let q = supabase
+          .from("reminders")
+          .select("id, publication_id, title, description, due_date, reminder_type, is_completed, created_at")
+          .eq("user_id", userId)
           .order("due_date", { ascending: true });
+        if (!params.include_completed) q = q.eq("is_completed", false);
+        const { data, error } = await q;
         if (error) throw error;
         return textResult({ count: (data || []).length, reminders: data });
       }
 
       if (action === "create") {
+        const title = String(params.title || "").trim();
+        const dueRaw = params.due_date ? String(params.due_date) : "";
+        const due = dueRaw ? new Date(dueRaw) : null;
+        if (!title) return textResult({ error: "title is required for create" });
+        if (!due || Number.isNaN(due.getTime())) {
+          return textResult({ error: "due_date is required for create and must be an ISO 8601 date, e.g. 2026-06-15" });
+        }
+        // Only attach to a publication the caller owns; otherwise create it unattached.
+        let publicationId: string | null = null;
+        let pubTitle: string | null = null;
+        if (params.publication_id) {
+          const { data: pub } = await supabase
+            .from("publications").select("id, title")
+            .eq("id", String(params.publication_id)).eq("owner_id", userId).maybeSingle();
+          if (!pub) return textResult({ error: "Publication not found" });
+          publicationId = pub.id;
+          pubTitle = pub.title;
+        }
+        const reminderType = normalizeReminderType(params.reminder_type as string | undefined);
         const { data, error } = await supabase
           .from("reminders")
           .insert({
             user_id: userId,
-            publication_id: params.publication_id || null,
-            title: String(params.title || "Reminder"),
-            due_date: params.due_date ? String(params.due_date) : null,
-            reminder_type: String(params.reminder_type || "custom"),
+            publication_id: publicationId,
+            title,
+            description: params.description ? String(params.description) : null,
+            due_date: due.toISOString(),
+            reminder_type: reminderType,
           })
-          .select().single();
+          .select("id, publication_id, title, description, due_date, reminder_type, is_completed")
+          .single();
         if (error) throw error;
+        await logActivity(supabase, userId, "reminder_created", { id: publicationId, title: pubTitle },
+          { reminder_id: data.id, title, due_date: data.due_date, reminder_type: reminderType });
         return textResult({ action: "created", reminder: data });
       }
 
-      if (action === "complete") {
-        const { error } = await supabase
-          .from("reminders")
-          .update({ completed: true, completed_at: new Date().toISOString() })
-          .eq("id", String(params.reminder_id)).eq("user_id", userId);
-        if (error) throw error;
-        return textResult({ action: "completed", reminder_id: params.reminder_id });
-      }
+      if (action === "complete" || action === "delete") {
+        const reminderId = String(params.reminder_id || "");
+        if (!reminderId) return textResult({ error: `reminder_id is required for ${action}` });
+        const { data: existing } = await supabase
+          .from("reminders").select("id, title, publication_id")
+          .eq("id", reminderId).eq("user_id", userId).maybeSingle();
+        if (!existing) return textResult({ error: "Reminder not found" });
 
-      if (action === "delete") {
-        const { error } = await supabase
-          .from("reminders").delete()
-          .eq("id", String(params.reminder_id)).eq("user_id", userId);
+        const { error } = action === "complete"
+          ? await supabase.from("reminders").update({ is_completed: true }).eq("id", reminderId)
+          : await supabase.from("reminders").delete().eq("id", reminderId);
         if (error) throw error;
-        return textResult({ action: "deleted", reminder_id: params.reminder_id });
+        await logActivity(supabase, userId, `reminder_${action === "complete" ? "completed" : "deleted"}`,
+          { id: existing.publication_id }, { reminder_id: reminderId, title: existing.title });
+        return textResult({ action: action === "complete" ? "completed" : "deleted", reminder_id: reminderId });
       }
 
       return textResult({ error: "Unknown action. Use: list, create, complete, delete" });
@@ -435,26 +484,23 @@ function createMcpServer(apiKey: string) {
       const all = pubs || [];
       const currentYear = new Date().getFullYear();
       const publishedByYear: Record<number, number> = {};
-      const stageTimesMs: Record<string, number[]> = {};
+      const stageDays: Record<string, number[]> = {};
+      const now = Date.now();
 
       for (const p of all) {
         if (p.stage === "published" && p.target_year) {
           publishedByYear[p.target_year] = (publishedByYear[p.target_year] || 0) + 1;
         }
-        const history = (p.stage_history || []) as Array<{ from: string; to: string; at: string }>;
-        for (let i = 0; i < history.length; i++) {
-          const entry = history[i];
-          const nextAt = history[i + 1]?.at || p.updated_at;
-          const durationMs = new Date(nextAt).getTime() - new Date(entry.at).getTime();
-          if (!stageTimesMs[entry.to]) stageTimesMs[entry.to] = [];
-          stageTimesMs[entry.to].push(durationMs);
+        // A paper still sitting in a stage has been there until today, not
+        // until the row was last edited.
+        for (const [stage, days] of Object.entries(daysPerStage(p.stage_history, now))) {
+          (stageDays[stage] ??= []).push(...days);
         }
       }
 
       const avgDaysPerStage: Record<string, number> = {};
-      for (const [stage, times] of Object.entries(stageTimesMs)) {
-        const avg = times.reduce((a, b) => a + b, 0) / times.length;
-        avgDaysPerStage[stage] = Math.round(avg / (24 * 60 * 60 * 1000));
+      for (const [stage, days] of Object.entries(stageDays)) {
+        avgDaysPerStage[stage] = Math.round(days.reduce((a, b) => a + b, 0) / days.length);
       }
 
       const result: Record<string, unknown> = {
@@ -488,7 +534,7 @@ function createMcpServer(apiKey: string) {
   });
 
   server.tool("get_team_summary", {
-    description: "Get a summary of a team's publication pipeline: member count, total papers, papers by stage per member, and stalled papers. Requires team membership.",
+    description: "Get a summary of a team's publication pipeline: member count, total papers, papers by stage per member, and stalled papers. Requires team dashboard access (team creator, admin, explicit dashboard access, or a team whose dashboard is public). Each member's papers are filtered by the stage floor that member chose for the team.",
     inputSchema: {
       type: "object" as const,
       properties: { team_id: { type: "string", description: "Team UUID" } },
@@ -498,26 +544,48 @@ function createMcpServer(apiKey: string) {
       const { userId, supabase } = await getAuthenticatedUser(apiKey);
       const teamId = String(params.team_id);
 
-      const { data: membership } = await supabase
-        .from("team_members").select("role")
-        .eq("team_id", teamId).eq("user_id", userId).eq("status", "accepted").single();
-      if (!membership) return textResult({ error: "You are not a member of this team" });
+      // Mirror public.has_dashboard_access() and the TeamsModal check: the
+      // service-role client bypasses RLS, so the rules are applied here.
+      const [{ data: membership }, { data: team }] = await Promise.all([
+        supabase
+          .from("team_members").select("role, has_dashboard_access")
+          .eq("team_id", teamId).eq("user_id", userId).eq("status", "accepted").maybeSingle(),
+        supabase.from("teams").select("id, created_by, dashboard_public").eq("id", teamId).maybeSingle(),
+      ]);
+      if (!team || !membership) return textResult({ error: "You are not a member of this team" });
+      const hasDashboardAccess =
+        team.created_by === userId ||
+        membership.role === "admin" ||
+        membership.has_dashboard_access === true ||
+        team.dashboard_public === true;
+      if (!hasDashboardAccess) {
+        return textResult({ error: "You do not have dashboard access for this team. Ask the team admin to grant it." });
+      }
 
-      const { data: members } = await supabase
-        .from("team_members").select("user_id, role, profiles(display_name)")
-        .eq("team_id", teamId).eq("status", "accepted");
+      const [{ data: members }, { data: visibility }] = await Promise.all([
+        supabase
+          .from("team_members").select("user_id, role, profiles(display_name)")
+          .eq("team_id", teamId).eq("status", "accepted"),
+        supabase.from("visibility_settings").select("user_id, min_visible_stage").eq("team_id", teamId),
+      ]);
+      const minStageByUser = new Map<string, string>();
+      for (const v of visibility || []) minStageByUser.set(v.user_id, String(v.min_visible_stage));
 
       const now = Date.now();
       const memberSummaries = [];
       for (const m of members || []) {
         if (!m.user_id) continue;
-        const { data: pubs } = await supabase
+        const { data: allPubs } = await supabase
           .from("publications").select("id, title, stage, updated_at")
           .eq("owner_id", m.user_id);
+        // Your own papers are always fully visible to you; a teammate's are
+        // cut at the floor they set (visibility_settings.min_visible_stage).
+        const minStage = m.user_id === userId ? "idea" : (minStageByUser.get(m.user_id) ?? "idea");
+        const pubs = (allPubs || []).filter((p) => isStageVisible(p.stage, minStage));
 
         const stageCounts: Record<string, number> = {};
         const stalledPapers: string[] = [];
-        for (const p of pubs || []) {
+        for (const p of pubs) {
           stageCounts[p.stage] = (stageCounts[p.stage] || 0) + 1;
           const daysSince = Math.floor((now - new Date(p.updated_at).getTime()) / (24 * 60 * 60 * 1000));
           if (daysSince >= 30 && p.stage !== "published") stalledPapers.push(p.title);
@@ -526,7 +594,8 @@ function createMcpServer(apiKey: string) {
           user_id: m.user_id,
           name: (m.profiles as { display_name?: string } | null)?.display_name || "Unknown",
           role: m.role,
-          total_papers: (pubs || []).length,
+          visible_from_stage: minStage,
+          total_papers: pubs.length,
           by_stage: stageCounts,
           stalled_count: stalledPapers.length,
           stalled_papers: stalledPapers.slice(0, 5),
@@ -539,6 +608,36 @@ function createMcpServer(apiKey: string) {
         total_papers: memberSummaries.reduce((s, m) => s + m.total_papers, 0),
         members: memberSummaries,
       });
+    },
+  });
+
+  server.tool("get_today", {
+    description: "What needs your attention today: overdue and due-soon reminders, revisions waiting on you, submissions with no decision after about four months, accepted papers to check on, long-idle drafts, and published papers missing a year. Ideas and papers under review inside the normal window are never listed. This is the same list the Kabbo dashboard shows under Today. Read-only.",
+    inputSchema: {
+      type: "object" as const,
+      properties: { limit: { type: "number", description: "Max items to return (default 10, max 50)" } },
+    },
+    handler: async (params: Record<string, unknown>) => {
+      const { userId, supabase } = await getAuthenticatedUser(apiKey);
+      const [{ data: pubs }, { data: rems }] = await Promise.all([
+        supabase
+          .from("publications").select("id, title, stage, updated_at, stage_history, target_year")
+          .eq("owner_id", userId),
+        supabase
+          .from("reminders").select("id, publication_id, title, due_date, is_completed")
+          .eq("user_id", userId).eq("is_completed", false),
+      ]);
+      const items = computeToday(
+        (pubs || []).map((p) => ({
+          id: p.id, title: p.title, stage: p.stage, updatedAt: p.updated_at, history: p.stage_history,
+          missingYear: p.stage === "published" && p.target_year == null,
+        })),
+        (rems || []).map((r) => ({
+          id: r.id, publicationId: r.publication_id, title: r.title, dueDate: r.due_date, isCompleted: r.is_completed,
+        })),
+      );
+      const limit = Math.min(Number(params.limit) || 10, 50);
+      return textResult({ count: items.length, items: items.slice(0, limit) });
     },
   });
 
@@ -591,7 +690,7 @@ function createMcpServer(apiKey: string) {
     handler: async (params: Record<string, unknown>) => {
       const { userId, supabase } = await getAuthenticatedUser(apiKey);
       const { data: pub } = await supabase
-        .from("publications").select("notes").eq("id", String(params.id)).eq("owner_id", userId).single();
+        .from("publications").select("id, title, notes").eq("id", String(params.id)).eq("owner_id", userId).maybeSingle();
       if (!pub) return textResult({ error: "Publication not found" });
 
       const timestamp = new Date().toISOString().slice(0, 10);
@@ -601,9 +700,10 @@ function createMcpServer(apiKey: string) {
 
       const { error } = await supabase
         .from("publications").update({ notes: updated, updated_at: new Date().toISOString() })
-        .eq("id", String(params.id));
+        .eq("id", pub.id);
       if (error) throw error;
-      return textResult({ success: true, publication_id: params.id, notes: updated });
+      await logActivity(supabase, userId, "note_added", pub, { note: String(params.note).slice(0, 200) });
+      return textResult({ success: true, publication_id: pub.id, notes: updated });
     },
   });
 
@@ -655,14 +755,17 @@ function createMcpServer(apiKey: string) {
     },
     handler: async (params: Record<string, unknown>) => {
       const { userId, supabase } = await getAuthenticatedUser(apiKey);
+      const { data: pub } = await supabase
+        .from("publications").select("id, title").eq("id", String(params.id)).eq("owner_id", userId).maybeSingle();
+      if (!pub) return textResult({ error: "Publication not found" });
       const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
       if (params.github_repo) patch.github_repo = String(params.github_repo);
       if (params.overleaf_url) patch.overleaf_link = String(params.overleaf_url);
-      const { error } = await supabase
-        .from("publications").update(patch)
-        .eq("id", String(params.id)).eq("owner_id", userId);
+      const { error } = await supabase.from("publications").update(patch).eq("id", pub.id);
       if (error) throw error;
-      return textResult({ success: true, publication_id: params.id, linked: patch });
+      const { updated_at: _u, ...linked } = patch;
+      await logActivity(supabase, userId, "updated", pub, { fields: Object.keys(linked) });
+      return textResult({ success: true, publication_id: pub.id, linked });
     },
   });
 
@@ -678,12 +781,16 @@ function createMcpServer(apiKey: string) {
     },
     handler: async (params: Record<string, unknown>) => {
       const { userId, supabase } = await getAuthenticatedUser(apiKey);
+      const { data: pub } = await supabase
+        .from("publications").select("id, title").eq("id", String(params.id)).eq("owner_id", userId).maybeSingle();
+      if (!pub) return textResult({ error: "Publication not found" });
       const { error } = await supabase
         .from("publications")
         .update({ target_journal: String(params.journal), updated_at: new Date().toISOString() })
-        .eq("id", String(params.id)).eq("owner_id", userId);
+        .eq("id", pub.id);
       if (error) throw error;
-      return textResult({ success: true, publication_id: params.id, target_journal: params.journal });
+      await logActivity(supabase, userId, "updated", pub, { fields: ["target_journal"], target_journal: params.journal });
+      return textResult({ success: true, publication_id: pub.id, target_journal: params.journal });
     },
   });
 
@@ -712,7 +819,7 @@ function createMcpServer(apiKey: string) {
         else if (e._type === "incollection" || e._type === "inbook") body.output_type = "chapter";
         const res = await fetch(`${SUPABASE_URL}/functions/v1/ingest-publication`, {
           method: "POST",
-          headers: { "x-api-key": apiKey, "Content-Type": "application/json" },
+          headers: { "x-api-key": apiKey, ...PROXY_HEADERS },
           body: JSON.stringify(body),
         });
         results.push({ title: e.title, result: await res.json() });
@@ -826,7 +933,7 @@ function createMcpServer(apiKey: string) {
     description: "A quick start-of-day overview of your pipeline and what needs attention.",
     handler: () => ({
       messages: [{ role: "user" as const, content: { type: "text" as const, text:
-        "Give me my Kabbo morning check-in. Read the kabbo://pipeline/summary resource (or call get_pipeline_summary), then in 3-4 sentences tell me: what moved recently, what's stalled and needs nudging, and the single most useful thing I could do today." } }],
+        "Give me my Kabbo morning check-in. Call get_today first: that is the list of things that need me. Then call get_pipeline_summary for what moved recently. In 3-4 sentences tell me what needs me today, what moved this week, and the single most useful thing I could do. Read only: do not call any tool that writes." } }],
     }),
   });
 
@@ -852,7 +959,7 @@ function createMcpServer(apiKey: string) {
     arguments: [{ name: "title", description: "Title (or part) of the paper to prepare", required: true }],
     handler: (args: { title?: string }) => ({
       messages: [{ role: "user" as const, content: { type: "text" as const, text:
-        `Help me prepare "${args?.title ?? "my current paper"}" for submission. Use search_publications to find it, check it has authors, a target_journal, and themes; if a journal isn't set, ask me and use set_target_journal. Then move it to 'submitted' with move_stage and set a resubmission reminder if relevant.` } }],
+        `Help me prepare "${args?.title ?? "my current paper"}" for submission. Use search_publications to find it, then check it has authors, a target_journal and themes; if a journal isn't set, ask me and use set_target_journal. Give me a short submission checklist (cover letter, data and code availability, formatting for the target journal, co-author sign-off). Do NOT call move_stage: preparing is not submitting. Only when I tell you the paper has actually been submitted, move it to 'submitted' and offer to set a reminder to check on the decision.` } }],
     }),
   });
 
@@ -875,7 +982,7 @@ async function manageStringArray(
   const id = String(params.id);
   const action = String(params.action);
   const { data: pub } = await supabase
-    .from("publications").select(column).eq("id", id).eq("owner_id", userId).single();
+    .from("publications").select(`id, title, ${column}`).eq("id", id).eq("owner_id", userId).maybeSingle();
   if (!pub) return textResult({ error: "Publication not found" });
 
   const current: string[] = Array.isArray((pub as Record<string, unknown>)[column])
@@ -894,6 +1001,8 @@ async function manageStringArray(
   const { error } = await supabase
     .from("publications").update({ [column]: next, updated_at: new Date().toISOString() }).eq("id", id);
   if (error) throw error;
+  await logActivity(supabase, userId, "updated", { id, title: (pub as { title?: string }).title },
+    { fields: [column], action, value });
   return textResult({ success: true, [column]: next });
 }
 

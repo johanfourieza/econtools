@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:integration": "node scripts/integration-test.mjs"
+    "test:integration": "node scripts/integration-test.mjs",
+    "test:mcp": "node scripts/mcp-smoke-test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

@@ -1,9 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { normalizeStage as toStage, appendStageHistory } from "../_shared/pipeline.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-api-key",
+    "authorization, x-client-info, apikey, content-type, x-api-key, x-kabbo-source",
 };
 
 // Simple hash function for API key validation
@@ -15,44 +16,9 @@ async function hashKey(key: string): Promise<string> {
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-const VALID_STAGES = [
-  "idea",
-  "draft",
-  "submitted",
-  "revise_resubmit",
-  "resubmitted",
-  "accepted",
-  "published",
-];
-
-// Map common stage aliases
+// Map common stage aliases; anything unrecognised lands in Idea.
 function normalizeStage(stage: string): string {
-  const map: Record<string, string> = {
-    idea: "idea",
-    ideas: "idea",
-    draft: "draft",
-    drafting: "draft",
-    "in-progress": "draft",
-    "work-in-progress": "draft",
-    wip: "draft",
-    submitted: "submitted",
-    "under-review": "submitted",
-    "under review": "submitted",
-    revise: "revise_resubmit",
-    "revise-resubmit": "revise_resubmit",
-    "revise_resubmit": "revise_resubmit",
-    "r&r": "revise_resubmit",
-    "revise and resubmit": "revise_resubmit",
-    resubmitted: "resubmitted",
-    accepted: "accepted",
-    forthcoming: "accepted",
-    published: "published",
-  };
-  const normalized = map[stage.toLowerCase().trim()];
-  if (normalized) return normalized;
-  if (VALID_STAGES.includes(stage.toLowerCase().trim()))
-    return stage.toLowerCase().trim();
-  return "idea"; // default
+  return toStage(stage) ?? "idea";
 }
 
 Deno.serve(async (req) => {
@@ -115,12 +81,14 @@ Deno.serve(async (req) => {
       notes,
       output_type,
       target_year,
+      target_journal,
       themes,
       grants,
       overleaf_url,
       github_repo,
       links,
     } = body;
+    const source = req.headers.get("x-kabbo-source") === "mcp" ? "mcp" : "api";
 
     if (!title || typeof title !== "string" || title.trim().length === 0) {
       return new Response(
@@ -139,23 +107,30 @@ Deno.serve(async (req) => {
     // on the common zero-row case.
     const { data: existing } = await supabase
       .from("publications")
-      .select("id, title, stage, target_year")
+      .select("id, title, stage, stage_history, target_year")
       .eq("owner_id", userId)
       .ilike("title", title.trim())
       .limit(1)
       .maybeSingle();
 
-    const pubData: Record<string, unknown> = {
-      updated_at: new Date().toISOString(),
-    };
+    const now = new Date().toISOString();
+    const pubData: Record<string, unknown> = { updated_at: now };
 
     // Only set fields that were provided
     if (authors !== undefined)
       pubData.authors = Array.isArray(authors) ? authors : [authors];
-    if (normalizedStage) pubData.stage = normalizedStage;
+    if (normalizedStage) {
+      pubData.stage = normalizedStage;
+      // Upsert onto an existing row that changes stage: record the move the
+      // same way the web client does, so analytics see it.
+      if (existing && existing.stage !== normalizedStage) {
+        pubData.stage_history = appendStageHistory(existing.stage_history, existing.stage, normalizedStage, now);
+      }
+    }
     if (notes !== undefined) pubData.notes = notes;
     if (output_type !== undefined) pubData.output_type = output_type;
     if (target_year !== undefined) pubData.target_year = target_year;
+    if (target_journal !== undefined) pubData.target_journal = target_journal;
     if (themes !== undefined)
       pubData.themes = Array.isArray(themes) ? themes : [themes];
     if (grants !== undefined)
@@ -214,7 +189,7 @@ Deno.serve(async (req) => {
     // Log activity
     await supabase.from("activity_log").insert({
       user_id: userId,
-      source: "api",
+      source,
       action,
       publication_id: resultId,
       publication_title: title.trim(),

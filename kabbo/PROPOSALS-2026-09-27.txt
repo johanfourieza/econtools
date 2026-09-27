@@ -1,0 +1,69 @@
+# Kabbo – ranked proposals, revised (27 September 2026, v2)
+
+## Context
+
+Kabbo (kabbo.app) is a seven-stage publication pipeline with teams, BibTeX in/out, a rule-based Insights panel and a 21-tool MCP server used from Claude Code, Codex and Gemini CLI. Latest code: commit fc216b8 (3 August 2026); last product commit 4ddb976 (9 July 2026). In June the GitHub automation was deliberately stripped; the OAuth groundwork sits unmerged on branch `integration-v2`.
+
+Sources: the four prior plans, a full inventory of the current code, an independent read by Codex Astra (gpt-6-astra), and Johan's reactions to v1 of this list.
+
+## Governing principle (from Johan): simple, in a good way
+
+Every proposal below must leave the app easier to use than it found it. Concretely: each new feature must remove or hide at least one thing, nothing new lives on the main canvas by default, and the paper drawer gets shorter, not longer. Johan's two irritants set the bar: he never uses Custom Sections and does not know what they are, and he closes the Insights panel every session.
+
+Decisions taken from Johan's feedback:
+- Proposal 4 of v1 (the agent proposed-changes inbox) is dropped.
+- R&R becomes a tracking workspace, not an AI referee. Plenty of AI refereeing tools exist; Kabbo's job is to keep the record of what was asked, what was done, and what is left.
+- A refereeing layer is added: papers Johan referees for journals, with the portal login kept safely, on the timeline, with optional reminders.
+- ORCID is integrated at the points where it genuinely helps.
+
+## The proposals, ranked
+
+- **1. Fix the agent layer so it keeps its promises (foundation, 1–2 days)**
+  Verified bugs in `supabase/functions/mcp-server/index.ts`: `get_team_summary` shows any accepted member every teammate's papers, including Idea-stage titles, ignoring `visibility_settings.min_visible_stage`; `manage_reminders` writes `completed`/`completed_at` and defaults to type `custom`, but the table has `is_completed` and a CHECK that rejects `custom`, so reminders never work; `create_publication`, `update_publication` and `import_bibtex` accept `target_journal` and drop it; agent `move_stage` never appends to `stage_history`; the `submission_prep` prompt moves the card to Submitted as part of "preparing"; direct-DB tools skip `activity_log`. Fix all, add an MCP smoke test that exercises every tool against a throwaway user, delete dead code (`usePubFlow`, `NavLink`, `TeamReportExport`).
+
+- **2. Simplify the paper drawer and silence the dashboard**
+  Audit every field in `PublicationDrawer.tsx` against actual use. Remove Custom Sections (the `links` label/URL list at line 872; migrate any existing entries into Project Links or Notes, then drop the UI). Fold Working Paper (series/number/link), Paper File and Project Links into one "Files and links" block. Show only the fields the stage needs (Idea: title, authors, notes; Published: journal, year, DOI). Put Themes, Grants and Output type behind a single "More" disclosure. On the dashboard, remove the Insights carousel from the canvas: it currently re-expands on every desktop load because only per-card dismissals are stored. Its replacement is proposal 3, which is opened on demand. Target: a first-time user should understand the drawer without a guide.
+
+- **3. A quiet "Today" queue instead of Insights**
+  One button in the header with a small count badge. It opens a short list (at most five items) of what needs Johan's attention across papers and referee reports: overdue or due-soon reminders, papers waiting on him (not on a journal), referee reports due, and a decision that has not been recorded. Each item opens its card. Nothing on the canvas moves. Builds the reminders UI on the existing `reminders` table, replaces the "30 days = stalled" and "accepted = quick win" rules, and gives the `morning_checkin` MCP prompt the same list.
+
+- **4. Model the journey a paper actually takes: submission attempts and dispositions**
+  Replace the single `target_journal` with a `submission_attempts` table: journal, submitted date, manuscript number, decision (desk reject, reject, R&R, accept), decision date, rounds, next intended outlet. Rejection closes an attempt and leaves the paper in place. Add `paused` and `shelved` dispositions with a reason and a reconsider date, so the file drawer is deliberate. In the drawer this is one compact "Journal history" list with an "Add submission" row; nothing else grows. Optional and small: "paste the decision letter" prefills the attempt form. Unlocks 6, 8 and 11.
+
+- **5. Refereeing layer: the papers Johan reviews for journals**
+  New `referee_assignments` table: journal, manuscript title, editor, manuscript number, invited date, due date, status (invited, accepted, declined, submitted), the PDF (private `papers` bucket), the portal URL, the login username, an encrypted password, and notes. Entry is one drag: drop the PDF onto a "Refereeing" dock next to the Published dock; a small form asks for journal and due date; an agent can fill the rest from the invitation email pasted in. Each assignment appears on the timeline and in the Today queue, with an optional reminder N days before the deadline (default on, per-assignment switch). Passwords are stored with Supabase Vault (server-side encryption, decrypted only through a security-definer RPC when Johan presses "reveal", never returned in lists or to MCP). Honest note: Kabbo should not become a password manager, so the reveal button and a "copy" action are the whole feature. Refereeing counts feed the annual review pack (proposal 11) and, via ORCID (proposal 7), the peer-review section of the record. MCP: one `manage_referee_reports` tool.
+
+- **6. Make Revise & Resubmit a simple tracking workspace**
+  Under a submission attempt, a "Referee reports" section: upload the reports, then a checklist of comments (added by hand, or extracted by an agent from the pasted report), each with owner, status (open, done, declined) and a one-line note on what was changed. One "Export response letter" button assembles the done items into a draft response. That is the whole screen. Kabbo does not referee the paper; if Johan wants a pre-review he runs an external tool on the draft. Storage: `revision_items` linked to the attempt; reports live in the private bucket.
+
+- **7. ORCID integration, where it actually helps**
+  Four touchpoints, all on ORCID's free public API. (a) "Connect ORCID" in Profile via ORCID's three-legged OAuth, which stores a verified iD (the `orcid_id` field already exists) and shows the green iD badge. (b) "Import my ORCID works" into Published, deduplicated by title and DOI, as one source of proposal 8. (c) Import ORCID peer-review activity into the refereeing layer, so past reviews recorded elsewhere appear on the timeline. (d) Match co-authors by ORCID iD rather than free text, so the co-author-on-Kabbo insight and team collaboration graph stop guessing. Writing back to ORCID (works or peer reviews) needs the Member API; Stellenbosch is a member through the South African ORCID consortium, so it is possible in principle but deferred until the library grants credentials. ORCID sign-in as a login provider is skipped: Supabase has no native ORCID provider and Google plus email is enough.
+
+- **8. Import anything**
+  One intake box that accepts a pasted CV, a BibTeX file, a spreadsheet, an ORCID iD or a name to search on OpenAlex. An edge function normalises the input with an LLM into a preview table (title, authors, journal, year, likely stage), deduplicates against existing cards, and creates the rest. Replaces the planned column-mapping CSV importer with something a new user finishes in a minute.
+
+- **9. OAuth remote MCP, so Kabbo appears as a connector in Claude.ai, ChatGPT and Claude Code**
+  Finish the `integration-v2` groundwork (PKCE helpers and `oauth_*` migration exist): `mcp-oauth` edge function, consent page, Bearer auth in `mcp-server`, a TOOLS registry with read-only/destructive annotations and per-user capability groups. Keep API keys for Codex and scripts. Reach expands from "people who run Claude Code" to anyone with a Claude or ChatGPT subscription.
+
+- **10. Honest analytics from the new data**
+  Elapsed time measured to today rather than to `updated_at`; per-journal experience (desk-reject rate, median days to first decision, rounds to acceptance); a throughput forecast from papers in progress and observed cycle time; a cohort funnel by year started; refereeing load per year. Same `AnalyticsModal` and `get_analytics`, better inputs. Nothing new on the canvas.
+
+- **11. Monetise a workflow, not a tier: the lab-review pilot**
+  Package what a lab head does every week and every year: a weekly lab-meeting pack from the Today queue, and report packs (grant progress by grant tag, per-member annual review including refereeing and editorial service, and a South African DHET-accredited-output report that checks journals against the accredited lists). Five paid pilot labs at USD 19–29 per lab per month on manual invoicing before Stripe. Drop the "straggler / superstar" ranking and defer SSO and the institutional ladder. Reconcile the README's "No monetization planned" line first.
+
+- **12. Public research-in-progress page with an llms.txt**
+  `kabbo.app/u/<handle>` shows a user's pipeline from a chosen stage upward, with working-paper links and an ORCID link, and a machine-readable `llms.txt`. Makes `/research-sync` native and gives non-agent users a reason to keep the pipeline current.
+
+## Dropped or deferred, and why
+
+- v1 proposal 4 (agent proposed-changes inbox): dropped at Johan's request; too much machinery for a simple app. The one-line "paste the decision letter" prefill in proposal 4 is the only survivor and is optional.
+- In-app AI assistant, idea generator, GitHub automation: stay dropped.
+- Stripe tiers, institutional hierarchy, SSO, citation tracking: deferred until pilot labs show demand.
+
+## Sequencing
+
+1 → 2 → 3 form the "simplify and trust" arc (about one week). 4 → 5 → 6 → 7 form the data-model arc (two to three weeks); 5 can start as soon as 3 is done since it only needs the Today queue. 8 and 9 are independent. 10 and 11 depend on 4 and 5. 12 is standalone.
+
+## Next step
+
+Johan confirms the list and order, or trims it. I then write a concrete implementation plan for the first arc (1, 2, 3), including a migration plan for dropping Custom Sections without losing any stored links.

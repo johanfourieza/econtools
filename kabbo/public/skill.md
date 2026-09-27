@@ -49,6 +49,7 @@ kabbo.app → **Settings → AI Integration → Create Key**.
 - **delete_publication** — soft-delete (bin) by `id`
 
 ### Analytics & insights
+- **get_today** — what needs your attention today (overdue reminders, revisions waiting, decisions to chase, idle drafts); the dashboard's Today list
 - **get_pipeline_summary** — counts by stage, stalled (30+ days), recently updated
 - **get_stalled_papers** — papers inactive for N days (default 30)
 - **get_analytics** — velocity, avg time per stage, breakdowns by author/theme/grant/year/output_type
@@ -66,8 +67,8 @@ kabbo.app → **Settings → AI Integration → Create Key**.
 - **manage_data_sources** — list/add/remove data sources
 
 ### Reminders, team, export, notes
-- **manage_reminders** — `action`: list | create | complete | delete
-- **get_team_summary** — per-member pipeline (needs `team_id`)
+- **manage_reminders** — `action`: list | create | complete | delete. Create needs `title` + ISO `due_date`; `reminder_type` ∈ deadline, conference, resubmission, working_paper, general
+- **get_team_summary** — per-member pipeline (needs `team_id` and team dashboard access; respects each member's visibility floor)
 - **export_bibtex** — BibTeX for selected/all publications (filter by stage/year/ids)
 - **add_note** — append a timestamped note without overwriting
 
@@ -97,13 +98,14 @@ and Overleaf links are plain metadata on the card.
 
 ## Common workflows
 
-- **Morning check-in** → `get_pipeline_summary`
+- **Morning check-in** → `get_today` (what needs you) + `get_pipeline_summary` (what moved)
 - **Weekly review** → `get_activity_log` (days: 7) + `get_pipeline_summary`
 - **Find stalled work** → `get_stalled_papers`
 - **Annual review** → `get_analytics` + `export_bibtex`
 - **Import a CV/BibTeX** → `import_bibtex`
 - **Batch tag** → `list_publications` then `bulk_update`
-- **Set a reminder** → `manage_reminders` (action: create, due_date ISO)
+- **Set a reminder** → `manage_reminders` (action: create, title, due_date ISO, optional publication_id)
+- **Prepare a submission** → `submission_prep` prompt. It builds a checklist; it never moves the card. Call `move_stage` only once the user says the paper has actually been submitted.
 - **Team oversight** → `get_team_summary` (team_id required)
 
 ## Tips

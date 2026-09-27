@@ -2,7 +2,8 @@ import { Publication, STAGE_COLORS } from '@/types/publication';
 import { parseList } from '@/lib/storage';
 import { PresenceIndicator } from './PresenceIndicator';
 import { useAuth } from '@/hooks/useAuth';
-import { Users } from 'lucide-react';
+import { useReminderStatus } from '@/hooks/useReminders';
+import { Bell, Users } from 'lucide-react';
 
 interface PresenceUser {
   id: string;
@@ -32,6 +33,7 @@ export function PublicationCard({ publication, stageIndex = 0, onClick, onDragSt
   const themes = parseList(publication.themes);
   const isWorkingPaper = publication.workingPaper?.on;
   const isCollaboration = publication.isCollaboration;
+  const dueStatus = useReminderStatus(publication.id);
 
   const stageColor = STAGE_COLORS[stageIndex % STAGE_COLORS.length];
 
@@ -88,6 +90,15 @@ export function PublicationCard({ publication, stageIndex = 0, onClick, onDragSt
         {publication.completionYear && (
           <span className="chip text-[10px] font-medium">
             {publication.completionYear}
+          </span>
+        )}
+
+        {dueStatus && (
+          <span
+            className={`ml-auto inline-flex items-center ${dueStatus === 'overdue' ? 'text-destructive' : 'text-warm'}`}
+            title={dueStatus === 'overdue' ? 'A reminder is overdue' : 'A reminder is due this week'}
+          >
+            <Bell className="w-3 h-3" />
           </span>
         )}
       </div>

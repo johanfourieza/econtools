@@ -72,6 +72,9 @@ export function dbToLocal(dbPub: any): Publication {
     publishedYear: dbPub.stage === 'published'
       ? (dbPub.target_year != null ? dbPub.target_year : 'unknown')
       : '',
+    disposition: dbPub.disposition === 'paused' || dbPub.disposition === 'shelved' ? dbPub.disposition : 'active',
+    dispositionReason: dbPub.disposition_reason || '',
+    dispositionReconsiderAt: dbPub.disposition_reconsider_at || '',
     createdAt: dbPub.created_at,
     updatedAt: dbPub.updated_at,
     history: (dbPub.stage_history || []).map((h: any) => ({
@@ -105,6 +108,9 @@ export function localToDb(pub: Publication, userId: string): {
   related_papers: string[];
   working_paper: any;
   stage_history: any[];
+  disposition: string;
+  disposition_reason: string | null;
+  disposition_reconsider_at: string | null;
 } {
   // For a published card the publication year (publishedYear) is authoritative;
   // completionYear is a UI mirror of the same target_year and can drift on
@@ -140,5 +146,8 @@ export function localToDb(pub: Publication, userId: string): {
     related_papers: pub.relatedPapers || [],
     working_paper: pub.workingPaper,
     stage_history: pub.history.map((h) => ({ from: h.from, to: h.to, at: h.at })),
+    disposition: pub.disposition ?? 'active',
+    disposition_reason: pub.dispositionReason?.trim() || null,
+    disposition_reconsider_at: pub.dispositionReconsiderAt || null,
   };
 }

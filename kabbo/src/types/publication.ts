@@ -94,6 +94,12 @@ export interface Publication {
   // unknown" bucket rather than silently filtered out. `''` means the row is
   // not in the published stage and therefore has no applicable year.
   publishedYear: number | '' | 'unknown';
+  // Deliberate resting states. 'active' (default) is a normal live paper;
+  // 'paused' stays on the board dimmed; 'shelved' is tucked under its column.
+  // Neither nags in the Today queue until dispositionReconsiderAt arrives.
+  disposition?: 'active' | 'paused' | 'shelved';
+  dispositionReason?: string;
+  dispositionReconsiderAt?: string; // YYYY-MM-DD or ''
   createdAt: string;
   updatedAt: string;
   history: HistoryEntry[];

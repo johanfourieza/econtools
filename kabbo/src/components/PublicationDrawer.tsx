@@ -17,7 +17,10 @@ import { toast } from 'sonner';
 import { PublicationChat } from './PublicationChat';
 import { PresenceIndicator } from './PresenceIndicator';
 import { RemindersSection } from './RemindersSection';
+import { SubmissionHistory } from './SubmissionHistory';
+import { DispositionControl } from './DispositionControl';
 import type { NewReminder, ReminderRow } from '@/hooks/useReminders';
+import type { AttemptPatch, NewAttempt, SubmissionAttempt } from '@/hooks/useSubmissionAttempts';
 
 interface PresenceUser {
   id: string;
@@ -40,6 +43,10 @@ interface PublicationDrawerProps {
   onAddReminder: (input: NewReminder) => Promise<ReminderRow | null>;
   onCompleteReminder: (id: string) => Promise<boolean>;
   onDeleteReminder: (id: string) => Promise<boolean>;
+  attempts: SubmissionAttempt[];
+  onAddAttempt: (input: NewAttempt) => Promise<SubmissionAttempt | null>;
+  onUpdateAttempt: (id: string, patch: AttemptPatch) => Promise<boolean>;
+  onDeleteAttempt: (id: string) => Promise<boolean>;
 }
 
 export function PublicationDrawer({
@@ -55,6 +62,10 @@ export function PublicationDrawer({
   onAddReminder,
   onCompleteReminder,
   onDeleteReminder,
+  attempts,
+  onAddAttempt,
+  onUpdateAttempt,
+  onDeleteAttempt,
 }: PublicationDrawerProps) {
   const [localPub, setLocalPub] = useState<Publication | null>(null);
   // "More" holds the fields most papers never need (themes, grants, history).
@@ -510,6 +521,17 @@ export function PublicationDrawer({
             </div>
           </div>
 
+          {/* Pause / shelve. One quiet line when active; a banner when resting. */}
+          <DispositionControl
+            disposition={localPub.disposition ?? 'active'}
+            reason={localPub.dispositionReason ?? ''}
+            reconsiderAt={localPub.dispositionReconsiderAt ?? ''}
+            canEdit={canEdit}
+            onChange={({ disposition, reason, reconsiderAt }) =>
+              updateLocal({ disposition, dispositionReason: reason, dispositionReconsiderAt: reconsiderAt })
+            }
+          />
+
           {/* Type & venue. An idea has no venue yet, so the row only appears
               once the paper is at least a draft. */}
           {localPub.stageId !== 'idea' && (
@@ -584,6 +606,23 @@ export function PublicationDrawer({
               disabled={!canEdit}
             />
           </div>
+
+          {/* Journal history: where the paper has been sent, and what came back.
+              Recording a decision moves the Stage select accordingly. */}
+          {localPub.stageId !== 'idea' && (
+            <SubmissionHistory
+              publicationId={localPub.id}
+              journalHint={localPub.outputType === 'journal' ? localPub.typeA : ''}
+              attempts={attempts}
+              canEdit={canEdit}
+              onAdd={onAddAttempt}
+              onUpdate={onUpdateAttempt}
+              onDelete={onDeleteAttempt}
+              onStageImplied={(stage) => {
+                if (stage !== localPub.stageId) updateLocal({ stageId: stage });
+              }}
+            />
+          )}
 
           {/* Reminders */}
           <RemindersSection

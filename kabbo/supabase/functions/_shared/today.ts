@@ -18,6 +18,10 @@ export interface TodayPublication {
   history: HistoryEntry[] | unknown;
   /** true when the paper is published but has no year recorded */
   missingYear?: boolean;
+  /** active (default) | paused | shelved. Paused and shelved papers never nag. */
+  disposition?: string | null;
+  /** ISO date on which a paused/shelved paper should be looked at again */
+  reconsiderAt?: string | null;
 }
 
 export interface TodayReminder {
@@ -35,6 +39,7 @@ export type TodayKind =
   | "no_decision"
   | "accepted_check"
   | "draft_idle"
+  | "reconsider"
   | "missing_year";
 
 export interface TodayItem {
@@ -141,6 +146,23 @@ export function computeToday(
   for (const p of publications) {
     if (p.stage === "published") {
       if (p.missingYear) missingYear++;
+      continue;
+    }
+    // A resting paper is silent until its reconsider date, then asks once.
+    if (p.disposition === "paused" || p.disposition === "shelved") {
+      if (p.reconsiderAt) {
+        const due = new Date(p.reconsiderAt).getTime();
+        if (!Number.isNaN(due) && due <= now) {
+          items.push({
+            id: `reconsider:${p.id}`,
+            kind: "reconsider",
+            message: `Reconsider ${quote(p.title)}`,
+            detail: `${p.disposition === "paused" ? "Paused" : "Shelved"}; you asked to look at it again. Pick it up or shelve it for good.`,
+            publicationId: p.id,
+            priority: 600,
+          });
+        }
+      }
       continue;
     }
     if (p.stage === "idea") continue;

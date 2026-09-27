@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -20,9 +20,9 @@ export type Database = {
           created_at: string
           details: Json | null
           id: string
+          kabbo_yaml_detected: boolean | null
           publication_id: string | null
           publication_title: string | null
-          kabbo_yaml_detected: boolean | null
           source: string
           user_id: string
         }
@@ -31,9 +31,9 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
+          kabbo_yaml_detected?: boolean | null
           publication_id?: string | null
           publication_title?: string | null
-          kabbo_yaml_detected?: boolean | null
           source: string
           user_id: string
         }
@@ -42,9 +42,9 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
+          kabbo_yaml_detected?: boolean | null
           publication_id?: string | null
           publication_title?: string | null
-          kabbo_yaml_detected?: boolean | null
           source?: string
           user_id?: string
         }
@@ -216,8 +216,12 @@ export type Database = {
       publications: {
         Row: {
           authors: string[] | null
+          collaboration_links: Json
           created_at: string
           data_sources: string[] | null
+          disposition: string
+          disposition_reason: string | null
+          disposition_reconsider_at: string | null
           github_repo: string | null
           grants: string[] | null
           id: string
@@ -228,22 +232,25 @@ export type Database = {
           owner_id: string
           paper_file_path: string | null
           related_papers: string[] | null
-          collaboration_links: Json | null
           stage: string
           stage_history: Json[] | null
           target_journal: string | null
           target_year: number | null
-          type_b: string | null
-          type_c: string | null
           themes: string[] | null
           title: string
+          type_b: string | null
+          type_c: string | null
           updated_at: string
           working_paper: Json | null
         }
         Insert: {
           authors?: string[] | null
+          collaboration_links?: Json
           created_at?: string
           data_sources?: string[] | null
+          disposition?: string
+          disposition_reason?: string | null
+          disposition_reconsider_at?: string | null
           github_repo?: string | null
           grants?: string[] | null
           id?: string
@@ -254,22 +261,25 @@ export type Database = {
           owner_id: string
           paper_file_path?: string | null
           related_papers?: string[] | null
-          collaboration_links?: Json | null
           stage?: string
           stage_history?: Json[] | null
           target_journal?: string | null
           target_year?: number | null
-          type_b?: string | null
-          type_c?: string | null
           themes?: string[] | null
           title?: string
+          type_b?: string | null
+          type_c?: string | null
           updated_at?: string
           working_paper?: Json | null
         }
         Update: {
           authors?: string[] | null
+          collaboration_links?: Json
           created_at?: string
           data_sources?: string[] | null
+          disposition?: string
+          disposition_reason?: string | null
+          disposition_reconsider_at?: string | null
           github_repo?: string | null
           grants?: string[] | null
           id?: string
@@ -280,15 +290,14 @@ export type Database = {
           owner_id?: string
           paper_file_path?: string | null
           related_papers?: string[] | null
-          collaboration_links?: Json | null
           stage?: string
           stage_history?: Json[] | null
           target_journal?: string | null
           target_year?: number | null
-          type_b?: string | null
-          type_c?: string | null
           themes?: string[] | null
           title?: string
+          type_b?: string | null
+          type_c?: string | null
           updated_at?: string
           working_paper?: Json | null
         }
@@ -331,6 +340,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "reminders_publication_id_fkey"
+            columns: ["publication_id"]
+            isOneToOne: false
+            referencedRelation: "publications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      submission_attempts: {
+        Row: {
+          created_at: string
+          decision: string
+          decision_at: string | null
+          id: string
+          journal: string
+          manuscript_number: string | null
+          notes: string | null
+          publication_id: string
+          rounds: number
+          submitted_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decision?: string
+          decision_at?: string | null
+          id?: string
+          journal: string
+          manuscript_number?: string | null
+          notes?: string | null
+          publication_id: string
+          rounds?: number
+          submitted_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decision?: string
+          decision_at?: string | null
+          id?: string
+          journal?: string
+          manuscript_number?: string | null
+          notes?: string | null
+          publication_id?: string
+          rounds?: number
+          submitted_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submission_attempts_publication_id_fkey"
             columns: ["publication_id"]
             isOneToOne: false
             referencedRelation: "publications"
@@ -546,7 +608,10 @@ export type Database = {
       is_team_member: { Args: { _team_id: string }; Returns: boolean }
       match_coauthors_on_kabbo: {
         Args: { _authors: string[] }
-        Returns: { matched_count: number; total_count: number }[]
+        Returns: {
+          matched_count: number
+          total_count: number
+        }[]
       }
       user_is_collaborator: { Args: { pub_id: string }; Returns: boolean }
       validate_api_key: { Args: { _key_hash: string }; Returns: string }
@@ -576,12 +641,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -605,11 +670,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -630,11 +695,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -655,11 +720,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -672,11 +737,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

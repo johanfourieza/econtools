@@ -2,6 +2,11 @@ import { describe, it, expect } from 'vitest';
 import {
   normalizeStage,
   stageIndex,
+  normalizeDecision,
+  stageForDecision,
+  isOpenDecision,
+  normalizeDisposition,
+  DECISIONS,
   appendStageHistory,
   normalizeHistory,
   isStageVisible,
@@ -62,6 +67,38 @@ describe('appendStageHistory', () => {
       { from: 'idea', to: 'draft', at: 'x' },
     ]);
     expect(normalizeHistory(null)).toEqual([]);
+  });
+});
+
+describe('submission decisions and dispositions', () => {
+  it('normalises the ways people write a decision', () => {
+    expect(normalizeDecision('Desk rejected')).toBe('desk_reject');
+    expect(normalizeDecision('R&R')).toBe('revise_resubmit');
+    expect(normalizeDecision('major revision')).toBe('revise_resubmit');
+    expect(normalizeDecision('Accepted')).toBe('accept');
+    expect(normalizeDecision('under review')).toBe('pending');
+    expect(normalizeDecision('maybe')).toBeNull();
+    for (const d of DECISIONS) expect(normalizeDecision(d)).toBe(d);
+  });
+  it('sends rejected and withdrawn papers back to Draft, R&R and accept forward', () => {
+    expect(stageForDecision('desk_reject')).toBe('draft');
+    expect(stageForDecision('reject')).toBe('draft');
+    expect(stageForDecision('withdrawn')).toBe('draft');
+    expect(stageForDecision('revise_resubmit')).toBe('revise_resubmit');
+    expect(stageForDecision('accept')).toBe('accepted');
+    expect(stageForDecision('pending')).toBeNull();
+  });
+  it('treats pending and R&R as open at the journal', () => {
+    expect(isOpenDecision('pending')).toBe(true);
+    expect(isOpenDecision('revise_resubmit')).toBe(true);
+    expect(isOpenDecision('accept')).toBe(false);
+    expect(isOpenDecision('reject')).toBe(false);
+  });
+  it('normalises dispositions and rejects nonsense', () => {
+    expect(normalizeDisposition('pause')).toBe('paused');
+    expect(normalizeDisposition('Shelve')).toBe('shelved');
+    expect(normalizeDisposition('reactivate')).toBe('active');
+    expect(normalizeDisposition('deleted')).toBeNull();
   });
 });
 

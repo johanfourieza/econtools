@@ -94,6 +94,20 @@ describe('computeToday – papers', () => {
     expect(items.map((i) => i.id)).toEqual(['accepted_check:acc', 'draft_idle:old']);
   });
 
+  it('leaves paused and shelved papers alone until their reconsider date', () => {
+    const items = computeToday(
+      [
+        pub({ id: 'p', stage: 'draft', updatedAt: ago(400), disposition: 'paused' }),
+        pub({ id: 's', stage: 'revise_resubmit', updatedAt: ago(400), disposition: 'shelved', reconsiderAt: ahead(10) }),
+        pub({ id: 'r', stage: 'draft', updatedAt: ago(400), disposition: 'shelved', reconsiderAt: ago(1) }),
+      ],
+      [],
+      NOW,
+    );
+    expect(items.map((i) => i.id)).toEqual(['reconsider:r']);
+    expect(items[0].kind).toBe('reconsider');
+  });
+
   it('rolls published papers without a year into one item', () => {
     const items = computeToday(
       [

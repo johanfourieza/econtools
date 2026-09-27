@@ -77,7 +77,7 @@ export function useSupabasePublications() {
         // 1. Owned publications
         supabase
           .from('publications')
-          .select('id, owner_id, title, authors, themes, grants, target_year, target_journal, stage, output_type, notes, links, github_repo, overleaf_link, collaboration_links, type_b, type_c, data_sources, related_papers, working_paper, stage_history, created_at, updated_at')
+          .select('id, owner_id, title, authors, themes, grants, target_year, target_journal, stage, output_type, notes, links, github_repo, overleaf_link, collaboration_links, type_b, type_c, data_sources, related_papers, working_paper, stage_history, disposition, disposition_reason, disposition_reconsider_at, created_at, updated_at')
           .eq('owner_id', user.id)
           .order('updated_at', { ascending: false }),
         // 2. Get collaborated publication IDs first
@@ -109,7 +109,7 @@ export function useSupabasePublications() {
         
         const { data: collabPubsData, error: collabPubsError } = await supabase
           .from('publications')
-          .select('id, owner_id, title, authors, themes, grants, target_year, target_journal, stage, output_type, notes, links, github_repo, overleaf_link, collaboration_links, type_b, type_c, data_sources, related_papers, working_paper, stage_history, created_at, updated_at')
+          .select('id, owner_id, title, authors, themes, grants, target_year, target_journal, stage, output_type, notes, links, github_repo, overleaf_link, collaboration_links, type_b, type_c, data_sources, related_papers, working_paper, stage_history, disposition, disposition_reason, disposition_reconsider_at, created_at, updated_at')
           .in('id', collabIds)
           .order('updated_at', { ascending: false });
         
@@ -501,6 +501,19 @@ export function useSupabasePublications() {
 
     const now = new Date().toISOString();
 
+    // A stage change made through the drawer (Stage select, a recorded journal
+    // decision) must leave the same {from,to,at} trail a drag does, or
+    // time-in-stage analytics and the Today queue lose the move. The drawer
+    // sends the whole card, so `history` may be present but stale; append only
+    // when the last entry does not already record this transition.
+    if (pub && 'stageId' in updates && updates.stageId && updates.stageId !== pub.stageId) {
+      const base = updates.history ?? pub.history;
+      const last = base[base.length - 1];
+      if (!(last && last.from === pub.stageId && last.to === updates.stageId)) {
+        updates = { ...updates, history: [...base, { from: pub.stageId, to: updates.stageId, at: now }] };
+      }
+    }
+
     // Optimistically update local state
     setPublications(prev => prev.map(c =>
       c.id === id
@@ -535,6 +548,9 @@ export function useSupabasePublications() {
     if ('links' in updates) dbUpdate.links = (updates.links || []).map((l: any) => JSON.stringify(l));
     if ('workingPaper' in updates) dbUpdate.working_paper = updates.workingPaper;
     if ('history' in updates) dbUpdate.stage_history = (updates.history || []).map(h => ({ from: h.from, to: h.to, at: h.at }));
+    if ('disposition' in updates) dbUpdate.disposition = updates.disposition ?? 'active';
+    if ('dispositionReason' in updates) dbUpdate.disposition_reason = (updates.dispositionReason ?? '').trim() || null;
+    if ('dispositionReconsiderAt' in updates) dbUpdate.disposition_reconsider_at = updates.dispositionReconsiderAt || null;
     // Year mapping for Published stage – fires whenever the *effective* stage
     // is 'published', regardless of whether the caller included publishedYear
     // in this payload. An explicit year edit must win: prefer numeric

@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { normalizeStage, appendStageHistory } from "../_shared/pipeline.ts";
+import { normalizeStage, appendStageHistory, normalizeDisposition } from "../_shared/pipeline.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -76,13 +76,19 @@ async function handleGet(
       .single();
 
     if (error || !data) return jsonResponse({ error: "Publication not found" }, 404);
-    return jsonResponse({ publication: data });
+    // The journal-by-journal record travels with the paper.
+    const { data: attempts } = await supabase
+      .from("submission_attempts")
+      .select("id, journal, submitted_at, manuscript_number, decision, decision_at, rounds, notes")
+      .eq("publication_id", id)
+      .order("submitted_at", { ascending: false });
+    return jsonResponse({ publication: { ...data, submission_attempts: attempts || [] } });
   }
 
   // List with optional filters
   let query = supabase
     .from("publications")
-    .select("id, title, stage, authors, themes, grants, target_year, target_journal, output_type, notes, github_repo, overleaf_link, created_at, updated_at", { count: "exact" })
+    .select("id, title, stage, disposition, authors, themes, grants, target_year, target_journal, output_type, notes, github_repo, overleaf_link, created_at, updated_at", { count: "exact" })
     .eq("owner_id", userId)
     .order("updated_at", { ascending: false })
     .range(offset, offset + limit - 1);
@@ -120,7 +126,7 @@ async function handlePatch(
   supabase: ReturnType<typeof createClient>
 ) {
   const body = await req.json();
-  const { id, title, authors, stage, notes, output_type, target_year, target_journal, themes, grants, overleaf_url, github_repo, links } = body;
+  const { id, title, authors, stage, notes, output_type, target_year, target_journal, themes, grants, overleaf_url, github_repo, links, disposition, disposition_reason, disposition_reconsider_at } = body;
 
   if (!id) return jsonResponse({ error: "id is required" }, 400);
 
@@ -154,6 +160,17 @@ async function handlePatch(
   if (output_type !== undefined) updates.output_type = output_type;
   if (target_year !== undefined) updates.target_year = target_year;
   if (target_journal !== undefined) updates.target_journal = target_journal;
+  if (disposition !== undefined) {
+    const d = normalizeDisposition(disposition);
+    if (!d) return jsonResponse({ error: `Invalid disposition: ${disposition}. Use active, paused or shelved.` }, 400);
+    updates.disposition = d;
+    if (d === "active") {
+      updates.disposition_reason = null;
+      updates.disposition_reconsider_at = null;
+    }
+  }
+  if (disposition_reason !== undefined) updates.disposition_reason = disposition_reason || null;
+  if (disposition_reconsider_at !== undefined) updates.disposition_reconsider_at = disposition_reconsider_at || null;
   if (themes !== undefined) updates.themes = Array.isArray(themes) ? themes : [themes];
   if (grants !== undefined) updates.grants = Array.isArray(grants) ? grants : [grants];
   if (overleaf_url !== undefined) updates.overleaf_link = overleaf_url;

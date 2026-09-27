@@ -24,6 +24,8 @@ export function useToday(publications: Publication[], reminders: ReminderRow[]):
         updatedAt: p.updatedAt,
         history: p.history,
         missingYear: p.stageId === 'published' && p.publishedYear === 'unknown',
+        disposition: p.disposition ?? 'active',
+        reconsiderAt: p.dispositionReconsiderAt || null,
       }));
     const rems: TodayReminder[] = reminders.map(r => ({
       id: r.id,

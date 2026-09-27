@@ -4,7 +4,12 @@ import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-
 import {
   VALID_STAGES,
   REMINDER_TYPES,
+  DECISIONS,
   normalizeReminderType,
+  normalizeDecision,
+  normalizeDisposition,
+  stageForDecision,
+  appendStageHistory,
   isStageVisible,
   parseBibtex,
   daysPerStage,
@@ -64,6 +69,37 @@ async function logActivity(
 // Requests the MCP server makes to the REST edge functions carry this header so
 // their activity_log rows are attributed to the agent, not to a raw API client.
 const PROXY_HEADERS = { "Content-Type": "application/json", "x-kabbo-source": "mcp" };
+
+type PubStageRow = { id: string; title: string; stage: string; stage_history: unknown };
+
+// Move a paper as a side effect of a recorded submission or decision, with the
+// same {from,to,at} trail every other path writes. No-op when already there.
+async function setStage(
+  supabase: SupabaseClient,
+  userId: string,
+  pub: PubStageRow,
+  newStage: string,
+): Promise<boolean> {
+  if (pub.stage === newStage) return false;
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from("publications")
+    .update({
+      stage: newStage,
+      stage_history: appendStageHistory(pub.stage_history, pub.stage, newStage, now),
+      updated_at: now,
+    })
+    .eq("id", pub.id);
+  if (error) throw error;
+  await logActivity(supabase, userId, "stage_changed", pub, { from: pub.stage, stage: newStage });
+  return true;
+}
+
+function todayDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+const ATTEMPT_COLUMNS = "id, publication_id, journal, submitted_at, manuscript_number, decision, decision_at, rounds, notes, created_at";
 
 async function callApi(
   method: string,
@@ -221,7 +257,7 @@ function createMcpServer(apiKey: string) {
       const { userId, supabase } = await getAuthenticatedUser(apiKey);
       const { data: pubs } = await supabase
         .from("publications")
-        .select("id, title, stage, updated_at, stage_history, target_year")
+        .select("id, title, stage, disposition, updated_at, stage_history, target_year")
         .eq("owner_id", userId);
 
       const now = Date.now();
@@ -229,11 +265,14 @@ function createMcpServer(apiKey: string) {
       VALID_STAGES.forEach(s => stageCounts[s] = 0);
       const stalled: { id: string; title: string; stage: string; days_stalled: number }[] = [];
       const recentlyUpdated: { id: string; title: string; stage: string; updated_at: string }[] = [];
+      let resting = 0;
 
       for (const p of pubs || []) {
         stageCounts[p.stage] = (stageCounts[p.stage] || 0) + 1;
+        if (p.disposition && p.disposition !== "active") resting++;
         const daysSince = Math.floor((now - new Date(p.updated_at).getTime()) / (24 * 60 * 60 * 1000));
-        if (daysSince >= 30 && p.stage !== "published") {
+        // A paused or shelved paper is resting on purpose, not stalled.
+        if (daysSince >= 30 && p.stage !== "published" && (!p.disposition || p.disposition === "active")) {
           stalled.push({ id: p.id, title: p.title, stage: p.stage, days_stalled: daysSince });
         }
         if (daysSince <= 7) {
@@ -247,6 +286,7 @@ function createMcpServer(apiKey: string) {
       return textResult({
         total: (pubs || []).length,
         by_stage: stageCounts,
+        paused_or_shelved: resting,
         stalled: stalled.slice(0, 10),
         recently_updated: recentlyUpdated.slice(0, 10),
       });
@@ -467,11 +507,11 @@ function createMcpServer(apiKey: string) {
   });
 
   server.tool("get_analytics", {
-    description: "Get analytics about your publication pipeline: conversion rates between stages, average time per stage, publication velocity by year, and breakdowns by author/theme/grant.",
+    description: "Get analytics about your publication pipeline: average days per stage (the current stage measured to today), papers published by year, and optional breakdowns. breakdown_by 'journal' uses the submission record: per journal, how many submissions, desk rejects, rejects, R&Rs, accepts and withdrawals, plus the median days to a decision.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        breakdown_by: { type: "string", description: "Optional: 'author', 'theme', 'grant', 'year', or 'output_type'" },
+        breakdown_by: { type: "string", description: "Optional: 'author', 'theme', 'grant', 'output_type', or 'journal'" },
       },
     },
     handler: async (params: Record<string, unknown>) => {
@@ -527,6 +567,46 @@ function createMcpServer(apiKey: string) {
         const byType: Record<string, number> = {};
         for (const p of all) { const t = p.output_type || "unspecified"; byType[t] = (byType[t] || 0) + 1; }
         result.by_output_type = byType;
+      } else if (params.breakdown_by === "journal") {
+        const { data: attempts } = await supabase
+          .from("submission_attempts")
+          .select("journal, submitted_at, decision, decision_at, rounds")
+          .eq("user_id", userId);
+        type JStats = {
+          submissions: number; pending: number; desk_rejects: number; rejects: number;
+          revise_resubmit: number; accepts: number; withdrawn: number;
+          desk_reject_rate: number | null; median_days_to_decision: number | null; _days: number[];
+        };
+        const byJournal: Record<string, JStats> = {};
+        for (const a of attempts || []) {
+          const j = String(a.journal || "").trim() || "Unknown journal";
+          const s = (byJournal[j] ??= {
+            submissions: 0, pending: 0, desk_rejects: 0, rejects: 0, revise_resubmit: 0, accepts: 0, withdrawn: 0,
+            desk_reject_rate: null, median_days_to_decision: null, _days: [],
+          });
+          s.submissions++;
+          const key = ({ pending: "pending", desk_reject: "desk_rejects", reject: "rejects", revise_resubmit: "revise_resubmit", accept: "accepts", withdrawn: "withdrawn" } as Record<string, keyof JStats>)[a.decision];
+          if (key) (s[key] as number)++;
+          if (a.decision !== "pending" && a.decision_at && a.submitted_at) {
+            const d = (new Date(a.decision_at).getTime() - new Date(a.submitted_at).getTime()) / (24 * 60 * 60 * 1000);
+            if (Number.isFinite(d) && d >= 0) s._days.push(d);
+          }
+        }
+        const out: Record<string, Omit<JStats, "_days">> = {};
+        for (const [j, s] of Object.entries(byJournal)) {
+          const sorted = s._days.slice().sort((x, y) => x - y);
+          const mid = Math.floor(sorted.length / 2);
+          const median = sorted.length === 0 ? null
+            : sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+          const { _days, ...rest } = s;
+          out[j] = {
+            ...rest,
+            desk_reject_rate: s.submissions ? Math.round((s.desk_rejects / s.submissions) * 100) / 100 : null,
+            median_days_to_decision: median == null ? null : Math.round(median),
+          };
+        }
+        result.by_journal = out;
+        result.total_submissions = (attempts || []).length;
       }
 
       return textResult(result);
@@ -621,7 +701,7 @@ function createMcpServer(apiKey: string) {
       const { userId, supabase } = await getAuthenticatedUser(apiKey);
       const [{ data: pubs }, { data: rems }] = await Promise.all([
         supabase
-          .from("publications").select("id, title, stage, updated_at, stage_history, target_year")
+          .from("publications").select("id, title, stage, updated_at, stage_history, target_year, disposition, disposition_reconsider_at")
           .eq("owner_id", userId),
         supabase
           .from("reminders").select("id, publication_id, title, due_date, is_completed")
@@ -631,6 +711,7 @@ function createMcpServer(apiKey: string) {
         (pubs || []).map((p) => ({
           id: p.id, title: p.title, stage: p.stage, updatedAt: p.updated_at, history: p.stage_history,
           missingYear: p.stage === "published" && p.target_year == null,
+          disposition: p.disposition, reconsiderAt: p.disposition_reconsider_at,
         })),
         (rems || []).map((r) => ({
           id: r.id, publicationId: r.publication_id, title: r.title, dueDate: r.due_date, isCompleted: r.is_completed,
@@ -723,7 +804,8 @@ function createMcpServer(apiKey: string) {
 
       let q = supabase
         .from("publications").select("id, title, stage, authors, updated_at, target_year")
-        .eq("owner_id", userId)        .neq("stage", "published").lt("updated_at", cutoff)
+        .eq("owner_id", userId).eq("disposition", "active")
+        .neq("stage", "published").lt("updated_at", cutoff)
         .order("updated_at", { ascending: true });
       if (params.stage) q = q.eq("stage", String(params.stage));
 
@@ -857,6 +939,161 @@ function createMcpServer(apiKey: string) {
     },
     handler: async (params: Record<string, unknown>) => {
       return await manageStringArray(apiKey, "data_sources", params);
+    },
+  });
+
+  server.tool("manage_submissions", {
+    description: `The journal-by-journal record of a paper (one row per journal it was sent to; rejections stay on the record). action: 'list' (attempts for a publication), 'add' (new submission; journal defaults to the paper's target_journal, submitted_at to today; an Idea/Draft paper moves to Submitted), 'decide' (record the journal's decision on an attempt: ${DECISIONS.filter((d) => d !== "pending").join(", ")}; the paper moves accordingly: rejections and withdrawals back to Draft, R&R to Revise & Resubmit, accept to Accepted), 'resubmitted' (the revised version went back after an R&R: next round, paper moves to Resubmitted), 'delete'.`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        action: { type: "string", description: "list, add, decide, resubmitted, delete" },
+        publication_id: { type: "string", description: "Publication UUID (list, add)" },
+        attempt_id: { type: "string", description: "Attempt UUID (decide, resubmitted, delete)" },
+        journal: { type: "string", description: "Journal name (add; defaults to the paper's target_journal)" },
+        submitted_at: { type: "string", description: "YYYY-MM-DD (add; default today)" },
+        manuscript_number: { type: "string", description: "Journal's manuscript ID (add)" },
+        decision: { type: "string", description: "decide: desk_reject, reject, revise_resubmit, accept, withdrawn (aliases like 'R&R' accepted)" },
+        decision_at: { type: "string", description: "YYYY-MM-DD (decide; default today)" },
+        notes: { type: "string", description: "Short note, e.g. the gist of the editor's letter (decide)" },
+      },
+      required: ["action"],
+    },
+    handler: async (params: Record<string, unknown>) => {
+      const { userId, supabase } = await getAuthenticatedUser(apiKey);
+      const action = String(params.action);
+
+      const loadPub = async (id: string): Promise<(PubStageRow & { target_journal: string | null }) | null> => {
+        const { data } = await supabase
+          .from("publications").select("id, title, stage, stage_history, target_journal")
+          .eq("id", id).eq("owner_id", userId).maybeSingle();
+        return data ?? null;
+      };
+      const loadAttempt = async (id: string) => {
+        const { data } = await supabase
+          .from("submission_attempts").select(ATTEMPT_COLUMNS)
+          .eq("id", id).eq("user_id", userId).maybeSingle();
+        return data ?? null;
+      };
+
+      if (action === "list") {
+        if (!params.publication_id) return textResult({ error: "publication_id is required for list" });
+        const pub = await loadPub(String(params.publication_id));
+        if (!pub) return textResult({ error: "Publication not found" });
+        const { data, error } = await supabase
+          .from("submission_attempts").select(ATTEMPT_COLUMNS)
+          .eq("publication_id", pub.id).order("submitted_at", { ascending: false });
+        if (error) throw error;
+        return textResult({ publication_id: pub.id, title: pub.title, stage: pub.stage, count: (data || []).length, attempts: data });
+      }
+
+      if (action === "add") {
+        if (!params.publication_id) return textResult({ error: "publication_id is required for add" });
+        const pub = await loadPub(String(params.publication_id));
+        if (!pub) return textResult({ error: "Publication not found" });
+        const journal = String(params.journal || pub.target_journal || "").trim();
+        if (!journal) return textResult({ error: "journal is required (the paper has no target_journal to default to)" });
+        const { data, error } = await supabase
+          .from("submission_attempts")
+          .insert({
+            user_id: userId,
+            publication_id: pub.id,
+            journal,
+            submitted_at: params.submitted_at ? String(params.submitted_at) : todayDate(),
+            manuscript_number: params.manuscript_number ? String(params.manuscript_number) : null,
+          })
+          .select(ATTEMPT_COLUMNS).single();
+        if (error) throw error;
+        await logActivity(supabase, userId, "submission_added", pub, { attempt_id: data.id, journal, submitted_at: data.submitted_at });
+        const moved = (pub.stage === "idea" || pub.stage === "draft") && await setStage(supabase, userId, pub, "submitted");
+        return textResult({ action: "added", attempt: data, stage: moved ? "submitted" : pub.stage });
+      }
+
+      if (action === "decide") {
+        if (!params.attempt_id) return textResult({ error: "attempt_id is required for decide" });
+        const decision = normalizeDecision(params.decision as string | undefined);
+        if (!decision) return textResult({ error: `decision must be one of: ${DECISIONS.join(", ")}` });
+        const attempt = await loadAttempt(String(params.attempt_id));
+        if (!attempt) return textResult({ error: "Attempt not found" });
+        const patch: Record<string, unknown> = {
+          decision,
+          decision_at: decision === "pending" ? null : String(params.decision_at || attempt.decision_at || todayDate()),
+          updated_at: new Date().toISOString(),
+        };
+        if (params.notes !== undefined) patch.notes = String(params.notes) || null;
+        const { data, error } = await supabase
+          .from("submission_attempts").update(patch).eq("id", attempt.id).select(ATTEMPT_COLUMNS).single();
+        if (error) throw error;
+        const pub = await loadPub(attempt.publication_id);
+        await logActivity(supabase, userId, "decision_recorded", pub, { attempt_id: attempt.id, journal: attempt.journal, decision });
+        const implied = stageForDecision(decision);
+        const moved = pub && implied ? await setStage(supabase, userId, pub, implied) : false;
+        return textResult({ action: "decided", attempt: data, stage: moved ? implied : pub?.stage });
+      }
+
+      if (action === "resubmitted") {
+        if (!params.attempt_id) return textResult({ error: "attempt_id is required for resubmitted" });
+        const attempt = await loadAttempt(String(params.attempt_id));
+        if (!attempt) return textResult({ error: "Attempt not found" });
+        if (attempt.decision !== "revise_resubmit") {
+          return textResult({ error: `Only an attempt with decision revise_resubmit can be resubmitted (this one is ${attempt.decision})` });
+        }
+        const { data, error } = await supabase
+          .from("submission_attempts")
+          .update({ decision: "pending", decision_at: null, rounds: (attempt.rounds || 0) + 1, updated_at: new Date().toISOString() })
+          .eq("id", attempt.id).select(ATTEMPT_COLUMNS).single();
+        if (error) throw error;
+        const pub = await loadPub(attempt.publication_id);
+        await logActivity(supabase, userId, "resubmitted", pub, { attempt_id: attempt.id, journal: attempt.journal, round: data.rounds + 1 });
+        const moved = pub ? await setStage(supabase, userId, pub, "resubmitted") : false;
+        return textResult({ action: "resubmitted", attempt: data, stage: moved ? "resubmitted" : pub?.stage });
+      }
+
+      if (action === "delete") {
+        if (!params.attempt_id) return textResult({ error: "attempt_id is required for delete" });
+        const attempt = await loadAttempt(String(params.attempt_id));
+        if (!attempt) return textResult({ error: "Attempt not found" });
+        const { error } = await supabase.from("submission_attempts").delete().eq("id", attempt.id);
+        if (error) throw error;
+        await logActivity(supabase, userId, "submission_deleted", { id: attempt.publication_id }, { attempt_id: attempt.id, journal: attempt.journal });
+        return textResult({ action: "deleted", attempt_id: attempt.id });
+      }
+
+      return textResult({ error: "Unknown action. Use: list, add, decide, resubmitted, delete" });
+    },
+  });
+
+  server.tool("set_disposition", {
+    description: "Pause, shelve or reactivate a paper. Paused stays on the board, dimmed; shelved is tucked away under its column. Neither is reported as stalled or listed by get_today until reconsider_at arrives. Always give a reason.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        publication_id: { type: "string", description: "Publication UUID" },
+        disposition: { type: "string", description: "active, paused or shelved" },
+        reason: { type: "string", description: "Why (e.g. waiting for data access; co-author on leave; null result)" },
+        reconsider_at: { type: "string", description: "YYYY-MM-DD to look at it again (optional)" },
+      },
+      required: ["publication_id", "disposition"],
+    },
+    handler: async (params: Record<string, unknown>) => {
+      const { userId, supabase } = await getAuthenticatedUser(apiKey);
+      const disposition = normalizeDisposition(params.disposition as string | undefined);
+      if (!disposition) return textResult({ error: "disposition must be active, paused or shelved" });
+      const { data: pub } = await supabase
+        .from("publications").select("id, title, stage").eq("id", String(params.publication_id)).eq("owner_id", userId).maybeSingle();
+      if (!pub) return textResult({ error: "Publication not found" });
+      const patch = disposition === "active"
+        ? { disposition, disposition_reason: null, disposition_reconsider_at: null, updated_at: new Date().toISOString() }
+        : {
+            disposition,
+            disposition_reason: params.reason ? String(params.reason) : null,
+            disposition_reconsider_at: params.reconsider_at ? String(params.reconsider_at) : null,
+            updated_at: new Date().toISOString(),
+          };
+      const { error } = await supabase.from("publications").update(patch).eq("id", pub.id);
+      if (error) throw error;
+      await logActivity(supabase, userId, "disposition_changed", pub, { disposition, reason: patch.disposition_reason, reconsider_at: patch.disposition_reconsider_at });
+      return textResult({ success: true, publication_id: pub.id, ...patch });
     },
   });
 

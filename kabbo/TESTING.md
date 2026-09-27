@@ -31,6 +31,17 @@ is disappearing.
 | 10 | Delete from bin | Open bin → click permanent delete | Card gone | Card gone (does not reappear) |
 | 11 | Undo a stage move | Drag a card, then click Undo in the toolbar | Card back in the original stage | Back in original stage |
 
+## Journal history and dispositions
+
+| # | Flow | Action | Expected live | Expected on hard-refresh |
+|---|------|--------|---------------|--------------------------|
+| J1 | Drag to Submitted | Set an intended journal on a Draft card, drag it to Submitted | Toast "Submission to X recorded"; drawer shows one Journal history row, Under review | Row still there |
+| J2 | Record a decision | In the drawer, set the row's decision to Revise & resubmit | Stage select flips to Revise & Resubmit; on close the card is in that column | Card in R&R, Stage history has the move |
+| J3 | Resubmitted | Click Resubmitted on the R&R row | Row shows round 2, Under review; card in Resubmitted | Same |
+| J4 | Rejection | Set decision to Rejected | Card returns to Draft; the row stays on the record | Same |
+| J5 | Pause | "Pause or shelve this paper" → Pause with a reason | Card dimmed with a Paused chip; not in Today | Same |
+| J6 | Shelve | Shelve with a reconsider date in the past | Card hidden behind "Show 1 shelved" in its column; Today shows "Reconsider …" | Same |
+
 ## BibTeX import (the flow that broke)
 
 | # | Flow | Action | Expected live | Expected on hard-refresh |

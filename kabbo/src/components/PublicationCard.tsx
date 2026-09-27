@@ -34,12 +34,15 @@ export function PublicationCard({ publication, stageIndex = 0, onClick, onDragSt
   const isWorkingPaper = publication.workingPaper?.on;
   const isCollaboration = publication.isCollaboration;
   const dueStatus = useReminderStatus(publication.id);
+  const disposition = publication.disposition ?? 'active';
+  const resting = disposition !== 'active';
 
   const stageColor = STAGE_COLORS[stageIndex % STAGE_COLORS.length];
 
   return (
     <article
-      className={`card-publication relative animate-fade-in ${isCollaboration ? 'ring-1 ring-primary/30' : ''}`}
+      className={`card-publication relative animate-fade-in ${isCollaboration ? 'ring-1 ring-primary/30' : ''} ${resting ? 'opacity-60 saturate-50' : ''}`}
+      title={resting ? `${disposition === 'paused' ? 'Paused' : 'Shelved'}${publication.dispositionReason ? `: ${publication.dispositionReason}` : ''}` : undefined}
       draggable={!isCollaboration || publication.myRole === 'editor'}
       onDragStart={onDragStart}
       onClick={onClick}
@@ -72,6 +75,11 @@ export function PublicationCard({ publication, stageIndex = 0, onClick, onDragSt
       </h3>
       
       <div className="flex flex-wrap gap-1.5 items-center">
+        {resting && (
+          <span className="chip text-[10px] font-medium uppercase tracking-wide">
+            {disposition === 'paused' ? 'Paused' : 'Shelved'}
+          </span>
+        )}
         {coauthors.slice(0, 2).map((author, i) => (
           <span key={i} className="chip text-[10px]">
             {author}

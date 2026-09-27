@@ -12,6 +12,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { FilterBar } from '@/components/FilterBar';
 import { TodayPanel } from '@/components/TodayPanel';
 import { useReminders, RemindersProvider } from '@/hooks/useReminders';
+import { useSubmissionAttempts } from '@/hooks/useSubmissionAttempts';
 import { useToday } from '@/hooks/useToday';
 import { PipelineStage } from '@/components/PipelineStage';
 import { HorizontalPipelineStage } from '@/components/HorizontalPipelineStage';
@@ -125,6 +126,16 @@ const Index = () => {
     deleteReminder,
   } = useReminders(user?.id);
   const todayItems = useToday(state.cards, reminders);
+
+  // Journal-by-journal history. Board moves keep it in sync (a drop on
+  // Submitted opens an attempt at the intended journal, and so on).
+  const {
+    byPublication: attemptsByPublication,
+    addAttempt,
+    updateAttempt,
+    deleteAttempt,
+    syncWithStage,
+  } = useSubmissionAttempts(user?.id);
 
   // Filter published years by limit. The 'unknown' bucket is always retained
   // regardless of limit, so orphan rows with missing years are never hidden.
@@ -245,6 +256,13 @@ const Index = () => {
     const isForward = oldIndex >= 0 && newIndex > oldIndex;
 
     moveToStage(cardId, stageId);
+
+    // Keep the journal history consistent with the move, without a form.
+    if (card && !card.isCollaboration) {
+      syncWithStage(cardId, stageId, card.outputType === 'journal' ? card.typeA : '').then(note => {
+        if (note) toast({ title: note });
+      });
+    }
 
     if (isForward) {
       toast({
@@ -588,6 +606,10 @@ const Index = () => {
         onAddReminder={addReminder}
         onCompleteReminder={completeReminder}
         onDeleteReminder={deleteReminder}
+        attempts={selectedCardId ? (attemptsByPublication.get(selectedCardId) ?? []) : []}
+        onAddAttempt={addAttempt}
+        onUpdateAttempt={updateAttempt}
+        onDeleteAttempt={deleteAttempt}
       />
 
       {/* Bin Modal */}

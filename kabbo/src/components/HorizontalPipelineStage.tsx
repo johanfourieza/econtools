@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Stage, Publication, STAGE_COLORS } from '@/types/publication';
 import { PublicationCard } from './PublicationCard';
+import { Archive } from 'lucide-react';
 
 interface PresenceUser {
   id: string;
@@ -55,15 +57,20 @@ export function HorizontalPipelineStage({
     e.dataTransfer.effectAllowed = 'move';
   };
 
+  // Shelved papers sit behind a toggle under the row; the board shows live work.
+  const [showShelved, setShowShelved] = useState(false);
+  const shelved = cards.filter(c => c.disposition === 'shelved');
+  const live = cards.filter(c => c.disposition !== 'shelved');
+
   // Split cards into rows of 8; if last row has < 4 cards, rebalance
   const COLS = 8;
   const rows: Publication[][] = [];
-  if (cards.length <= COLS) {
-    rows.push(cards);
+  if (live.length <= COLS) {
+    rows.push(live);
   } else {
     const tempRows: Publication[][] = [];
-    for (let i = 0; i < cards.length; i += COLS) {
-      tempRows.push(cards.slice(i, i + COLS));
+    for (let i = 0; i < live.length; i += COLS) {
+      tempRows.push(live.slice(i, i + COLS));
     }
     if (tempRows.length > 1) {
       const lastRow = tempRows[tempRows.length - 1];
@@ -102,7 +109,7 @@ export function HorizontalPipelineStage({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        {cards.length === 0 ? (
+        {live.length === 0 && shelved.length === 0 ? (
           <div className="text-muted-foreground/50 text-sm text-center py-3 border border-dashed border-border rounded-lg">
             Drop publications here
           </div>
@@ -123,6 +130,34 @@ export function HorizontalPipelineStage({
                 ))}
               </div>
             ))}
+          </div>
+        )}
+        {shelved.length > 0 && (
+          <div className="mt-1">
+            <button
+              type="button"
+              onClick={() => setShowShelved(v => !v)}
+              className="w-full flex items-center justify-center gap-1.5 py-1 text-[11px] text-muted-foreground hover:text-foreground"
+              aria-expanded={showShelved}
+            >
+              <Archive className="w-3 h-3" />
+              {showShelved ? 'Hide' : 'Show'} {shelved.length} shelved
+            </button>
+            {showShelved && (
+              <div className="flex flex-wrap justify-center gap-[2px]">
+                {shelved.map((card) => (
+                  <div key={card.id} className="w-[140px] xl:w-[160px]">
+                    <PublicationCard
+                      publication={card}
+                      stageIndex={stageIndex}
+                      onClick={() => onCardClick(card.id)}
+                      onDragStart={handleCardDragStart(card.id)}
+                      viewers={getViewersForPublication?.(card.id) || []}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

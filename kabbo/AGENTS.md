@@ -43,6 +43,8 @@ backs Claude Code (the plugin) and Gemini CLI (`~/.gemini/settings.json`, using
 - `import_bibtex` — create publications from a BibTeX string
 - `manage_related_papers` — list/add/remove related papers
 - `manage_data_sources` — list/add/remove data sources
+- `manage_submissions` — the journal-by-journal record: action list | add | decide | resubmitted | delete. `add` opens an attempt (journal defaults to target_journal) and moves an Idea/Draft paper to Submitted; `decide` records desk_reject / reject / revise_resubmit / accept / withdrawn and moves the paper accordingly
+- `set_disposition` — pause, shelve or reactivate a paper with a reason and optional reconsider_at; resting papers are never reported as stalled
 
 ### Reminders / team / export / notes
 - `manage_reminders` — action: list | create | complete | delete. Create needs
@@ -78,6 +80,10 @@ metadata you set directly via `link_repo` or `update_publication`.
 
 - "What needs me today?" → get_today
 - "How's my pipeline looking?" → get_pipeline_summary
+- "The JEH desk-rejected the wages paper yesterday" → manage_submissions (action: list to find the attempt, then decide)
+- "I just sent the revised version back to EHR" → manage_submissions (action: resubmitted)
+- "Park the missions paper until March, waiting on the archive" → set_disposition (paused, reconsider_at)
+- "Which journals have treated me worst?" → get_analytics (breakdown_by: journal)
 - "Which papers have been stuck longest?" → get_stalled_papers
 - "How many papers did I publish this year vs last?" → get_analytics
 - "Find all papers about colonial wages" → search_publications

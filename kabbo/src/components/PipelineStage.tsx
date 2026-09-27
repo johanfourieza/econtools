@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Stage, Publication, STAGE_COLORS } from '@/types/publication';
 import { PublicationCard } from './PublicationCard';
+import { Archive } from 'lucide-react';
 
 interface PresenceUser {
   id: string;
@@ -31,6 +33,11 @@ export function PipelineStage({
   getViewersForPublication,
 }: PipelineStageProps) {
   const stageColor = STAGE_COLORS[stageIndex % STAGE_COLORS.length];
+  // Shelved papers are tucked under the column behind a one-line toggle so
+  // the board shows live work only.
+  const [showShelved, setShowShelved] = useState(false);
+  const shelved = cards.filter(c => c.disposition === 'shelved');
+  const live = cards.filter(c => c.disposition !== 'shelved');
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -54,6 +61,17 @@ export function PipelineStage({
     e.dataTransfer.setData('text/pubflow-card', cardId);
     e.dataTransfer.effectAllowed = 'move';
   };
+
+  const renderCard = (card: Publication) => (
+    <PublicationCard
+      key={card.id}
+      publication={card}
+      stageIndex={stageIndex}
+      onClick={() => onCardClick(card.id)}
+      onDragStart={handleCardDragStart(card.id)}
+      viewers={getViewersForPublication?.(card.id) || []}
+    />
+  );
 
   // Funnel effect: early stages are wider, narrows toward end
   const totalStages = 6;
@@ -98,21 +116,26 @@ export function PipelineStage({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        {cards.length === 0 ? (
+        {live.length === 0 && shelved.length === 0 ? (
           <div className="text-muted-foreground/50 text-xs md:text-sm text-center py-6 md:py-8 border border-dashed border-border rounded-lg mx-2">
             Drop here
           </div>
         ) : (
-          cards.map(card => (
-            <PublicationCard
-              key={card.id}
-              publication={card}
-              stageIndex={stageIndex}
-              onClick={() => onCardClick(card.id)}
-              onDragStart={handleCardDragStart(card.id)}
-              viewers={getViewersForPublication?.(card.id) || []}
-            />
-          ))
+          live.map(renderCard)
+        )}
+        {shelved.length > 0 && (
+          <>
+            <button
+              type="button"
+              onClick={() => setShowShelved(v => !v)}
+              className="w-full flex items-center justify-center gap-1.5 py-1.5 text-[11px] text-muted-foreground hover:text-foreground"
+              aria-expanded={showShelved}
+            >
+              <Archive className="w-3 h-3" />
+              {showShelved ? 'Hide' : 'Show'} {shelved.length} shelved
+            </button>
+            {showShelved && shelved.map(renderCard)}
+          </>
         )}
       </div>
     </section>

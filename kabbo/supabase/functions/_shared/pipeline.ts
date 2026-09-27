@@ -95,6 +95,78 @@ export function isStageVisible(stage: string, minVisibleStage: string | null | u
   return idx >= (min < 0 ? 0 : min);
 }
 
+// ── submission attempts ──────────────────────────────────────────────────
+// Must match the CHECK constraint on public.submission_attempts.decision.
+export const DECISIONS = [
+  "pending",
+  "desk_reject",
+  "reject",
+  "revise_resubmit",
+  "accept",
+  "withdrawn",
+] as const;
+export type Decision = (typeof DECISIONS)[number];
+
+export const DECISION_LABELS: Record<Decision, string> = {
+  pending: "Under review",
+  desk_reject: "Desk rejected",
+  reject: "Rejected",
+  revise_resubmit: "Revise & resubmit",
+  accept: "Accepted",
+  withdrawn: "Withdrawn",
+};
+
+/** Attempts that are still live at the journal. */
+export function isOpenDecision(d: string): boolean {
+  return d === "pending" || d === "revise_resubmit";
+}
+
+/**
+ * Where the paper goes when a decision is recorded. A rejection or a
+ * withdrawal puts it back in the author's hands (Draft); null = no change.
+ */
+export function stageForDecision(decision: string): Stage | null {
+  switch (decision) {
+    case "desk_reject":
+    case "reject":
+    case "withdrawn":
+      return "draft";
+    case "revise_resubmit":
+      return "revise_resubmit";
+    case "accept":
+      return "accepted";
+    default:
+      return null;
+  }
+}
+
+export function normalizeDecision(input: string | null | undefined): Decision | null {
+  if (!input) return null;
+  const key = String(input).toLowerCase().trim().replace(/[\s-]+/g, "_").replace(/&/g, "and");
+  const aliases: Record<string, Decision> = {
+    pending: "pending", under_review: "pending", submitted: "pending", in_review: "pending",
+    desk_reject: "desk_reject", desk_rejected: "desk_reject", desk: "desk_reject",
+    reject: "reject", rejected: "reject",
+    revise_resubmit: "revise_resubmit", revise_and_resubmit: "revise_resubmit", randr: "revise_resubmit",
+    rr: "revise_resubmit", major_revision: "revise_resubmit", minor_revision: "revise_resubmit",
+    accept: "accept", accepted: "accept", forthcoming: "accept",
+    withdrawn: "withdrawn", withdraw: "withdrawn",
+  };
+  return aliases[key] ?? null;
+}
+
+// ── dispositions ─────────────────────────────────────────────────────────
+export const DISPOSITIONS = ["active", "paused", "shelved"] as const;
+export type Disposition = (typeof DISPOSITIONS)[number];
+
+export function normalizeDisposition(input: string | null | undefined): Disposition | null {
+  const key = String(input ?? "").toLowerCase().trim();
+  if (key === "active" || key === "resume" || key === "reactivate") return "active";
+  if (key === "paused" || key === "pause" || key === "on_hold" || key === "hold") return "paused";
+  if (key === "shelved" || key === "shelve" || key === "archived" || key === "abandoned") return "shelved";
+  return null;
+}
+
 // Reminder types must match the CHECK constraint on public.reminders.
 export const REMINDER_TYPES = [
   "deadline",

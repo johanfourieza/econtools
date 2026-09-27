@@ -65,6 +65,8 @@ kabbo.app → **Settings → AI Integration → Create Key**.
 - **import_bibtex** — create publications from a BibTeX string
 - **manage_related_papers** — list/add/remove related papers
 - **manage_data_sources** — list/add/remove data sources
+- **manage_submissions** — journal-by-journal record: `action` list | add | decide | resubmitted | delete. `add` opens an attempt (journal defaults to `target_journal`, Idea/Draft paper moves to Submitted); `decide` takes desk_reject / reject / revise_resubmit / accept / withdrawn and moves the paper accordingly; `resubmitted` starts the next round
+- **set_disposition** — pause, shelve or reactivate a paper (`reason`, optional `reconsider_at`); resting papers are not stalled and stay out of `get_today`
 
 ### Reminders, team, export, notes
 - **manage_reminders** — `action`: list | create | complete | delete. Create needs `title` + ISO `due_date`; `reminder_type` ∈ deadline, conference, resubmission, working_paper, general
@@ -104,6 +106,9 @@ and Overleaf links are plain metadata on the card.
 - **Annual review** → `get_analytics` + `export_bibtex`
 - **Import a CV/BibTeX** → `import_bibtex`
 - **Batch tag** → `list_publications` then `bulk_update`
+- **Record a decision letter** → `manage_submissions` (action: list, then decide with the decision and date). Never guess the decision; quote the letter.
+- **Park a paper** → `set_disposition` (paused or shelved, with a reason and a reconsider date)
+- **Journal scorecard** → `get_analytics` (breakdown_by: journal)
 - **Set a reminder** → `manage_reminders` (action: create, title, due_date ISO, optional publication_id)
 - **Prepare a submission** → `submission_prep` prompt. It builds a checklist; it never moves the card. Call `move_stage` only once the user says the paper has actually been submitted.
 - **Team oversight** → `get_team_summary` (team_id required)

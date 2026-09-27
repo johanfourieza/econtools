@@ -29,10 +29,32 @@ Full proposal list (12 items, revised with Johan) lives in PROPOSALS-2026-09-27.
       90d, published without year; ideas never nag). Reminders UI in the
       drawer (RemindersSection + useReminders), bell on cards when due.
       MCP get_today tool + morning_checkin prompt use the same rules.
-- [ ] Deploy mcp-server, api-publications, ingest-publication; push frontend.
+- [x] Deployed (functions + Vercel) and committed a8d0d73, 2026-09-27.
 - [ ] Run npm run test:mcp against production with a throwaway key.
-- [ ] Next: proposal 4 (submission attempts + dispositions), then 5
-      (refereeing layer).
+
+### Proposal 4: submission attempts + dispositions — BUILT + DEPLOYED 2026-09-27
+- [x] Migration 20260927120000: submission_attempts table (journal,
+      submitted_at, manuscript_number, decision pending/desk_reject/reject/
+      revise_resubmit/accept/withdrawn, decision_at, rounds, notes; RLS by
+      user) + publications.disposition (active/paused/shelved),
+      disposition_reason, disposition_reconsider_at. Applied to production
+      via the Management API; types regenerated.
+- [x] Drawer: "Journal history" block (SubmissionHistory) with add / decision
+      select / Resubmitted; a recorded decision moves the Stage select
+      (stageForDecision). "Pause or shelve this paper" line
+      (DispositionControl) under the Stage row; banner + Reactivate when
+      resting.
+- [x] Board: drag to Submitted opens an attempt at the intended journal; drag
+      to R&R / Resubmitted / Accepted records the decision or next round
+      (useSubmissionAttempts.syncWithStage). Paused cards dimmed with a chip;
+      shelved cards behind a "Show N shelved" toggle per column.
+- [x] Drawer stage changes now append stage_history (they never did before).
+- [x] Today: resting papers are silent until reconsider date ("Reconsider X").
+- [x] MCP: manage_submissions (list/add/decide/resubmitted/delete),
+      set_disposition, get_analytics breakdown_by journal (desk-reject rate,
+      median days to decision), stalled/pipeline summary skip resting papers,
+      get_publication embeds submission_attempts. 24 tools.
+- [ ] Next: proposal 5 (refereeing layer), then 6 (R&R ledger), 7 (ORCID).
 
 ### Wave 1 (Deep): Frictionless integration — IN PROGRESS (2026-05-31)
 Rebuilt the integration around "install once, then it just happens as you work."

@@ -23,6 +23,7 @@ import {
   Mail,
   PenLine,
   PartyPopper,
+  Archive,
 } from 'lucide-react';
 
 interface TodayPanelProps {
@@ -41,6 +42,7 @@ const KIND_ICON: Record<TodayKind, React.ComponentType<{ className?: string }>> 
   no_decision: Mail,
   accepted_check: PartyPopper,
   draft_idle: Clock,
+  reconsider: Archive,
   missing_year: CalendarX,
 };
 
@@ -51,6 +53,7 @@ const KIND_COLOUR: Record<TodayKind, string> = {
   no_decision: 'text-accent',
   accepted_check: 'text-sage',
   draft_idle: 'text-muted-foreground',
+  reconsider: 'text-brand-ochre',
   missing_year: 'text-muted-foreground',
 };
 

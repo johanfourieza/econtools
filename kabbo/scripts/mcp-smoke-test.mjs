@@ -129,7 +129,7 @@ async function run() {
     'delete_publication', 'get_pipeline_summary', 'search_publications', 'bulk_update', 'get_activity_log',
     'manage_reminders', 'get_analytics', 'get_team_summary', 'export_bibtex', 'add_note',
     'get_stalled_papers', 'link_repo', 'set_target_journal', 'import_bibtex', 'manage_related_papers',
-    'manage_data_sources',
+    'manage_data_sources', 'get_today', 'manage_submissions', 'set_disposition',
   ];
   for (const n of expected) ok(`tool registered: ${n}`, names.has(n));
   await step('prompts/list', () => rpc('prompts/list'));
@@ -167,6 +167,33 @@ async function run() {
   await step('manage_related_papers add', () => tool('manage_related_papers', { id, action: 'add', value: 'doi:10.1000/x' }));
   await step('manage_data_sources add', () => tool('manage_data_sources', { id, action: 'add', value: 'https://example.org/data' }));
   await step('bulk_update', () => tool('bulk_update', { updates: [{ id, themes: ['smoke'] }] }));
+
+  // ---- Journal history and dispositions
+  const added = await step('manage_submissions add', () =>
+    tool('manage_submissions', { action: 'add', publication_id: id, journal: 'Journal of Smoke', submitted_at: '2026-01-10' }));
+  const attemptId = added?.attempt?.id;
+  const listed = await step('manage_submissions list', () => tool('manage_submissions', { action: 'list', publication_id: id }));
+  ok('attempt appears in list', (listed?.attempts ?? []).some((a) => a.id === attemptId));
+  if (attemptId) {
+    const decided = await step('manage_submissions decide (R&R alias)', () =>
+      tool('manage_submissions', { action: 'decide', attempt_id: attemptId, decision: 'R&R', decision_at: '2026-03-01' }));
+    ok('decision normalised to revise_resubmit', decided?.attempt?.decision === 'revise_resubmit', `got ${decided?.attempt?.decision}`);
+    ok('paper moved to revise_resubmit', decided?.stage === 'revise_resubmit', `got ${decided?.stage}`);
+    const round = await step('manage_submissions resubmitted', () => tool('manage_submissions', { action: 'resubmitted', attempt_id: attemptId }));
+    ok('round incremented and paper moved to resubmitted', round?.attempt?.rounds === 1 && round?.stage === 'resubmitted');
+    const pubNow = await step('get_publication carries submission_attempts', () => tool('get_publication', { id }));
+    ok('submission_attempts embedded on the publication', Array.isArray(pubNow?.publication?.submission_attempts) && pubNow.publication.submission_attempts.length === 1);
+    ok('stage_history recorded the implied moves',
+      (pubNow?.publication?.stage_history ?? []).some((h) => h?.to === 'resubmitted'));
+  }
+  const byJournal = await step('get_analytics by journal', () => tool('get_analytics', { breakdown_by: 'journal' }));
+  ok('journal breakdown includes the smoke journal', !!byJournal?.by_journal?.['Journal of Smoke']);
+  const paused = await step('set_disposition paused', () =>
+    tool('set_disposition', { publication_id: id, disposition: 'pause', reason: 'smoke', reconsider_at: '2030-01-01' }));
+  ok('disposition normalised to paused', paused?.disposition === 'paused', `got ${paused?.disposition}`);
+  const stalledWhilePaused = await step('get_stalled_papers ignores paused', () => tool('get_stalled_papers', { days: 0 }));
+  ok('paused paper not reported as stalled', !(stalledWhilePaused?.stalled ?? []).some((p) => p.id === id));
+  await step('set_disposition active', () => tool('set_disposition', { publication_id: id, disposition: 'active' }));
 
   const reminder = await step('manage_reminders create', () =>
     tool('manage_reminders', { action: 'create', publication_id: id, title: 'Smoke reminder', due_date: '2030-01-01', reminder_type: 'custom' }));
